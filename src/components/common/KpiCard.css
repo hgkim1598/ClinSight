@@ -1,0 +1,71 @@
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease;
+}
+
+.kpi-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.kpi-card__label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.kpi-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.kpi-card__value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+  font-feature-settings: 'tnum';
+}
+
+.kpi-card__sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.kpi-card--danger .kpi-card__value {
+  color: var(--danger);
+}
+
+.kpi-card--danger .kpi-card__icon {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.kpi-card--warn .kpi-card__value {
+  color: var(--warn);
+}
+
+.kpi-card--warn .kpi-card__icon {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.kpi-card--safe .kpi-card__icon {
+  color: var(--safe);
+  background: var(--safe-bg);
+}

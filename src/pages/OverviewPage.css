@@ -1,0 +1,226 @@
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+}
+
+.overview__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.overview__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.overview__clock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-feature-settings: 'tnum';
+}
+
+.overview__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.overview__capacity {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-sm);
+  margin-top: calc(var(--space-md) * -1);
+}
+
+.capacity-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--canvas);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.capacity-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  background: var(--card);
+  flex-shrink: 0;
+}
+
+.capacity-card__body {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.capacity-card__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.capacity-card__value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  font-feature-settings: 'tnum';
+}
+
+.capacity-card__sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.capacity-card--ok .capacity-card__sub {
+  color: var(--safe);
+}
+
+.capacity-card--warn {
+  border-color: var(--warn-border);
+}
+
+.capacity-card--warn .capacity-card__icon {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.capacity-card--warn .capacity-card__sub {
+  color: var(--warn);
+}
+
+.overview__section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.overview__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.overview__section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.overview__section-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.overview__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.patient-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 780px;
+}
+
+.patient-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--canvas);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.patient-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.patient-table tbody tr:hover {
+  background: var(--sidebar-hover);
+}
+
+.patient-table tbody tr.is-high {
+  border-left-color: var(--danger);
+}
+
+.patient-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.patient-table td {
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.patient-table .cell-bed {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.patient-table .cell-id {
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.patient-table .cell-diag {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.patient-table .cell-sofa {
+  font-feature-settings: 'tnum';
+  font-weight: 600;
+}
+
+.patient-table .cell-admit {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-feature-settings: 'tnum';
+}
+
+@media (max-width: 768px) {
+  .overview {
+    padding: var(--space-md);
+  }
+
+  .overview__title {
+    font-size: 20px;
+  }
+}
