@@ -12,6 +12,7 @@ export const patients: Patient[] = [
     risk: 'high',
     status: '집중관찰',
     sofa: 12,
+    sepsisOnset: '2026-04-23 11:40',
   },
   {
     bed: 'A-02',

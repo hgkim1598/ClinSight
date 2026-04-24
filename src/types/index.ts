@@ -29,6 +29,7 @@ export interface Patient {
   risk: RiskLevel;
   status: PatientStatus;
   sofa: number;
+  sepsisOnset?: string;
 }
 
 // ---------- 모델 예측 ----------
@@ -101,4 +102,13 @@ export interface LabDot {
   time: string;
   label: string;
   value: number;
+}
+
+/** 바이탈 차트 탭 키 */
+export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp';
+
+/** 환자 1명 바이탈 + lab 번들 */
+export interface VitalData {
+  series: Record<VitalKey, VitalSeries>;
+  labs: LabDot[];
 }

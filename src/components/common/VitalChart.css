@@ -1,0 +1,153 @@
+.vital-chart {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.vital-chart__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.vital-chart__tabs {
+  display: inline-flex;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.vital-chart__tab {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.vital-chart__tab:hover {
+  color: var(--text);
+}
+
+.vital-chart__tab.is-active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.vital-chart__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.vital-chart__current {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.vital-chart__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.vital-chart__value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  font-feature-settings: 'tnum';
+}
+
+.vital-chart__unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.vital-chart__normal {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.vital-chart__canvas {
+  width: 100%;
+  min-height: 260px;
+}
+
+.vital-chart__empty {
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.vital-chart__labs {
+  border-top: 1px dashed var(--border);
+  padding-top: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.vital-chart__labs-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.vital-chart__labs ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vital-chart__labs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.vital-chart__lab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.vital-chart__lab-time {
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.vital-chart__lab-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.vital-chart__lab-value {
+  color: var(--text);
+  font-feature-settings: 'tnum';
+}
