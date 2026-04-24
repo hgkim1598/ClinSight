@@ -1,0 +1,36 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.layout__content {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+  min-width: 0;
+}
+
+/* 모바일 햄버거 */
+.layout__mobile-toggle {
+  position: fixed;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  background: var(--sidebar);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 768px) {
+  .layout__content {
+    padding: var(--space-md);
+    padding-top: 64px;
+  }
+}

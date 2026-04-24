@@ -1,13 +1,19 @@
-import Badge from './components/common/Badge';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Layout from './components/layout/Layout';
+import OverviewPage from './pages/OverviewPage';
+import PatientPage from './pages/PatientPage';
+import DrilldownPage from './pages/DrilldownPage';
 
-function App() {
+export default function App() {
   return (
-    <div style={{ padding: '32px', display: 'flex', gap: '12px' }}>
-      <Badge level="high" />
-      <Badge level="med" />
-      <Badge level="low" />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<OverviewPage />} />
+          <Route path="/patient/:id" element={<PatientPage />} />
+          <Route path="/patient/:id/model/:modelKey" element={<DrilldownPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;
