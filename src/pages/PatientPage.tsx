@@ -8,6 +8,7 @@ import { getModelPredictions } from '../api/services/modelService';
 import PatientHeader from '../components/common/PatientHeader';
 import VitalChart from '../components/common/VitalChart';
 import ModelCard from '../components/common/ModelCard';
+import ModelDetailView from '../components/common/ModelDetailView';
 import './PatientPage.css';
 
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
@@ -33,15 +34,12 @@ export default function PatientPage() {
   const vitals = useMemo(() => getVitals(id), [id]);
   const predictions = useMemo(() => getModelPredictions(id), [id]);
   const [now, setNow] = useState(() => new Date());
+  const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
-
-  const handleModelSelect = (key: ModelKey) => {
-    console.log('[model select]', key);
-  };
 
   if (!patient) {
     return (
@@ -59,8 +57,10 @@ export default function PatientPage() {
     );
   }
 
+  const isDetail = selectedModel != null;
+
   return (
-    <div className="patient-page">
+    <div className={`patient-page ${isDetail ? 'patient-page--detail' : ''}`}>
       <nav className="patient-page__nav">
         <Link to="/" className="patient-page__back">
           <ArrowLeft size={14} />
@@ -74,26 +74,37 @@ export default function PatientPage() {
 
       <PatientHeader patient={patient} />
 
-      <VitalChart vitals={vitals} />
+      {isDetail ? (
+        <ModelDetailView
+          selectedModel={selectedModel}
+          predictions={predictions}
+          onBack={() => setSelectedModel(null)}
+          onChangeModel={(k) => setSelectedModel(k)}
+        />
+      ) : (
+        <>
+          <VitalChart vitals={vitals} />
 
-      <section className="patient-page__models">
-        <header className="patient-page__models-head">
-          <h3 className="patient-page__models-title">예측 모델</h3>
-          <span className="patient-page__models-meta">
-            클릭하여 모델 상세 분석 · 마지막 갱신 {LAST_UPDATED_MIN}분 전
-          </span>
-        </header>
-        <div className="patient-page__models-grid">
-          {MODEL_ORDER.map((key) => (
-            <ModelCard
-              key={key}
-              modelKey={key}
-              prediction={predictions[key]}
-              onSelect={handleModelSelect}
-            />
-          ))}
-        </div>
-      </section>
+          <section className="patient-page__models">
+            <header className="patient-page__models-head">
+              <h3 className="patient-page__models-title">예측 모델</h3>
+              <span className="patient-page__models-meta">
+                클릭하여 모델 상세 분석 · 마지막 갱신 {LAST_UPDATED_MIN}분 전
+              </span>
+            </header>
+            <div className="patient-page__models-grid">
+              {MODEL_ORDER.map((key) => (
+                <ModelCard
+                  key={key}
+                  modelKey={key}
+                  prediction={predictions[key]}
+                  onSelect={(k) => setSelectedModel(k)}
+                />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

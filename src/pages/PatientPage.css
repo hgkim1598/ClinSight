@@ -5,6 +5,13 @@
   padding: var(--space-lg);
 }
 
+.patient-page--detail {
+  height: calc(100dvh - var(--space-lg) * 2);
+  max-height: calc(100dvh - var(--space-lg) * 2);
+  overflow: hidden;
+  gap: var(--space-md);
+}
+
 .patient-page__nav {
   display: flex;
   align-items: center;
@@ -83,6 +90,14 @@
 @media (max-width: 1024px) {
   .patient-page__models-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 960px) {
+  .patient-page--detail {
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
 }
 

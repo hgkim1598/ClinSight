@@ -111,6 +111,17 @@ const pt19482: PatientModels = {
     ],
     llmSummary:
       '산소화 저하와 호흡수 증가가 동반되어 호흡부전 악화 가능성이 평가 필요합니다. 침습적 기계환기 전환 준비 여부를 판단하십시오.',
+    escalation: {
+      title: '침습적 기계환기 (InvasiveVent)',
+      shortLabel: 'InvasiveVent',
+      probability: 38,
+      currentStatus: 'unused',
+      shap: [
+        { name: 'PaO2/FiO2 180', value: 0.22, direction: 'up' },
+        { name: 'Respiratory rate 28', value: 0.14, direction: 'up' },
+        { name: 'FiO2 상승 추세', value: 0.09, direction: 'up' },
+      ],
+    },
   },
   sic: {
     title: '패혈증 유발 응고장애 (SIC)',
@@ -176,6 +187,17 @@ const pt19482: PatientModels = {
     ],
     llmSummary:
       '수액 소생에도 평균동맥압이 회복되지 않고 lactate가 상승합니다. 승압제 요구 가능성에 대한 평가가 필요합니다.',
+    escalation: {
+      title: '승압제 (Vasopressor)',
+      shortLabel: 'Vasopressor',
+      probability: 52,
+      currentStatus: 'unused',
+      shap: [
+        { name: 'MAP 58 mmHg', value: 0.26, direction: 'up' },
+        { name: 'Lactate 5.2', value: 0.18, direction: 'up' },
+        { name: 'Fluid balance +2.4L (반응 낮음)', value: 0.12, direction: 'up' },
+      ],
+    },
   },
 };
 

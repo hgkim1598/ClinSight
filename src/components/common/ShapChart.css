@@ -1,0 +1,118 @@
+.shap-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.shap-chart__note {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.shap-chart__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.shap-chart__row {
+  display: grid;
+  grid-template-columns: 180px 1fr 56px;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.shap-chart__name {
+  font-size: 12px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shap-chart__track {
+  position: relative;
+  height: 10px;
+  background: var(--canvas);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.shap-chart__axis {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+
+.shap-chart__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--radius-sm);
+}
+
+.shap-chart__fill--up {
+  background: var(--danger);
+}
+
+.shap-chart__fill--down {
+  background: var(--primary);
+}
+
+.shap-chart__value {
+  font-size: 12px;
+  font-weight: 600;
+  font-feature-settings: 'tnum';
+  text-align: right;
+}
+
+.shap-chart__value--up {
+  color: var(--danger);
+}
+
+.shap-chart__value--down {
+  color: var(--primary);
+}
+
+.shap-chart__toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+
+.shap-chart__toggle:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.shap-chart--empty {
+  padding: var(--space-md);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 640px) {
+  .shap-chart__row {
+    grid-template-columns: 120px 1fr 48px;
+  }
+}

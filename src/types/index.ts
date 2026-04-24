@@ -62,6 +62,15 @@ export interface RawMetric {
   isModelInput: boolean;
 }
 
+/** 보조지표 — 치료 에스컬레이션 예측 (ARDS/Shock 전용) */
+export interface EscalationPrediction {
+  title: string;
+  shortLabel: string;
+  probability: number;
+  currentStatus: 'unused' | 'inUse';
+  shap: ShapFeature[];
+}
+
 /** 개별 모델 예측 결과 */
 export interface ModelPrediction {
   title: string;
@@ -71,6 +80,7 @@ export interface ModelPrediction {
   shap: ShapFeature[];
   raw: RawMetric[];
   llmSummary: string;
+  escalation?: EscalationPrediction;
 }
 
 // ---------- ICU 현황 ----------
