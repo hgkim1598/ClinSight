@@ -15,7 +15,8 @@
 
 .overview__title {
   font-size: 22px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--text);
   margin: 0;
 }
@@ -37,37 +38,38 @@
 
 .overview__capacity {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-sm);
-  margin-top: calc(var(--space-md) * -1);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
 }
 
 .capacity-card {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  background: var(--canvas);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  min-height: 56px;
 }
 
 .capacity-card__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  background: var(--card);
+  background: var(--canvas);
   flex-shrink: 0;
 }
 
 .capacity-card__body {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-sm);
+  align-items: center;
+  gap: var(--space-md);
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -84,28 +86,34 @@
   font-feature-settings: 'tnum';
 }
 
-.capacity-card__sub {
+/* 상태 태그 (pill) */
+.capacity-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
   font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.capacity-tag--neutral {
   color: var(--text-muted);
+  background: var(--border);
 }
 
-.capacity-card--ok .capacity-card__sub {
+.capacity-tag--safe {
   color: var(--safe);
+  background: var(--safe-bg);
 }
 
-.capacity-card--warn {
-  border-color: var(--warn-border);
-}
-
-.capacity-card--warn .capacity-card__icon {
+.capacity-tag--warn {
   color: var(--warn);
   background: var(--warn-bg);
 }
 
-.capacity-card--warn .capacity-card__sub {
-  color: var(--warn);
-}
-
+/* 섹션 (환자 목록) */
 .overview__section {
   background: var(--card);
   border: 1px solid var(--border);
@@ -121,6 +129,7 @@
   gap: var(--space-md);
   padding: var(--space-md);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .overview__section-title {
@@ -130,11 +139,72 @@
   margin: 0;
 }
 
+.overview__section-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
 .overview__section-count {
   font-size: 13px;
   color: var(--text-muted);
 }
 
+/* 정렬 드롭다운 */
+.overview__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+}
+
+.overview__sort-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.overview__sort-control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.overview__sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 28px 6px 10px;
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+
+.overview__sort-select:hover {
+  border-color: var(--border-strong);
+}
+
+.overview__sort-select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.overview__sort-chevron {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+/* 환자 테이블 */
 .overview__table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -163,11 +233,11 @@
   border-bottom: 1px solid var(--border);
   border-left: 4px solid transparent;
   cursor: pointer;
-  transition: background-color 0.12s ease;
+  transition: background-color 0.15s ease;
 }
 
 .patient-table tbody tr:hover {
-  background: var(--sidebar-hover);
+  background: var(--primary-bg);
 }
 
 .patient-table tbody tr.is-high {
@@ -215,6 +285,55 @@
   font-feature-settings: 'tnum';
 }
 
+/* 페이지네이션 */
+.overview__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--border);
+  background: var(--canvas);
+}
+
+.overview__page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.overview__page-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--card);
+}
+
+.overview__page-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.overview__page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.overview__page-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-feature-settings: 'tnum';
+  min-width: 88px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .overview {
     padding: var(--space-md);
@@ -222,5 +341,14 @@
 
   .overview__title {
     font-size: 20px;
+  }
+
+  .overview__section-head {
+    align-items: stretch;
+  }
+
+  .overview__section-meta {
+    width: 100%;
+    justify-content: space-between;
   }
 }

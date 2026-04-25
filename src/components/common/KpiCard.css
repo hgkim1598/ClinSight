@@ -2,10 +2,10 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: var(--space-md);
+  padding: 12px var(--space-md);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   box-shadow: var(--shadow-sm);
   transition: border-color 0.15s ease;
 }

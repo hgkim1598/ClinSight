@@ -7,8 +7,11 @@ import {
   Clock,
   Stethoscope,
   UserCheck,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
-import type { KpiData, Patient } from '../types';
+import type { KpiData, Patient, RiskLevel } from '../types';
 import { getPatients } from '../api/services/patientService';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
@@ -18,6 +21,44 @@ const TOTAL_BEDS = 20;
 const DOCTORS_ON_DUTY = 3;
 const DOCTORS_TOTAL = 4;
 const NURSES_ON_DUTY = 4;
+const PAGE_SIZE = 10;
+
+type SortKey =
+  | 'risk-desc'
+  | 'risk-asc'
+  | 'admit-desc'
+  | 'admit-asc'
+  | 'sofa-desc'
+  | 'age-desc';
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'risk-desc', label: '위험도순 (높은순)' },
+  { value: 'risk-asc', label: '위험도순 (낮은순)' },
+  { value: 'admit-desc', label: '입실시간순 (최신순)' },
+  { value: 'admit-asc', label: '입실시간순 (오래된순)' },
+  { value: 'sofa-desc', label: 'SOFA 점수순 (높은순)' },
+  { value: 'age-desc', label: '나이순 (높은순)' },
+];
+
+const RISK_RANK: Record<RiskLevel, number> = { high: 3, med: 2, low: 1 };
+
+function sortPatients(list: Patient[], key: SortKey): Patient[] {
+  const arr = [...list];
+  switch (key) {
+    case 'risk-desc':
+      return arr.sort((a, b) => RISK_RANK[b.risk] - RISK_RANK[a.risk]);
+    case 'risk-asc':
+      return arr.sort((a, b) => RISK_RANK[a.risk] - RISK_RANK[b.risk]);
+    case 'admit-desc':
+      return arr.sort((a, b) => b.admit.localeCompare(a.admit));
+    case 'admit-asc':
+      return arr.sort((a, b) => a.admit.localeCompare(b.admit));
+    case 'sofa-desc':
+      return arr.sort((a, b) => b.sofa - a.sofa);
+    case 'age-desc':
+      return arr.sort((a, b) => b.age - a.age);
+  }
+}
 
 function formatKstClock(date: Date): string {
   const fmt = new Intl.DateTimeFormat('ko-KR', {
@@ -34,7 +75,6 @@ function formatKstClock(date: Date): string {
 }
 
 function formatAdmit(admit: string): string {
-  // "2026-04-21 08:14" → "04-21 08:14"
   const parts = admit.split(' ');
   if (parts.length !== 2) return admit;
   const date = parts[0].split('-').slice(1).join('-');
@@ -74,11 +114,25 @@ export default function OverviewPage() {
   const patients = useMemo(() => getPatients(), []);
   const kpis = useMemo(() => buildKpis(patients), [patients]);
   const [now, setNow] = useState(() => new Date());
+  const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  const sortedPatients = useMemo(
+    () => sortPatients(patients, sortKey),
+    [patients, sortKey],
+  );
+
+  const totalPages = Math.max(1, Math.ceil(sortedPatients.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const pagedPatients = sortedPatients.slice(
+    safePage * PAGE_SIZE,
+    safePage * PAGE_SIZE + PAGE_SIZE,
+  );
 
   const kpiIcons = [
     <Users size={16} />,
@@ -87,9 +141,14 @@ export default function OverviewPage() {
   ];
 
   const nurseRatio = patients.length / NURSES_ON_DUTY;
-  const nurseRatioLabel = `1 : ${Number.isInteger(nurseRatio) ? nurseRatio : nurseRatio.toFixed(1)}`;
-  const nurseStatusLabel = nurseRatio <= 2 ? '권장 수준' : '주의';
-  const nurseStatusClass = nurseRatio <= 2 ? 'capacity-card--ok' : 'capacity-card--warn';
+  const nurseRatioLabel = `1 : ${
+    Number.isInteger(nurseRatio) ? nurseRatio : nurseRatio.toFixed(1)
+  }`;
+  const nurseStatusOk = nurseRatio <= 2;
+  const nurseStatusLabel = nurseStatusOk ? '권장 수준' : '주의';
+  const nurseTagClass = nurseStatusOk
+    ? 'capacity-tag capacity-tag--safe'
+    : 'capacity-tag capacity-tag--warn';
 
   return (
     <div className="overview">
@@ -117,16 +176,18 @@ export default function OverviewPage() {
             <span className="capacity-card__value">
               {DOCTORS_ON_DUTY} / {DOCTORS_TOTAL}명
             </span>
+            <span className="capacity-tag capacity-tag--neutral">회진 2</span>
+            <span className="capacity-tag capacity-tag--neutral">수술 1</span>
           </div>
         </div>
-        <div className={`capacity-card ${nurseStatusClass}`}>
+        <div className="capacity-card">
           <span className="capacity-card__icon">
             <UserCheck size={16} />
           </span>
           <div className="capacity-card__body">
             <span className="capacity-card__label">간호사 : 환자 비율</span>
             <span className="capacity-card__value">{nurseRatioLabel}</span>
-            <span className="capacity-card__sub">{nurseStatusLabel}</span>
+            <span className={nurseTagClass}>{nurseStatusLabel}</span>
           </div>
         </div>
       </section>
@@ -134,8 +195,31 @@ export default function OverviewPage() {
       <section className="overview__section">
         <div className="overview__section-head">
           <h3 className="overview__section-title">환자 목록</h3>
-          <span className="overview__section-count">{patients.length}명</span>
+          <div className="overview__section-meta">
+            <span className="overview__section-count">{sortedPatients.length}명</span>
+            <label className="overview__sort">
+              <span className="overview__sort-label">정렬</span>
+              <span className="overview__sort-control">
+                <select
+                  className="overview__sort-select"
+                  value={sortKey}
+                  onChange={(e) => {
+                    setSortKey(e.target.value as SortKey);
+                    setPage(0);
+                  }}
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="overview__sort-chevron" />
+              </span>
+            </label>
+          </div>
         </div>
+
         <div className="overview__table-wrap">
           <table className="patient-table">
             <thead>
@@ -150,7 +234,7 @@ export default function OverviewPage() {
               </tr>
             </thead>
             <tbody>
-              {patients.map((p) => (
+              {pagedPatients.map((p) => (
                 <tr
                   key={p.id}
                   className={p.risk === 'high' ? 'is-high' : ''}
@@ -173,6 +257,30 @@ export default function OverviewPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="overview__pagination">
+          <button
+            type="button"
+            className="overview__page-btn"
+            disabled={safePage === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            aria-label="이전 페이지"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span className="overview__page-info">
+            {safePage + 1} / {totalPages} 페이지
+          </span>
+          <button
+            type="button"
+            className="overview__page-btn"
+            disabled={safePage >= totalPages - 1}
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            aria-label="다음 페이지"
+          >
+            <ChevronRight size={14} />
+          </button>
         </div>
       </section>
     </div>

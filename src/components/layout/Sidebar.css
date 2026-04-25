@@ -13,7 +13,7 @@
   width: 64px;
 }
 
-/* 로고 */
+/* 로고 (클릭 시 / 로 이동) */
 .sidebar__logo {
   display: flex;
   align-items: center;
@@ -21,19 +21,41 @@
   padding: var(--space-md);
   border-bottom: 1px solid var(--border);
   min-height: 64px;
+  width: 100%;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.sidebar__logo:hover {
+  background: var(--sidebar-hover);
+}
+
+.sidebar__logo:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.sidebar--collapsed .sidebar__logo {
+  justify-content: center;
+  padding: var(--space-md) 0;
 }
 
 .sidebar__logo-mark {
   width: 32px;
   height: 32px;
-  background: var(--primary);
-  color: #fff;
+  background: var(--primary-bg);
+  color: var(--primary);
   border-radius: var(--radius-md);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 17px;
   flex-shrink: 0;
 }
 
@@ -46,18 +68,22 @@
 
 .sidebar__logo-text strong {
   font-size: 16px;
+  font-weight: 700;
   color: var(--text-inverse-strong);
-}
-
-.sidebar__logo-text span {
-  font-size: 12px;
-  color: var(--text-inverse-muted);
+  letter-spacing: -0.01em;
 }
 
 /* 네비게이션 */
 .sidebar__nav {
   flex: 1;
   padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+}
+
+.sidebar__group {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -67,49 +93,102 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: var(--text-muted);
-  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+  color: var(--text-inverse-muted);
+  padding: var(--space-xs) var(--space-sm);
 }
 
 .sidebar__item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-sm);
+  padding: var(--space-sm);
   border-radius: var(--radius-md);
   color: var(--text-inverse-secondary);
   text-decoration: none;
   font-size: 15px;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  min-height: 40px;
   transition: background 0.15s, color 0.15s;
 }
 
 .sidebar__item:hover {
   background: var(--sidebar-hover);
-  color: #fff;
+  color: var(--text-inverse-strong);
+}
+
+.sidebar__item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 
 .sidebar__item--active {
   background: var(--sidebar-active);
-  color: #fff;
+  color: var(--text-inverse-strong);
+}
+
+.sidebar__item--active:hover {
+  background: var(--sidebar-active);
 }
 
 .sidebar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 20px;
-  text-align: center;
   flex-shrink: 0;
+}
+
+.sidebar__item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar--collapsed .sidebar__item {
+  justify-content: center;
+  padding: var(--space-sm) 0;
+}
+
+.sidebar--collapsed .sidebar__nav {
+  gap: var(--space-sm);
 }
 
 /* 토글 버튼 */
 .sidebar__toggle {
-  padding: var(--space-md);
-  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin: var(--space-sm);
+  border-radius: var(--radius-md);
+  color: var(--text-inverse-muted);
   font-size: 13px;
-  border-top: 1px solid var(--border);
-  transition: color 0.15s;
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  min-height: 44px;
+  transition: background 0.15s, color 0.15s;
 }
 
 .sidebar__toggle:hover {
-  color: #fff;
+  background: var(--sidebar-hover);
+  color: var(--text-inverse-strong);
+}
+
+.sidebar__toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.sidebar--collapsed .sidebar__toggle {
+  justify-content: center;
+  padding: var(--space-sm) 0;
 }
 
 /* 오버레이 (태블릿 이하) */
