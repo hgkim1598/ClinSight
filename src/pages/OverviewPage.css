@@ -101,6 +101,22 @@
 .capacity-tag--info {
   color: var(--primary);
   background: var(--primary-bg);
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.capacity-tag__label {
+  padding: 2px 8px;
+}
+
+.capacity-tag__count {
+  padding: 2px 8px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0;
+  font-feature-settings: 'tnum';
 }
 
 .capacity-tag--safe {
