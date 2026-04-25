@@ -1,0 +1,352 @@
+.login {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: var(--canvas);
+  overflow: hidden;
+}
+
+/* 배경 그리드 — 다크모드: 미세한 흰색, 라이트모드: 미세한 검정 */
+.login__bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+:root[data-theme='light'] .login__bg {
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+}
+
+/* 카드 */
+.login__card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  animation: login-fade-in 220ms ease-out;
+}
+
+@keyframes login-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 로고 + 브랜드명 */
+.login__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.login__logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.login__brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.login__subtitle {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 입력 필드 */
+.login__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.login__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.login__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.login__input::placeholder {
+  color: var(--text-muted);
+}
+
+.login__input:hover {
+  border-color: var(--border-strong);
+}
+
+.login__input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+.login__input:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+/* 체크박스 + 링크 행 */
+.login__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.login__remember {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+}
+
+.login__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.login__checkbox:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.login__link {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font-size: 13px;
+  color: var(--primary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.login__link:hover {
+  text-decoration: underline;
+}
+
+.login__link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* 버튼 공통 */
+.login__btn {
+  width: 100%;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.login__btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.login__btn--primary {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+}
+
+.login__btn--primary:hover {
+  opacity: 0.92;
+}
+
+.login__btn--primary:active {
+  opacity: 0.85;
+}
+
+.login__btn--badge {
+  background: transparent;
+  color: var(--text);
+  border: 1.5px dashed var(--border);
+}
+
+.login__btn--badge:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* 구분선 */
+.login__divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: var(--space-xs) 0;
+}
+
+.login__divider::before,
+.login__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.login__divider-text {
+  padding: 0 var(--space-md);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* 푸터 */
+.login__footer {
+  margin: var(--space-sm) 0 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ============ 웰컴 스플래시 ============ */
+.login__splash {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  animation: login-splash-in 320ms ease-out;
+}
+
+@keyframes login-splash-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login__logo-mark--lg {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+}
+
+.login__brand--lg {
+  gap: var(--space-md);
+}
+
+.login__brand-name--lg {
+  font-size: 28px;
+}
+
+.login__welcome {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.login__welcome strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.login__progress {
+  width: 200px;
+  height: 3px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: var(--space-sm);
+}
+
+.login__progress-bar {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+  animation: login-progress 1.5s ease-in-out infinite;
+}
+
+@keyframes login-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+/* 모바일 */
+@media (max-width: 480px) {
+  .login {
+    padding: var(--space-md);
+  }
+
+  .login__card {
+    padding: var(--space-lg);
+  }
+
+  .login__brand-name {
+    font-size: 20px;
+  }
+}
