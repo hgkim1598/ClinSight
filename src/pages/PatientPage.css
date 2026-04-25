@@ -24,7 +24,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
   text-decoration: none;
   padding: 4px 8px;
@@ -41,7 +41,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
   font-feature-settings: 'tnum';
 }
@@ -70,14 +70,14 @@
 }
 
 .patient-page__models-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
   margin: 0;
 }
 
 .patient-page__models-meta {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 

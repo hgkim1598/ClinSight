@@ -25,14 +25,14 @@
 }
 
 .model-detail__selected-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   letter-spacing: 0.4px;
   text-transform: uppercase;
 }
 
 .model-detail__selected-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text);
 }
@@ -65,7 +65,7 @@
 }
 
 .model-detail__selected-unit {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text-muted);
   margin-left: 2px;
@@ -109,7 +109,7 @@
 }
 
 .model-detail__others-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   letter-spacing: 0.4px;
   text-transform: uppercase;
@@ -165,7 +165,7 @@
 }
 
 .model-detail__mini-title {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -173,7 +173,7 @@
 }
 
 .model-detail__mini-pct {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   font-feature-settings: 'tnum';
@@ -189,7 +189,7 @@
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   padding: 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -225,7 +225,7 @@
 
 .model-detail__title {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text);
 }
@@ -233,7 +233,7 @@
 .model-detail__time {
   display: block;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   font-family: var(--mono);
 }
@@ -275,7 +275,7 @@
 
 .model-detail__section-title {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
   letter-spacing: 0.2px;
@@ -318,13 +318,13 @@
 }
 
 .detail-banner__delta {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
 }
 
 .detail-banner__note {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
   margin-top: 2px;
   line-height: 1.5;
@@ -336,7 +336,7 @@
   border: 1px solid var(--border);
   color: var(--text);
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   padding: 6px 12px;
   border-radius: var(--radius-sm);

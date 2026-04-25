@@ -33,7 +33,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 
@@ -45,13 +45,13 @@
 }
 
 .sidebar__logo-text strong {
-  font-size: 15px;
-  color: var(--text-inverse, #f8fafc);
+  font-size: 16px;
+  color: var(--text-inverse-strong);
 }
 
 .sidebar__logo-text span {
-  font-size: 11px;
-  color: var(--text-inverse-muted, #64748b);
+  font-size: 12px;
+  color: var(--text-inverse-muted);
 }
 
 /* 네비게이션 */
@@ -64,7 +64,7 @@
 }
 
 .sidebar__nav-label {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-muted);
@@ -77,9 +77,9 @@
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-sm);
   border-radius: var(--radius-md);
-  color: var(--text-inverse-muted, #94a3b8);
+  color: var(--text-inverse-secondary);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px;
   transition: background 0.15s, color 0.15s;
 }
 
@@ -103,7 +103,7 @@
 .sidebar__toggle {
   padding: var(--space-md);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 13px;
   border-top: 1px solid var(--border);
   transition: color 0.15s;
 }

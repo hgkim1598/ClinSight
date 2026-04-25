@@ -13,13 +13,13 @@
 }
 
 .raw-metrics__title {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
   font-weight: 500;
 }
 
 .raw-metrics__time {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   font-family: var(--mono);
 }
@@ -42,7 +42,7 @@
 }
 
 .raw-metrics__cell-tag {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.5px;
   color: var(--primary);
@@ -50,7 +50,7 @@
 }
 
 .raw-metrics__cell-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -63,13 +63,13 @@
 }
 
 .raw-metrics__cell-unit {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
 }
 
 .raw-metrics__cell-time {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   font-family: var(--mono);
 }
@@ -78,7 +78,7 @@
   padding: var(--space-md);
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
 }

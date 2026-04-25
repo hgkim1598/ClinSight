@@ -6,7 +6,7 @@
 
 .shap-chart__note {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -27,7 +27,7 @@
 }
 
 .shap-chart__name {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -67,7 +67,7 @@
 }
 
 .shap-chart__value {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-feature-settings: 'tnum';
   text-align: right;
@@ -90,7 +90,7 @@
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -106,7 +106,7 @@
   padding: var(--space-md);
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
 }

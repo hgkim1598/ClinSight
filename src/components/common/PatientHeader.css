@@ -39,7 +39,7 @@
 
 .patient-header__name-id {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
 }
 
@@ -57,14 +57,14 @@
 }
 
 .patient-header__field dt {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
   letter-spacing: 0.3px;
   margin-bottom: 2px;
 }
 
 .patient-header__field dd {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text);
   margin: 0;

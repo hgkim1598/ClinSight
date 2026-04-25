@@ -18,7 +18,7 @@
 }
 
 .kpi-card__label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-secondary);
   font-weight: 500;
 }
@@ -43,7 +43,7 @@
 }
 
 .kpi-card__sub {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
 }
 
