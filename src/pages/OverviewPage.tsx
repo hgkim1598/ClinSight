@@ -13,14 +13,11 @@ import {
 } from 'lucide-react';
 import type { KpiData, Patient, RiskLevel } from '../types';
 import { getPatients } from '../api/services/patientService';
+import { getStaffing } from '../api/services/staffingService';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
 import './OverviewPage.css';
 
-const TOTAL_BEDS = 20;
-const DOCTORS_ON_DUTY = 3;
-const DOCTORS_TOTAL = 4;
-const NURSES_ON_DUTY = 4;
 const PAGE_SIZE = 10;
 
 type SortKey =
@@ -81,17 +78,17 @@ function formatAdmit(admit: string): string {
   return `${date} ${parts[1]}`;
 }
 
-function buildKpis(list: Patient[]): KpiData[] {
+function buildKpis(list: Patient[], totalBeds: number): KpiData[] {
   const total = list.length;
   const highCount = list.filter((p) => p.risk === 'high').length;
-  const remaining = TOTAL_BEDS - total;
-  const occupancyPct = Math.round((total / TOTAL_BEDS) * 100);
+  const remaining = totalBeds - total;
+  const occupancyPct = Math.round((total / totalBeds) * 100);
 
   return [
     {
       label: '총 환자 수',
       value: `${total}명`,
-      sub: `병상 ${TOTAL_BEDS}개 중`,
+      sub: `병상 ${totalBeds}개 중`,
       tone: 'default',
     },
     {
@@ -112,7 +109,11 @@ function buildKpis(list: Patient[]): KpiData[] {
 export default function OverviewPage() {
   const navigate = useNavigate();
   const patients = useMemo(() => getPatients(), []);
-  const kpis = useMemo(() => buildKpis(patients), [patients]);
+  const staffing = useMemo(() => getStaffing(), []);
+  const kpis = useMemo(
+    () => buildKpis(patients, staffing.totalBeds),
+    [patients, staffing.totalBeds],
+  );
   const [now, setNow] = useState(() => new Date());
   const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
   const [page, setPage] = useState(0);
@@ -140,11 +141,11 @@ export default function OverviewPage() {
     <AlertTriangle size={16} />,
   ];
 
-  const nurseRatio = patients.length / NURSES_ON_DUTY;
+  const nurseRatio = patients.length / staffing.nurses.onDuty;
   const nurseRatioLabel = `1 : ${
     Number.isInteger(nurseRatio) ? nurseRatio : nurseRatio.toFixed(1)
   }`;
-  const nurseStatusOk = nurseRatio <= 2;
+  const nurseStatusOk = nurseRatio <= staffing.thresholds.maxPatientsPerNurse;
   const nurseStatusLabel = nurseStatusOk ? '권장 수준' : '주의';
   const nurseTagClass = nurseStatusOk
     ? 'capacity-tag capacity-tag--safe'
@@ -174,16 +175,17 @@ export default function OverviewPage() {
           <div className="capacity-card__body">
             <span className="capacity-card__label">담당 의사 가용</span>
             <span className="capacity-card__value">
-              {DOCTORS_ON_DUTY} / {DOCTORS_TOTAL}명
+              {staffing.doctors.onDuty} / {staffing.doctors.total}명
             </span>
-            <span className="capacity-tag capacity-tag--info">
-              <span className="capacity-tag__label">회진</span>
-              <span className="capacity-tag__count">2</span>
-            </span>
-            <span className="capacity-tag capacity-tag--info">
-              <span className="capacity-tag__label">수술</span>
-              <span className="capacity-tag__count">1</span>
-            </span>
+            {staffing.doctors.activities.map((activity) => (
+              <span
+                key={activity.label}
+                className="capacity-tag capacity-tag--info"
+              >
+                <span className="capacity-tag__label">{activity.label}</span>
+                <span className="capacity-tag__count">{activity.count}</span>
+              </span>
+            ))}
           </div>
         </div>
         <div className="capacity-card">

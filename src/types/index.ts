@@ -122,3 +122,69 @@ export interface VitalData {
   series: Record<VitalKey, VitalSeries>;
   labs: LabDot[];
 }
+
+// ---------- ICU 운영 / Staffing ----------
+
+/**
+ * 의사 활동 종류별 인원.
+ * label은 향후 enum code(예: 'ROUNDS', 'SURGERY')로 이행 가능하며,
+ * 현재는 표시 라벨을 그대로 사용한다. 합계는 DoctorRoster.onDuty 이하이다.
+ */
+export interface DoctorActivityCount {
+  /** 활동 라벨 (예: '회진', '수술', '응급', '회의') */
+  label: string;
+  /** 해당 활동 중인 의사 수 */
+  count: number;
+}
+
+/** ICU 의사 인력 스냅샷 */
+export interface DoctorRoster {
+  /** 현재 근무 중 의사 수 */
+  onDuty: number;
+  /** 등록된 의사 총원 */
+  total: number;
+  /** 활동 분포 (각 항목 count 합 ≤ onDuty) */
+  activities: DoctorActivityCount[];
+}
+
+/** ICU 간호사 인력 스냅샷 */
+export interface NurseRoster {
+  /** 현재 근무 중 간호사 수 */
+  onDuty: number;
+}
+
+/** 운영 임계값 (정책 기반, 환경별로 상이) */
+export interface StaffingThresholds {
+  /**
+   * 간호사 1명이 담당 가능한 최대 환자 수.
+   * (환자 수 / 간호사 수) ≤ 이 값 이면 '권장 수준', 초과면 '주의'.
+   */
+  maxPatientsPerNurse: number;
+}
+
+/**
+ * ICU 운영 스냅샷 — 병상 정원, 의사·간호사 인력 현황, 운영 임계값.
+ *
+ * Backend 매핑 (DynamoDB):
+ *   - Table: `IcuStaffing`
+ *   - PK: `icuId` (S)
+ *   - 그 외 필드는 객체/맵 속성으로 저장
+ *
+ * Lambda API:
+ *   - GET /icus/{icuId}/staffing → StaffingSnapshot
+ *   - 단일 ICU의 가장 최신 스냅샷을 반환
+ */
+export interface StaffingSnapshot {
+  /** ICU 식별자 (DynamoDB PK) */
+  icuId: string;
+  /** 스냅샷 갱신 시각 (ISO 8601, 타임존 포함) */
+  updatedAt: string;
+  /** 병상 정원 (현재 가동 가능한 침상 수) */
+  totalBeds: number;
+  /** 의사 인력 현황 */
+  doctors: DoctorRoster;
+  /** 간호사 인력 현황 */
+  nurses: NurseRoster;
+  /** 운영 임계값 (간호사:환자 비율 등) */
+  thresholds: StaffingThresholds;
+}
