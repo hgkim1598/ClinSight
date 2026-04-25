@@ -176,8 +176,8 @@ export default function OverviewPage() {
             <span className="capacity-card__value">
               {DOCTORS_ON_DUTY} / {DOCTORS_TOTAL}명
             </span>
-            <span className="capacity-tag capacity-tag--neutral">회진 2</span>
-            <span className="capacity-tag capacity-tag--neutral">수술 1</span>
+            <span className="capacity-tag capacity-tag--info">회진 2</span>
+            <span className="capacity-tag capacity-tag--info">수술 1</span>
           </div>
         </div>
         <div className="capacity-card">

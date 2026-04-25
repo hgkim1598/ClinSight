@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -10,8 +11,32 @@ import {
   Settings,
   ChevronsLeft,
   ChevronsRight,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import './Sidebar.css';
+
+const THEME_STORAGE_KEY = 'clinsight-theme';
+
+type Theme = 'dark' | 'light';
+
+function getInitialTheme(): Theme {
+  if (typeof document === 'undefined') return 'dark';
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+function applyTheme(theme: Theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // localStorage may be unavailable (privacy mode); ignore
+  }
+}
 
 interface SidebarProps {
   collapsed: boolean;
@@ -58,6 +83,13 @@ const NAV_GROUPS: NavGroup[] = [
 
 export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProps) {
   const navigate = useNavigate();
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  const handleThemeToggle = () => {
+    const next: Theme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    applyTheme(next);
+  };
 
   const className = [
     'sidebar',
@@ -130,6 +162,16 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
           </div>
         ))}
       </nav>
+
+      <button
+        type="button"
+        className="sidebar__toggle"
+        onClick={handleThemeToggle}
+        aria-label={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+      >
+        {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+        {!collapsed && <span>{theme === 'dark' ? '다크 모드' : '라이트 모드'}</span>}
+      </button>
 
       <button
         type="button"

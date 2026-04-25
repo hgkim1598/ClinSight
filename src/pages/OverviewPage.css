@@ -98,9 +98,9 @@
   white-space: nowrap;
 }
 
-.capacity-tag--neutral {
-  color: var(--text-muted);
-  background: var(--border);
+.capacity-tag--info {
+  color: var(--primary);
+  background: var(--primary-bg);
 }
 
 .capacity-tag--safe {
