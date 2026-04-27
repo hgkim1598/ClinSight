@@ -1,3 +1,7 @@
+// 실제 MIMIC-IV 데이터에서는 장기별 결측 패턴이 다름
+// cardiovascular은 거의 매시간, respiration/coagulation/liver는 하루 1~2회 수준
+// 결측 보간 없이 실제 측정값만 표시. connectNulls={false} 유지.
+
 import { useMemo, useState } from 'react';
 import {
   CartesianGrid,
@@ -111,6 +115,20 @@ function scoreToToneClass(score: number): 'safe' | 'warn' | 'danger' {
   return 'safe';
 }
 
+/** null/NaN을 모두 결측으로 간주해 유효 값이 1개 이상인지 검사 */
+function hasValidData(scores: Array<number | null>): boolean {
+  return scores.some((v) => v != null && !Number.isNaN(v));
+}
+
+/** 가장 마지막 유효 값 반환. 모두 결측이면 null. */
+function findLatestValid(scores: Array<number | null>): number | null {
+  for (let i = scores.length - 1; i >= 0; i--) {
+    const v = scores[i];
+    if (v != null && !Number.isNaN(v)) return v;
+  }
+  return null;
+}
+
 const ORGAN_LEGEND_LABEL: Record<OrganKey, string> = {
   cardio: '심혈관',
   resp: '호흡기',
@@ -141,14 +159,16 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
     [trend],
   );
 
-  const latestScores = ORGAN_KEYS.reduce<Record<OrganKey, number>>(
+  const latestScores = ORGAN_KEYS.reduce<Record<OrganKey, number | null>>(
     (acc, key) => {
-      const arr = trend.scores[key];
-      acc[key] = arr.length > 0 ? arr[arr.length - 1] : 0;
+      acc[key] = findLatestValid(trend.scores[key]);
       return acc;
     },
-    { cardio: 0, resp: 0, cns: 0, hepatic: 0, renal: 0, coag: 0 },
+    { cardio: null, resp: null, cns: null, hepatic: null, renal: null, coag: null },
   );
+
+  const selectedHasNoData =
+    selected !== null && !hasValidData(trend.scores[selected]);
 
   const handleOrganClick = (key: OrganKey) => {
     setSelected((prev) => (prev === key ? null : key));
@@ -185,8 +205,9 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
 
         {ORGANS.map((o) => {
           const score = latestScores[o.key];
-          const tone = scoreToToneClass(score);
+          const tone = score == null ? 'muted' : scoreToToneClass(score);
           const isSelected = selected === o.key;
+          const scoreLabel = score == null ? '측정 데이터 없음' : `${score}점`;
           return (
             <button
               key={o.key}
@@ -197,7 +218,7 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
               style={o.buttonPos}
               onClick={() => handleOrganClick(o.key)}
               aria-pressed={isSelected}
-              aria-label={`${o.label} 점수 ${score}점${isSelected ? ' (선택됨)' : ''}`}
+              aria-label={`${o.label} ${scoreLabel}${isSelected ? ' (선택됨)' : ''}`}
             >
               <span
                 className="sofa-organ__icon"
@@ -207,7 +228,7 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
               <span className="sofa-organ__meta">
                 <span className="sofa-organ__label">{o.label}</span>
                 <span className={`sofa-organ__score sofa-organ__score--${tone}`}>
-                  {score}
+                  {score == null ? '—' : score}
                 </span>
               </span>
             </button>
@@ -265,12 +286,18 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
                   strokeOpacity={dimmed ? 0.2 : 1}
                   dot={{ r: 3, fill: o.color, strokeOpacity: dimmed ? 0.2 : 1 }}
                   activeDot={{ r: 5 }}
+                  connectNulls={false}
                   isAnimationActive={false}
                 />
               );
             })}
           </LineChart>
         </ResponsiveContainer>
+        {selectedHasNoData && selected !== null && (
+          <div className="sofa-chart__empty" role="status">
+            최근 24시간 내 {ORGAN_LEGEND_LABEL[selected]} 측정 데이터가 없습니다
+          </div>
+        )}
       </div>
     </div>
   );

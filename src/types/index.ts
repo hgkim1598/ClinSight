@@ -179,10 +179,12 @@ export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp';
 /** SOFA 6개 장기 시스템 */
 export type OrganKey = 'cardio' | 'resp' | 'cns' | 'hepatic' | 'renal' | 'coag';
 
-/** SOFA 점수 추이 — 6개 장기가 동일 시간축 공유 */
+/** SOFA 점수 추이 — 6개 장기가 동일 시간축 공유.
+ *  실제 데이터는 결측이 잦아 각 시점은 number 또는 null. NaN도 동일하게 결측으로 간주한다.
+ */
 export interface SofaTrend {
   times: string[];
-  scores: Record<OrganKey, number[]>;
+  scores: Record<OrganKey, Array<number | null>>;
 }
 
 /** 환자 1명 바이탈 + lab 번들 */

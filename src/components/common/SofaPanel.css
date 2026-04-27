@@ -124,14 +124,33 @@
   color: var(--danger);
 }
 
+.sofa-organ__score--muted {
+  color: var(--text-muted);
+}
+
 /* ============================================
    우측: SOFA Trend 라인 차트
    ============================================ */
 
 .sofa-chart {
+  position: relative;
   flex: 1;
   min-width: 0;
   height: 100%;
+}
+
+/* 선택된 장기에 유효 측정값이 0건일 때 차트 위 중앙에 표시되는 안내. */
+.sofa-chart__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-md);
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  pointer-events: none;
 }
 
 /* ============================================
