@@ -73,23 +73,3 @@
   font-weight: 600;
   color: var(--text-muted);
 }
-
-.model-card__bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4px;
-}
-
-.model-card__bar--danger {
-  background: var(--danger);
-}
-
-.model-card__bar--warn {
-  background: var(--warn);
-}
-
-.model-card__bar--safe {
-  background: var(--safe);
-}

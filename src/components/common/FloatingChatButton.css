@@ -1,0 +1,38 @@
+.floating-chat {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  z-index: 90;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.floating-chat:hover {
+  opacity: 0.92;
+}
+
+.floating-chat:active {
+  transform: scale(0.96);
+}
+
+.floating-chat:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .floating-chat {
+    right: 16px;
+    bottom: 16px;
+  }
+}

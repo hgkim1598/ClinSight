@@ -5,10 +5,13 @@ import type { ModelKey } from '../types';
 import { getPatientById } from '../api/services/patientService';
 import { getVitals } from '../api/services/vitalService';
 import { getModelPredictions } from '../api/services/modelService';
+import { getPatientReport } from '../api/services/reportService';
 import PatientHeader from '../components/common/PatientHeader';
 import VitalChart from '../components/common/VitalChart';
 import ModelCard from '../components/common/ModelCard';
 import ModelDetailView from '../components/common/ModelDetailView';
+import FloatingChatButton from '../components/common/FloatingChatButton';
+import PatientReportModal from '../components/common/PatientReportModal';
 import './PatientPage.css';
 
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
@@ -35,6 +38,11 @@ export default function PatientPage() {
   const predictions = useMemo(() => getModelPredictions(id), [id]);
   const [now, setNow] = useState(() => new Date());
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const report = useMemo(
+    () => (reportOpen ? getPatientReport(id) : null),
+    [id, reportOpen],
+  );
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -72,7 +80,7 @@ export default function PatientPage() {
         </span>
       </nav>
 
-      <PatientHeader patient={patient} />
+      <PatientHeader patient={patient} onSummaryClick={() => setReportOpen(true)} />
 
       {isDetail ? (
         <ModelDetailView
@@ -104,6 +112,16 @@ export default function PatientPage() {
             </div>
           </section>
         </>
+      )}
+
+      <FloatingChatButton patientId={patient.id} />
+
+      {report && (
+        <PatientReportModal
+          open={reportOpen}
+          onClose={() => setReportOpen(false)}
+          report={report}
+        />
       )}
     </div>
   );

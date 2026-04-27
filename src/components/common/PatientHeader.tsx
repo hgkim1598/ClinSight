@@ -1,8 +1,10 @@
+import { FileText } from 'lucide-react';
 import type { Patient } from '../../types';
 import './PatientHeader.css';
 
 interface PatientHeaderProps {
   patient: Patient;
+  onSummaryClick?: () => void;
 }
 
 function hoursSince(admit: string): number | null {
@@ -22,7 +24,7 @@ function formatShort(ts?: string): string {
   return `${parts[0].split('-').slice(1).join('-')} ${parts[1]}`;
 }
 
-export default function PatientHeader({ patient }: PatientHeaderProps) {
+export default function PatientHeader({ patient, onSummaryClick }: PatientHeaderProps) {
   const hours = hoursSince(patient.admit);
   const avatarLetter = patient.name.charAt(0);
 
@@ -58,6 +60,17 @@ export default function PatientHeader({ patient }: PatientHeaderProps) {
           ))}
         </dl>
       </div>
+      {onSummaryClick && (
+        <button
+          type="button"
+          className="patient-header__summary"
+          onClick={onSummaryClick}
+          aria-label="환자 상태 요약 보고서 열기"
+        >
+          <FileText size={16} aria-hidden="true" />
+          <span className="patient-header__summary-label">요약 보고서</span>
+        </button>
+      )}
     </section>
   );
 }

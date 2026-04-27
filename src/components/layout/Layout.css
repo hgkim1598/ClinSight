@@ -10,6 +10,12 @@
   min-width: 0;
 }
 
+/* 채팅 패널이 열렸을 때 메인 콘텐츠 우측 패딩으로 푸시.
+   transform/opacity 애니메이션 규칙 준수 위해 transition 없이 snap 적용. */
+.layout__content--shifted {
+  padding-right: calc(360px + var(--space-lg));
+}
+
 /* 모바일 햄버거 */
 .layout__mobile-toggle {
   position: fixed;
@@ -32,5 +38,10 @@
   .layout__content {
     padding: var(--space-md);
     padding-top: 64px;
+  }
+
+  /* 모바일에서 패널은 화면 전체를 덮으므로 메인 푸시는 적용하지 않음 */
+  .layout__content--shifted {
+    padding-right: var(--space-md);
   }
 }

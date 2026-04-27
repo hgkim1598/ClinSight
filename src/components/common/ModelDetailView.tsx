@@ -1,12 +1,14 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-import type { ModelKey, ModelPrediction, RiskLevel, RiskTone } from '../../types';
+import type { AiInsightSection, ModelKey, ModelPrediction, RiskLevel, RiskTone } from '../../types';
+import { getAiInsight } from '../../api/services/aiInsightService';
 import Badge from './Badge';
 import TrendBar from './TrendBar';
 import ShapChart from './ShapChart';
 import RawMetrics from './RawMetrics';
 import EscalationCard from './EscalationCard';
-import AiSummary from './AiSummary';
+import AiInsightButton from './AiInsightButton';
+import AiInsightModal from './AiInsightModal';
 import './ModelDetailView.css';
 
 interface ModelDetailViewProps {
@@ -18,6 +20,13 @@ interface ModelDetailViewProps {
 
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
 const REFERENCE_TIME = '04-24 00:55 KST';
+
+const SECTION_TITLES: Record<AiInsightSection, string> = {
+  trend: '확률 추이',
+  shap: 'SHAP 피처 기여도',
+  rawMetrics: 'Raw 임상 지표',
+  auxiliary: '보조지표: 치료 에스컬레이션 예측',
+};
 
 function currentProbability(p: ModelPrediction): number | null {
   if (p.trend.length === 0) return null;
@@ -49,6 +58,8 @@ export default function ModelDetailView({
   onChangeModel,
 }: ModelDetailViewProps) {
   const shapRef = useRef<HTMLDivElement>(null);
+  const [openSection, setOpenSection] = useState<AiInsightSection | null>(null);
+
   const prediction = predictions[selectedModel];
   const prob = currentProbability(prediction) ?? toneFallbackPct(prediction.tone);
   const risk = toneToRisk(prediction.tone);
@@ -61,6 +72,23 @@ export default function ModelDetailView({
 
   const scrollToShap = () => {
     shapRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const renderModalBody = (section: AiInsightSection) => {
+    switch (section) {
+      case 'trend':
+        return <TrendBar trend={prediction.trend} tone={prediction.tone} />;
+      case 'shap':
+        return <ShapChart features={prediction.shap} />;
+      case 'rawMetrics':
+        return <RawMetrics metrics={prediction.raw} />;
+      case 'auxiliary':
+        return prediction.escalation ? (
+          <EscalationCard escalation={prediction.escalation} />
+        ) : null;
+      default:
+        return null;
+    }
   };
 
   return (
@@ -132,7 +160,10 @@ export default function ModelDetailView({
         </header>
 
         <section className="model-detail__section">
-          <h4 className="model-detail__section-title">확률 추이</h4>
+          <div className="model-detail__section-head">
+            <h4 className="model-detail__section-title">{SECTION_TITLES.trend}</h4>
+            <AiInsightButton onClick={() => setOpenSection('trend')} />
+          </div>
           <TrendBar trend={prediction.trend} tone={prediction.tone} />
         </section>
 
@@ -152,27 +183,40 @@ export default function ModelDetailView({
         </section>
 
         <section className="model-detail__section" ref={shapRef}>
-          <h4 className="model-detail__section-title">SHAP 피처 기여도</h4>
+          <div className="model-detail__section-head">
+            <h4 className="model-detail__section-title">{SECTION_TITLES.shap}</h4>
+            <AiInsightButton onClick={() => setOpenSection('shap')} />
+          </div>
           <ShapChart features={prediction.shap} />
         </section>
 
         <section className="model-detail__section">
-          <h4 className="model-detail__section-title">Raw 임상 지표</h4>
+          <div className="model-detail__section-head">
+            <h4 className="model-detail__section-title">{SECTION_TITLES.rawMetrics}</h4>
+            <AiInsightButton onClick={() => setOpenSection('rawMetrics')} />
+          </div>
           <RawMetrics metrics={prediction.raw} />
         </section>
 
         {showEscalation && prediction.escalation && (
           <section className="model-detail__section">
-            <h4 className="model-detail__section-title">보조지표: 치료 에스컬레이션 예측</h4>
+            <div className="model-detail__section-head">
+              <h4 className="model-detail__section-title">{SECTION_TITLES.auxiliary}</h4>
+              <AiInsightButton onClick={() => setOpenSection('auxiliary')} />
+            </div>
             <EscalationCard escalation={prediction.escalation} />
           </section>
         )}
-
-        <section className="model-detail__section">
-          <h4 className="model-detail__section-title">AI 임상 설명</h4>
-          <AiSummary summary={prediction.llmSummary} />
-        </section>
       </div>
+
+      <AiInsightModal
+        open={openSection !== null}
+        onClose={() => setOpenSection(null)}
+        title={openSection ? SECTION_TITLES[openSection] : ''}
+        insight={openSection ? getAiInsight(selectedModel, openSection) : ''}
+      >
+        {openSection ? renderModalBody(openSection) : null}
+      </AiInsightModal>
     </div>
   );
 }

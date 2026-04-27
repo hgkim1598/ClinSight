@@ -1,6 +1,7 @@
 .patient-header {
   display: flex;
   gap: var(--space-md);
+  align-items: flex-start;
   padding: var(--space-md) var(--space-lg);
   background: var(--card);
   border: 1px solid var(--border);
@@ -73,6 +74,36 @@
   white-space: nowrap;
 }
 
+/* 요약 보고서 버튼 — 헤더 우측 끝 */
+.patient-header__summary {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease;
+}
+
+.patient-header__summary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-bg);
+}
+
+.patient-header__summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 @media (max-width: 640px) {
   .patient-header {
     padding: var(--space-md);
@@ -81,5 +112,12 @@
     width: 44px;
     height: 44px;
     font-size: 18px;
+  }
+  .patient-header__summary {
+    padding: 0 var(--space-sm);
+    min-width: 44px;
+  }
+  .patient-header__summary-label {
+    display: none;
   }
 }

@@ -273,6 +273,14 @@
   border-radius: var(--radius-md);
 }
 
+.model-detail__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 24px;
+}
+
 .model-detail__section-title {
   margin: 0;
   font-size: 14px;

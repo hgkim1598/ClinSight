@@ -47,7 +47,6 @@ export default function ModelCard({ modelKey, prediction, onSelect, isActive }: 
         <span className="model-card__pct">{prob}</span>
         <span className="model-card__unit">%</span>
       </div>
-      <div className={`model-card__bar model-card__bar--${prediction.tone}`} aria-hidden="true" />
     </button>
   );
 }

@@ -16,6 +16,63 @@ export type ModelKey = 'mortality' | 'aki' | 'ards' | 'sic' | 'shock';
 /** 모델 위험 톤 */
 export type RiskTone = 'danger' | 'warn' | 'safe';
 
+/** AI 설명 모달이 다루는 섹션 키 */
+export type AiInsightSection = 'trend' | 'shap' | 'rawMetrics' | 'auxiliary';
+
+/** 채팅 패널 컨텍스트 — 섹션 단위 또는 환자 전체 */
+export type ChatContext =
+  | { type: 'section'; section: AiInsightSection; modelKey: ModelKey }
+  | { type: 'patient'; patientId: string };
+
+/** 채팅 메시지 한 건 */
+export interface ChatMessage {
+  id: string;
+  role: 'ai' | 'user';
+  text: string;
+}
+
+// ---------- 환자 요약 보고서 ----------
+
+/** 활력징후 상태 등급 */
+export type VitalStatusLevel = 'normal' | 'attention' | 'critical';
+
+/** 보고서 활력징후 행 */
+export interface ReportVitalRow {
+  key: VitalKey;
+  label: string;
+  unit: string;
+  latestValue: number | null;
+  latestTime: string | null;
+  normalRange: [number, number];
+  status: VitalStatusLevel;
+}
+
+/** 보고서 검사 결과 행 */
+export interface ReportLabRow {
+  label: string;
+  value: string;
+  unit: string;
+  time: string;
+  normalRange: string;
+}
+
+/** 보고서 예측 결과 행 */
+export interface ReportPrediction {
+  key: ModelKey;
+  title: string;
+  probability: number;
+  risk: RiskLevel;
+}
+
+/** 환자 상태 요약 보고서 — patient + vitals + labs + predictions 조합 */
+export interface PatientReport {
+  patient: Patient;
+  generatedAt: Date;
+  vitals: ReportVitalRow[];
+  labs: ReportLabRow[];
+  predictions: ReportPrediction[];
+}
+
 // ---------- 환자 ----------
 
 export interface Patient {

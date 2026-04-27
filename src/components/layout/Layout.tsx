@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import AiChatPanel from '../common/AiChatPanel';
+import { useAiMode } from '../../context/AiModeContext';
 import './Layout.css';
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { chatPanelOpen } = useAiMode();
 
   useEffect(() => {
       const check = () => {
@@ -45,9 +48,13 @@ export default function Layout() {
         </button>
       )}
 
-      <main className="layout__content">
+      <main
+        className={`layout__content ${chatPanelOpen ? 'layout__content--shifted' : ''}`}
+      >
         <Outlet />
       </main>
+
+      <AiChatPanel />
     </div>
   );
 }

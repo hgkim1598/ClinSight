@@ -24,6 +24,15 @@
   --primary-deep: #1e3a5f;
   --primary-bg: rgba(37, 99, 235, 0.1);
 
+  /* AI 어시스턴트 강조색 (Sparkles 등) — 골드 옐로우 라인 강조용.
+     라이트 모드에서 가독성 위해 darken 변형 사용.
+     `-on-dark` 변형은 항상-다크 표면(사이드바)용으로 라이트 모드에도 동일 값 유지. */
+  --ai-accent: #facc15;
+  --ai-accent-hover: #fde047;
+  --ai-accent-bg: rgba(250, 204, 21, 0.12);
+  --ai-accent-on-dark: #facc15;
+  --ai-accent-on-dark-hover: #fde047;
+
   /* 사이드바 — 다크/라이트 모두 다크 유지 (v2 요구사항) */
   --sidebar: #0f172a;
   --sidebar-hover: #1e293b;
@@ -75,6 +84,11 @@
   --safe-bg: #f0fdf4;
 
   --primary-bg: #eff6ff;
+
+  /* AI 강조색 라이트 모드 — 흰 배경 위 가독성 위해 darker amber */
+  --ai-accent: #b45309;
+  --ai-accent-hover: #92400e;
+  --ai-accent-bg: rgba(180, 83, 9, 0.1);
 
   /* 사이드바는 변경 안 함 (v2: 양쪽 다 다크 유지) */
 
