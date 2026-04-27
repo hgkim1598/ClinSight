@@ -11,18 +11,23 @@ import {
   YAxis,
 } from 'recharts';
 import type { VitalData, VitalKey } from '../../types';
+import SofaPanel from './SofaPanel';
 import './VitalChart.css';
+
+type TabKey = VitalKey | 'sofa';
 
 interface VitalChartProps {
   vitals: VitalData;
+  patientId: string;
 }
 
-const TABS: Array<{ key: VitalKey; label: string }> = [
+const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'hr', label: 'HR' },
   { key: 'map', label: 'MAP' },
   { key: 'spo2', label: 'SpO₂' },
   { key: 'rr', label: 'RR' },
   { key: 'temp', label: 'Temp' },
+  { key: 'sofa', label: 'SOFA' },
 ];
 
 const CRE_DANGER_THRESHOLD = 2.0;
@@ -80,10 +85,12 @@ function CreShape({ cx, cy, payload }: LabShapeProps) {
   );
 }
 
-export default function VitalChart({ vitals }: VitalChartProps) {
-  const [active, setActive] = useState<VitalKey>('hr');
-  const series = vitals.series[active];
-  const hasData = series.data.length > 0;
+export default function VitalChart({ vitals, patientId }: VitalChartProps) {
+  const [active, setActive] = useState<TabKey>('hr');
+  const isSofa = active === 'sofa';
+  const vitalKey: VitalKey = isSofa ? 'hr' : active;
+  const series = vitals.series[vitalKey];
+  const hasData = !isSofa && series.data.length > 0;
 
   const currentValue = hasData ? series.data[series.data.length - 1] : null;
   const [normalLow, normalHigh] = series.normal;
@@ -132,22 +139,26 @@ export default function VitalChart({ vitals }: VitalChartProps) {
             </button>
           ))}
         </div>
-        <div className="vital-chart__meta">
-          <span className="vital-chart__current">
-            <span className="vital-chart__label">{series.label}</span>
-            <span className="vital-chart__value">
-              {currentValue != null ? currentValue : '—'}
-              <span className="vital-chart__unit"> {series.unit}</span>
+        {!isSofa && (
+          <div className="vital-chart__meta">
+            <span className="vital-chart__current">
+              <span className="vital-chart__label">{series.label}</span>
+              <span className="vital-chart__value">
+                {currentValue != null ? currentValue : '—'}
+                <span className="vital-chart__unit"> {series.unit}</span>
+              </span>
             </span>
-          </span>
-          <span className="vital-chart__normal">
-            정상 범위 {normalLow}–{normalHigh} {series.unit}
-          </span>
-        </div>
+            <span className="vital-chart__normal">
+              정상 범위 {normalLow}–{normalHigh} {series.unit}
+            </span>
+          </div>
+        )}
       </header>
 
       <div className="vital-chart__canvas">
-        {hasData ? (
+        {isSofa ? (
+          <SofaPanel patientId={patientId} />
+        ) : hasData ? (
           <ResponsiveContainer width="100%" height={260}>
             <ComposedChart data={chartData} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />

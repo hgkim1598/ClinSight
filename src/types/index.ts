@@ -174,6 +174,17 @@ export interface LabDot {
 /** 바이탈 차트 탭 키 */
 export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp';
 
+// ---------- SOFA ----------
+
+/** SOFA 6개 장기 시스템 */
+export type OrganKey = 'cardio' | 'resp' | 'cns' | 'hepatic' | 'renal' | 'coag';
+
+/** SOFA 점수 추이 — 6개 장기가 동일 시간축 공유 */
+export interface SofaTrend {
+  times: string[];
+  scores: Record<OrganKey, number[]>;
+}
+
 /** 환자 1명 바이탈 + lab 번들 */
 export interface VitalData {
   series: Record<VitalKey, VitalSeries>;

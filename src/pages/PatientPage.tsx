@@ -91,7 +91,7 @@ export default function PatientPage() {
         />
       ) : (
         <>
-          <VitalChart vitals={vitals} />
+          <VitalChart vitals={vitals} patientId={id} />
 
           <section className="patient-page__models">
             <header className="patient-page__models-head">

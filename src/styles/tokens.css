@@ -33,6 +33,10 @@
   --ai-accent-on-dark: #facc15;
   --ai-accent-on-dark-hover: #fde047;
 
+  /* 해부학 다이어그램 라인 — SOFA 패널의 리더 점선 + 장기 버튼 테두리에 사용.
+     배경 위에 자연스럽게 떠 보이도록 알파 기반. */
+  --anatomy-line: rgba(255, 255, 255, 0.3);
+
   /* 사이드바 — 다크/라이트 모두 다크 유지 (v2 요구사항) */
   --sidebar: #0f172a;
   --sidebar-hover: #1e293b;
@@ -89,6 +93,9 @@
   --ai-accent: #b45309;
   --ai-accent-hover: #92400e;
   --ai-accent-bg: rgba(180, 83, 9, 0.1);
+
+  /* 해부학 라인 라이트 모드 — 흰 배경 위에서도 보이도록 검은색 알파 */
+  --anatomy-line: rgba(0, 0, 0, 0.25);
 
   /* 사이드바는 변경 안 함 (v2: 양쪽 다 다크 유지) */
 
