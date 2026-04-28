@@ -271,3 +271,49 @@ export interface StaffingSnapshot {
   /** 운영 임계값 (간호사:환자 비율 등) */
   thresholds: StaffingThresholds;
 }
+
+// ---------- 알림 ----------
+
+/** 알림 발생 소스 — 경량 모델 / 정밀 모델 / 룰 기반 임계치 */
+export type AlertSource = 'light_model' | 'deep_model' | 'threshold';
+
+/** 알림 우선순위 */
+export type AlertPriority = 'critical' | 'warning';
+
+/** 알림 처리 상태 */
+export type AlertStatus = 'new' | 'acknowledged' | 'resolved';
+
+/** 알림에서 호출 가능한 액션 종류 */
+export type AlertActionType = 'view_patient' | 'acknowledge' | 'escalate';
+
+export interface AlertAction {
+  type: AlertActionType;
+  label: string;
+}
+
+/**
+ * 단일 알림 — 알림 누적 페이지와 토스트 모달이 공유하는 데이터 모델.
+ * 시간/Bed/Source/Priority/Status로 필터링 및 정렬한다.
+ */
+export interface Alert {
+  id: string;
+  /** 표시용 시각 ("14:20") 또는 ISO 문자열 — 백엔드 연결 시 ISO로 통일 예정 */
+  timestamp: string;
+  patient: {
+    id: string;
+    name: string;
+    bed: string;
+  };
+  source: AlertSource;
+  priority: AlertPriority;
+  status: AlertStatus;
+  acknowledgedBy?: string;
+  acknowledgedAt?: string;
+  resolvedAt?: string;
+  title: string;
+  body: string;
+  tags: string[];
+  /** 모델 소스(light_model/deep_model)일 때만. 0~100. */
+  confidence?: number;
+  actions: AlertAction[];
+}

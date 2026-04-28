@@ -1,0 +1,221 @@
+.alerts-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  max-width: 1200px;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  min-height: 0;
+}
+
+.alerts-page__header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.alerts-page__nav-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.alerts-page__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.alerts-page__back:hover {
+  background: var(--canvas);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.alerts-page__back:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.alerts-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.alerts-page__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.alerts-page__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* 필터 바 — VitalChart 탭과 같은 패턴 */
+.alerts-filter {
+  display: inline-flex;
+  align-items: center;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+  align-self: flex-start;
+}
+
+.alerts-filter__btn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.alerts-filter__btn:hover {
+  color: var(--text);
+}
+
+.alerts-filter__btn.is-active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.alerts-filter__btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.alerts-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.alerts-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.alerts-section__head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0;
+}
+
+.alerts-section__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font: inherit;
+  align-self: flex-start;
+}
+
+.alerts-section__toggle:hover .alerts-section__label {
+  color: var(--text-secondary);
+}
+
+.alerts-section__toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.alerts-section__label {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.alerts-section__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 8px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-feature-settings: 'tnum';
+}
+
+.alerts-section__count--danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: transparent;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.alerts-empty {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .alerts-page {
+    padding: var(--space-md);
+    gap: var(--space-md);
+  }
+
+  .alerts-page__content {
+    gap: var(--space-lg);
+  }
+
+  .alerts-page__title {
+    font-size: 20px;
+  }
+}

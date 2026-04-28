@@ -20,21 +20,36 @@
   flex-wrap: wrap;
 }
 
+.patient-page__nav-left {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
 .patient-page__back {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
-  font-size: 14px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  padding: 4px 8px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  transition: color 0.12s ease, background-color 0.12s ease;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
 }
 
 .patient-page__back:hover {
   color: var(--text);
-  background: var(--sidebar-hover);
+  background: var(--canvas);
+  border-color: var(--border-strong);
+}
+
+.patient-page__back:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .patient-page__clock {

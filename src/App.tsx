@@ -5,6 +5,7 @@ import OverviewPage from './pages/OverviewPage';
 import PatientPage from './pages/PatientPage';
 import DrilldownPage from './pages/DrilldownPage';
 import LoginPage from './pages/LoginPage';
+import AlertsPage from './pages/AlertsPage';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/" element={<OverviewPage />} />
             <Route path="/patient/:id" element={<PatientPage />} />
             <Route path="/patient/:id/model/:modelKey" element={<DrilldownPage />} />
+            <Route path="/alerts" element={<AlertsPage />} />
           </Route>
         </Routes>
       </AiModeProvider>

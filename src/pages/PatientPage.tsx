@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronLeft, Clock } from 'lucide-react';
 import type { ModelKey } from '../types';
 import { getPatientById } from '../api/services/patientService';
 import { getVitals } from '../api/services/vitalService';
 import { getModelPredictions } from '../api/services/modelService';
 import { getPatientReport } from '../api/services/reportService';
+import Breadcrumb from '../components/common/Breadcrumb';
 import PatientHeader from '../components/common/PatientHeader';
 import VitalChart from '../components/common/VitalChart';
 import ModelCard from '../components/common/ModelCard';
@@ -33,6 +34,7 @@ function formatKstClock(date: Date): string {
 
 export default function PatientPage() {
   const { id = '' } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const patient = useMemo(() => getPatientById(id), [id]);
   const vitals = useMemo(() => getVitals(id), [id]);
   const predictions = useMemo(() => getModelPredictions(id), [id]);
@@ -53,10 +55,22 @@ export default function PatientPage() {
     return (
       <div className="patient-page">
         <nav className="patient-page__nav">
-          <Link to="/" className="patient-page__back">
-            <ArrowLeft size={14} />
-            ICU 현황
-          </Link>
+          <div className="patient-page__nav-left">
+            <button
+              type="button"
+              className="patient-page__back"
+              onClick={() => navigate('/')}
+              aria-label="ICU 현황으로 돌아가기"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <Breadcrumb
+              items={[
+                { label: 'ICU 대시보드', path: '/' },
+                { label: '환자 상세' },
+              ]}
+            />
+          </div>
         </nav>
         <div className="patient-page__empty">
           환자를 찾을 수 없습니다. (id: {id || '없음'})
@@ -70,10 +84,22 @@ export default function PatientPage() {
   return (
     <div className={`patient-page ${isDetail ? 'patient-page--detail' : ''}`}>
       <nav className="patient-page__nav">
-        <Link to="/" className="patient-page__back">
-          <ArrowLeft size={14} />
-          ICU 현황
-        </Link>
+        <div className="patient-page__nav-left">
+          <button
+            type="button"
+            className="patient-page__back"
+            onClick={() => navigate('/')}
+            aria-label="ICU 현황으로 돌아가기"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <Breadcrumb
+            items={[
+              { label: 'ICU 대시보드', path: '/' },
+              { label: `${patient.name} (${patient.bed})` },
+            ]}
+          />
+        </div>
         <span className="patient-page__clock">
           <Clock size={14} />
           {formatKstClock(now)}

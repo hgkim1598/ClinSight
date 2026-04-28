@@ -16,6 +16,7 @@ import { getPatients } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
+import AlertBell from '../components/common/AlertBell';
 import './OverviewPage.css';
 
 const PAGE_SIZE = 10;
@@ -155,10 +156,13 @@ export default function OverviewPage() {
     <div className="overview">
       <header className="overview__header">
         <h2 className="overview__title">ICU 현황</h2>
-        <span className="overview__clock">
-          <Clock size={14} />
-          {formatKstClock(now)}
-        </span>
+        <div className="overview__header-right">
+          <span className="overview__clock">
+            <Clock size={14} />
+            {formatKstClock(now)}
+          </span>
+          <AlertBell />
+        </div>
       </header>
 
       <section className="overview__kpis">
