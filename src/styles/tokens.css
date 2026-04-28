@@ -24,6 +24,10 @@
   --primary-deep: #1e3a5f;
   --primary-bg: rgba(37, 99, 235, 0.1);
 
+  /* 차트 라인 색상 — 듀얼 시리즈 비교용 (다크 모드 기본) */
+  --chart-line-1: #2563eb;
+  --chart-line-2: #60a5fa;
+
   /* AI 어시스턴트 강조색 (Sparkles 등) — 골드 옐로우 라인 강조용.
      라이트 모드에서 가독성 위해 darken 변형 사용.
      `-on-dark` 변형은 항상-다크 표면(사이드바)용으로 라이트 모드에도 동일 값 유지. */
@@ -88,6 +92,10 @@
   --safe-bg: #f0fdf4;
 
   --primary-bg: #eff6ff;
+
+  /* 차트 라인 — 라이트 모드에서는 두 색의 명도 차이를 키워 구분 */
+  --chart-line-1: #3b82f6;
+  --chart-line-2: #1d4ed8;
 
   /* AI 강조색 라이트 모드 — 흰 배경 위 가독성 위해 darker amber */
   --ai-accent: #b45309;

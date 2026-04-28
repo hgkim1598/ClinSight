@@ -12,7 +12,7 @@
 .vital-chart__head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--space-md);
   flex-wrap: wrap;
 }
@@ -48,11 +48,43 @@
   color: #ffffff;
 }
 
+.vital-chart__compare-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: 8px;
+}
+
+.vital-chart__compare-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.vital-chart__compare-btn.is-active {
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.1);
+  border-color: var(--primary);
+}
+
+.vital-chart__compare-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .vital-chart__meta {
   display: flex;
   align-items: center;
   gap: var(--space-md);
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .vital-chart__current {
