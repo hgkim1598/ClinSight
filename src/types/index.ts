@@ -95,6 +95,8 @@ export interface Patient {
 export interface TrendPoint {
   t: string;
   pct: number;
+  /** 해당 시점의 SHAP top 5 (없을 수 있음) — 시점별 기여도 변화 추적용 */
+  shap?: ShapFeature[];
 }
 
 /** 추세 경고 */

@@ -17,13 +17,76 @@ const pt19482: PatientModels = {
     title: '사망 위험',
     tone: 'danger',
     trend: [
-      { t: '-6h', pct: 48 },
-      { t: '-5h', pct: 52 },
-      { t: '-4h', pct: 55 },
-      { t: '-3h', pct: 61 },
-      { t: '-2h', pct: 68 },
-      { t: '-1h', pct: 72 },
-      { t: '현재', pct: 74 },
+      {
+        t: '-6h', pct: 48,
+        shap: [
+          { name: 'Lactate 2.8 mmol/L', value: 0.15, direction: 'up' },
+          { name: 'MAP 72 mmHg', value: 0.12, direction: 'up' },
+          { name: 'SOFA 8', value: 0.10, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 220', value: 0.05, direction: 'down' },
+        ],
+      },
+      {
+        t: '-5h', pct: 52,
+        shap: [
+          { name: 'Lactate 3.1 mmol/L', value: 0.18, direction: 'up' },
+          { name: 'MAP 68 mmHg', value: 0.15, direction: 'up' },
+          { name: 'SOFA 9', value: 0.12, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 210', value: 0.06, direction: 'down' },
+        ],
+      },
+      {
+        t: '-4h', pct: 55,
+        shap: [
+          { name: 'Lactate 3.5 mmol/L', value: 0.20, direction: 'up' },
+          { name: 'MAP 65 mmHg', value: 0.17, direction: 'up' },
+          { name: 'SOFA 10', value: 0.14, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 200', value: 0.06, direction: 'down' },
+        ],
+      },
+      {
+        t: '-3h', pct: 61,
+        shap: [
+          { name: 'Lactate 4.0 mmol/L', value: 0.23, direction: 'up' },
+          { name: 'MAP 62 mmHg', value: 0.19, direction: 'up' },
+          { name: 'SOFA 11', value: 0.16, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 190', value: 0.07, direction: 'up' },
+        ],
+      },
+      {
+        t: '-2h', pct: 68,
+        shap: [
+          { name: 'Lactate 4.5 mmol/L', value: 0.25, direction: 'up' },
+          { name: 'MAP 60 mmHg', value: 0.20, direction: 'up' },
+          { name: 'SOFA 11', value: 0.17, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 185', value: 0.07, direction: 'up' },
+        ],
+      },
+      {
+        t: '-1h', pct: 72,
+        shap: [
+          { name: 'Lactate 5.0 mmol/L', value: 0.27, direction: 'up' },
+          { name: 'MAP 59 mmHg', value: 0.21, direction: 'up' },
+          { name: 'SOFA 12', value: 0.18, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 182', value: 0.07, direction: 'up' },
+        ],
+      },
+      {
+        t: '현재', pct: 74,
+        shap: [
+          { name: 'Lactate 5.2 mmol/L', value: 0.28, direction: 'up' },
+          { name: 'MAP 58 mmHg', value: 0.21, direction: 'up' },
+          { name: 'SOFA 12', value: 0.18, direction: 'up' },
+          { name: 'Age 72', value: 0.09, direction: 'up' },
+          { name: 'PaO2/FiO2 180', value: 0.07, direction: 'up' },
+        ],
+      },
     ],
     trendWarn: {
       delta: '+26%p',
@@ -51,13 +114,76 @@ const pt19482: PatientModels = {
     title: '급성 신손상 (AKI)',
     tone: 'danger',
     trend: [
-      { t: '-6h', pct: 41 },
-      { t: '-5h', pct: 46 },
-      { t: '-4h', pct: 52 },
-      { t: '-3h', pct: 58 },
-      { t: '-2h', pct: 62 },
-      { t: '-1h', pct: 65 },
-      { t: '현재', pct: 68 },
+      {
+        t: '-6h', pct: 41,
+        shap: [
+          { name: 'Urine output 0.6 mL/kg/h', value: 0.13, direction: 'up' },
+          { name: 'Creatinine 1.0 mg/dL', value: 0.10, direction: 'up' },
+          { name: 'MAP 78 mmHg', value: 0.06, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+          { name: 'BUN 22 mg/dL', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '-5h', pct: 46,
+        shap: [
+          { name: 'Urine output 0.55 mL/kg/h', value: 0.16, direction: 'up' },
+          { name: 'Creatinine 1.2 mg/dL', value: 0.13, direction: 'up' },
+          { name: 'MAP 72 mmHg', value: 0.08, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+          { name: 'BUN 26 mg/dL', value: 0.05, direction: 'up' },
+        ],
+      },
+      {
+        t: '-4h', pct: 52,
+        shap: [
+          { name: 'Urine output 0.5 mL/kg/h', value: 0.18, direction: 'up' },
+          { name: 'Creatinine 1.4 mg/dL', value: 0.16, direction: 'up' },
+          { name: 'MAP 68 mmHg', value: 0.10, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+          { name: 'BUN 30 mg/dL', value: 0.06, direction: 'up' },
+        ],
+      },
+      {
+        t: '-3h', pct: 58,
+        shap: [
+          { name: 'Urine output 0.45 mL/kg/h', value: 0.20, direction: 'up' },
+          { name: 'Creatinine 1.6 mg/dL', value: 0.18, direction: 'up' },
+          { name: 'MAP 65 mmHg', value: 0.12, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+          { name: 'BUN 33 mg/dL', value: 0.07, direction: 'up' },
+        ],
+      },
+      {
+        t: '-2h', pct: 62,
+        shap: [
+          { name: 'Urine output 0.4 mL/kg/h', value: 0.22, direction: 'up' },
+          { name: 'Creatinine 1.8 mg/dL', value: 0.20, direction: 'up' },
+          { name: 'MAP 62 mmHg', value: 0.13, direction: 'up' },
+          { name: 'Vasopressor use', value: 0.09, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+        ],
+      },
+      {
+        t: '-1h', pct: 65,
+        shap: [
+          { name: 'Urine output 0.35 mL/kg/h', value: 0.23, direction: 'up' },
+          { name: 'Creatinine 2.0 mg/dL', value: 0.21, direction: 'up' },
+          { name: 'MAP 59 mmHg', value: 0.14, direction: 'up' },
+          { name: 'Vasopressor use', value: 0.10, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+        ],
+      },
+      {
+        t: '현재', pct: 68,
+        shap: [
+          { name: 'Urine output 0.3 mL/kg/h', value: 0.24, direction: 'up' },
+          { name: 'Creatinine 2.1 mg/dL', value: 0.22, direction: 'up' },
+          { name: 'MAP 58 mmHg', value: 0.15, direction: 'up' },
+          { name: 'Vasopressor use', value: 0.11, direction: 'up' },
+          { name: 'Age 72', value: 0.06, direction: 'up' },
+        ],
+      },
     ],
     trendWarn: {
       delta: '+27%p',
@@ -83,13 +209,76 @@ const pt19482: PatientModels = {
     title: '급성호흡곤란증후군 (ARDS)',
     tone: 'warn',
     trend: [
-      { t: '-6h', pct: 32 },
-      { t: '-5h', pct: 34 },
-      { t: '-4h', pct: 38 },
-      { t: '-3h', pct: 42 },
-      { t: '-2h', pct: 45 },
-      { t: '-1h', pct: 48 },
-      { t: '현재', pct: 51 },
+      {
+        t: '-6h', pct: 32,
+        shap: [
+          { name: 'PaO2/FiO2 280', value: 0.14, direction: 'up' },
+          { name: 'SpO2 96%', value: 0.08, direction: 'up' },
+          { name: 'Respiratory rate 20', value: 0.06, direction: 'up' },
+          { name: 'FiO2 0.4', value: 0.04, direction: 'up' },
+          { name: 'Lactate 2.8', value: 0.02, direction: 'up' },
+        ],
+      },
+      {
+        t: '-5h', pct: 34,
+        shap: [
+          { name: 'PaO2/FiO2 260', value: 0.16, direction: 'up' },
+          { name: 'SpO2 95%', value: 0.10, direction: 'up' },
+          { name: 'Respiratory rate 22', value: 0.07, direction: 'up' },
+          { name: 'FiO2 0.45', value: 0.05, direction: 'up' },
+          { name: 'Lactate 3.1', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-4h', pct: 38,
+        shap: [
+          { name: 'PaO2/FiO2 240', value: 0.18, direction: 'up' },
+          { name: 'SpO2 94%', value: 0.12, direction: 'up' },
+          { name: 'Respiratory rate 24', value: 0.08, direction: 'up' },
+          { name: 'FiO2 0.5', value: 0.06, direction: 'up' },
+          { name: 'Lactate 3.5', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-3h', pct: 42,
+        shap: [
+          { name: 'PaO2/FiO2 220', value: 0.20, direction: 'up' },
+          { name: 'SpO2 93%', value: 0.13, direction: 'up' },
+          { name: 'Respiratory rate 25', value: 0.09, direction: 'up' },
+          { name: 'FiO2 0.55', value: 0.07, direction: 'up' },
+          { name: 'Lactate 4.0', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '-2h', pct: 45,
+        shap: [
+          { name: 'PaO2/FiO2 205', value: 0.22, direction: 'up' },
+          { name: 'SpO2 92%', value: 0.15, direction: 'up' },
+          { name: 'Respiratory rate 26', value: 0.10, direction: 'up' },
+          { name: 'FiO2 0.6', value: 0.08, direction: 'up' },
+          { name: 'Lactate 4.5', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '-1h', pct: 48,
+        shap: [
+          { name: 'PaO2/FiO2 192', value: 0.24, direction: 'up' },
+          { name: 'SpO2 91%', value: 0.17, direction: 'up' },
+          { name: 'Respiratory rate 27', value: 0.11, direction: 'up' },
+          { name: 'FiO2 0.6', value: 0.09, direction: 'up' },
+          { name: 'Lactate 5.0', value: 0.05, direction: 'up' },
+        ],
+      },
+      {
+        t: '현재', pct: 51,
+        shap: [
+          { name: 'PaO2/FiO2 180', value: 0.26, direction: 'up' },
+          { name: 'SpO2 91%', value: 0.18, direction: 'up' },
+          { name: 'Respiratory rate 28', value: 0.12, direction: 'up' },
+          { name: 'FiO2 0.6', value: 0.09, direction: 'up' },
+          { name: 'Lactate 5.2', value: 0.05, direction: 'up' },
+        ],
+      },
     ],
     trendWarn: {
       delta: '+19%p',
@@ -127,13 +316,76 @@ const pt19482: PatientModels = {
     title: '패혈증 유발 응고장애 (SIC)',
     tone: 'warn',
     trend: [
-      { t: '-6h', pct: 28 },
-      { t: '-5h', pct: 30 },
-      { t: '-4h', pct: 33 },
-      { t: '-3h', pct: 36 },
-      { t: '-2h', pct: 39 },
-      { t: '-1h', pct: 42 },
-      { t: '현재', pct: 44 },
+      {
+        t: '-6h', pct: 28,
+        shap: [
+          { name: 'Platelet 180 x10^3', value: 0.10, direction: 'up' },
+          { name: 'PT-INR 1.1', value: 0.07, direction: 'up' },
+          { name: 'SOFA 8', value: 0.06, direction: 'up' },
+          { name: 'D-dimer 1.5', value: 0.04, direction: 'up' },
+          { name: 'Fibrinogen 280', value: 0.02, direction: 'up' },
+        ],
+      },
+      {
+        t: '-5h', pct: 30,
+        shap: [
+          { name: 'Platelet 165 x10^3', value: 0.12, direction: 'up' },
+          { name: 'PT-INR 1.2', value: 0.09, direction: 'up' },
+          { name: 'SOFA 9', value: 0.07, direction: 'up' },
+          { name: 'D-dimer 2.2', value: 0.05, direction: 'up' },
+          { name: 'Fibrinogen 260', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-4h', pct: 33,
+        shap: [
+          { name: 'Platelet 145 x10^3', value: 0.15, direction: 'up' },
+          { name: 'PT-INR 1.4', value: 0.11, direction: 'up' },
+          { name: 'SOFA 10', value: 0.08, direction: 'up' },
+          { name: 'D-dimer 3.2', value: 0.06, direction: 'up' },
+          { name: 'Fibrinogen 240', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-3h', pct: 36,
+        shap: [
+          { name: 'Platelet 125 x10^3', value: 0.17, direction: 'up' },
+          { name: 'PT-INR 1.5', value: 0.13, direction: 'up' },
+          { name: 'SOFA 11', value: 0.09, direction: 'up' },
+          { name: 'D-dimer 4.2', value: 0.07, direction: 'up' },
+          { name: 'Fibrinogen 220', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '-2h', pct: 39,
+        shap: [
+          { name: 'Platelet 110 x10^3', value: 0.19, direction: 'up' },
+          { name: 'PT-INR 1.6', value: 0.15, direction: 'up' },
+          { name: 'SOFA 11', value: 0.10, direction: 'up' },
+          { name: 'D-dimer 5.0', value: 0.08, direction: 'up' },
+          { name: 'Fibrinogen 200', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '-1h', pct: 42,
+        shap: [
+          { name: 'Platelet 100 x10^3', value: 0.21, direction: 'up' },
+          { name: 'PT-INR 1.7', value: 0.17, direction: 'up' },
+          { name: 'SOFA 12', value: 0.11, direction: 'up' },
+          { name: 'D-dimer 5.8', value: 0.09, direction: 'up' },
+          { name: 'Fibrinogen 190', value: 0.05, direction: 'up' },
+        ],
+      },
+      {
+        t: '현재', pct: 44,
+        shap: [
+          { name: 'Platelet 92 x10^3', value: 0.22, direction: 'up' },
+          { name: 'PT-INR 1.8', value: 0.18, direction: 'up' },
+          { name: 'SOFA 12', value: 0.11, direction: 'up' },
+          { name: 'D-dimer 6.2', value: 0.09, direction: 'up' },
+          { name: 'Fibrinogen 180', value: 0.05, direction: 'up' },
+        ],
+      },
     ],
     trendWarn: {
       delta: '+16%p',
@@ -159,13 +411,76 @@ const pt19482: PatientModels = {
     title: '패혈성 쇼크 (Septic Shock)',
     tone: 'danger',
     trend: [
-      { t: '-6h', pct: 44 },
-      { t: '-5h', pct: 50 },
-      { t: '-4h', pct: 55 },
-      { t: '-3h', pct: 60 },
-      { t: '-2h', pct: 64 },
-      { t: '-1h', pct: 68 },
-      { t: '현재', pct: 71 },
+      {
+        t: '-6h', pct: 44,
+        shap: [
+          { name: 'MAP 78 mmHg', value: 0.15, direction: 'up' },
+          { name: 'Lactate 2.8', value: 0.12, direction: 'up' },
+          { name: 'HR 100', value: 0.08, direction: 'up' },
+          { name: 'Fluid balance +0.6L', value: 0.04, direction: 'up' },
+          { name: 'Temp 37.6', value: 0.02, direction: 'up' },
+        ],
+      },
+      {
+        t: '-5h', pct: 50,
+        shap: [
+          { name: 'MAP 72 mmHg', value: 0.18, direction: 'up' },
+          { name: 'Lactate 3.2', value: 0.14, direction: 'up' },
+          { name: 'HR 106', value: 0.09, direction: 'up' },
+          { name: 'Fluid balance +1.0L', value: 0.05, direction: 'up' },
+          { name: 'Temp 38.0', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-4h', pct: 55,
+        shap: [
+          { name: 'MAP 68 mmHg', value: 0.21, direction: 'up' },
+          { name: 'Lactate 3.8', value: 0.17, direction: 'up' },
+          { name: 'HR 112', value: 0.10, direction: 'up' },
+          { name: 'Fluid balance +1.4L', value: 0.06, direction: 'up' },
+          { name: 'Temp 38.3', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-3h', pct: 60,
+        shap: [
+          { name: 'MAP 64 mmHg', value: 0.23, direction: 'up' },
+          { name: 'Lactate 4.2', value: 0.19, direction: 'up' },
+          { name: 'HR 116', value: 0.12, direction: 'up' },
+          { name: 'Fluid balance +1.8L', value: 0.07, direction: 'up' },
+          { name: 'Temp 38.5', value: 0.03, direction: 'up' },
+        ],
+      },
+      {
+        t: '-2h', pct: 64,
+        shap: [
+          { name: 'MAP 61 mmHg', value: 0.25, direction: 'up' },
+          { name: 'Lactate 4.6', value: 0.21, direction: 'up' },
+          { name: 'HR 120', value: 0.13, direction: 'up' },
+          { name: 'Fluid balance +2.0L', value: 0.07, direction: 'up' },
+          { name: 'Temp 38.7', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '-1h', pct: 68,
+        shap: [
+          { name: 'MAP 59 mmHg', value: 0.26, direction: 'up' },
+          { name: 'Lactate 5.0', value: 0.22, direction: 'up' },
+          { name: 'HR 122', value: 0.13, direction: 'up' },
+          { name: 'Fluid balance +2.2L', value: 0.08, direction: 'up' },
+          { name: 'Temp 38.8', value: 0.04, direction: 'up' },
+        ],
+      },
+      {
+        t: '현재', pct: 71,
+        shap: [
+          { name: 'MAP 58 mmHg', value: 0.27, direction: 'up' },
+          { name: 'Lactate 5.2', value: 0.23, direction: 'up' },
+          { name: 'HR 124', value: 0.14, direction: 'up' },
+          { name: 'Fluid balance +2.4L', value: 0.08, direction: 'up' },
+          { name: 'Temp 38.9', value: 0.04, direction: 'up' },
+        ],
+      },
     ],
     trendWarn: {
       delta: '+27%p',
