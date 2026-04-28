@@ -44,6 +44,13 @@
 
 .model-card__value {
   display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.model-card__value-text {
+  display: flex;
   align-items: baseline;
   gap: 2px;
 }

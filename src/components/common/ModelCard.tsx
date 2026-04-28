@@ -1,5 +1,6 @@
 import type { ModelKey, ModelPrediction, RiskLevel } from '../../types';
 import Badge from './Badge';
+import MiniTrendChart from './MiniTrendChart';
 import './ModelCard.css';
 
 interface ModelCardProps {
@@ -44,8 +45,11 @@ export default function ModelCard({ modelKey, prediction, onSelect, isActive }: 
         <Badge level={risk} />
       </div>
       <div className="model-card__value">
-        <span className="model-card__pct">{prob}</span>
-        <span className="model-card__unit">%</span>
+        <span className="model-card__value-text">
+          <span className="model-card__pct">{prob}</span>
+          <span className="model-card__unit">%</span>
+        </span>
+        <MiniTrendChart trend={prediction.trend} />
       </div>
     </button>
   );
