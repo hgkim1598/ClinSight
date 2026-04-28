@@ -28,6 +28,20 @@
   --chart-line-1: #2563eb;
   --chart-line-2: #60a5fa;
 
+  /* SHAP 5단계 그라데이션 (보라 → 청록) — 다크 모드 기본 */
+  --shap-1: #8b5cf6;
+  --shap-2: #7c3aed;
+  --shap-3: #6366f1;
+  --shap-4: #3b82f6;
+  --shap-5: #06b6d4;
+
+  /* 라이트 모드용 진한 변형 — 흰 배경 위 흰 텍스트 가독성 위해 더 어둡게 */
+  --shap-1-light: #7c3aed;
+  --shap-2-light: #6d28d9;
+  --shap-3-light: #4f46e5;
+  --shap-4-light: #2563eb;
+  --shap-5-light: #0891b2;
+
   /* AI 어시스턴트 강조색 (Sparkles 등) — 골드 옐로우 라인 강조용.
      라이트 모드에서 가독성 위해 darken 변형 사용.
      `-on-dark` 변형은 항상-다크 표면(사이드바)용으로 라이트 모드에도 동일 값 유지. */
@@ -96,6 +110,13 @@
   /* 차트 라인 — 라이트 모드에서는 두 색의 명도 차이를 키워 구분 */
   --chart-line-1: #3b82f6;
   --chart-line-2: #1d4ed8;
+
+  /* SHAP — 흰 배경 위 흰 텍스트 가독성 확보 위해 어두운 변형으로 교체 */
+  --shap-1: #7c3aed;
+  --shap-2: #6d28d9;
+  --shap-3: #4f46e5;
+  --shap-4: #2563eb;
+  --shap-5: #0891b2;
 
   /* AI 강조색 라이트 모드 — 흰 배경 위 가독성 위해 darker amber */
   --ai-accent: #b45309;
