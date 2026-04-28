@@ -1,0 +1,133 @@
+/* ============================================
+   환자 상세 페이지 — 은은한 사이버/글로우 테마 (실험)
+   ----------------------------------------------------
+   PatientPage.css의 @import 한 줄을 제거하면 모든 효과가
+   사라지고 기존 시각으로 원복됩니다.
+
+   적용 범위: .patient-page 스코프로 한정.
+   라이트 모드(data-theme='light')에서는 글로우 변수가
+   transparent / 기존 토큰 폴백으로 바뀌어 자동 비활성화.
+
+   원칙: 의료진이 12시간 보는 화면이므로 글로우는 부분/은은하게.
+   본문 텍스트나 애니메이션에는 적용하지 않음.
+   ============================================ */
+
+.patient-page {
+  /* Outer / inner glow 색상 — box-shadow blur 색 */
+  --glow-primary: rgba(37, 99, 235, 0.15);
+  --glow-primary-line: rgba(37, 99, 235, 0.3);
+  --glow-danger: rgba(220, 38, 38, 0.12);
+  --glow-warn: rgba(217, 119, 6, 0.12);
+  --glow-safe: rgba(22, 163, 74, 0.12);
+  --glow-cyan: rgba(34, 211, 238, 0.08);
+
+  /* 카드/차트 테두리 미세 푸른 틴트 */
+  --glow-border: rgba(37, 99, 235, 0.25);
+
+  /* 페이지 배경 radial-gradient 오버레이 색 */
+  --glow-bg-overlay: rgba(37, 99, 235, 0.03);
+}
+
+/* 라이트 모드 — 글로우 비활성화. transparent로 두면 box-shadow/text-shadow가 무효가 됨. */
+:root[data-theme='light'] .patient-page {
+  --glow-primary: transparent;
+  --glow-primary-line: transparent;
+  --glow-danger: transparent;
+  --glow-warn: transparent;
+  --glow-safe: transparent;
+  --glow-cyan: transparent;
+  --glow-border: var(--border);
+
+  --glow-bg-overlay: transparent;
+}
+
+/* ----------------------------------------------------
+   1. 페이지 배경 — 중앙 상단에서 은은하게 퍼지는 푸른 글로우
+   ---------------------------------------------------- */
+.patient-page {
+  background:
+    radial-gradient(
+      ellipse 80% 40% at 50% 0%,
+      var(--glow-bg-overlay) 0%,
+      transparent 70%
+    );
+}
+
+/* ----------------------------------------------------
+   2. ModelCard — 기본 primary 글로우 + 위험도별 색상 분기
+   기존 box-shadow에 글로우를 stack. 라이트 모드면 글로우가 transparent라 기존 shadow만 남음.
+   ---------------------------------------------------- */
+.patient-page .model-card {
+  border-color: var(--glow-border);
+  box-shadow:
+    0 0 8px var(--glow-primary),
+    inset 0 0 4px var(--glow-primary),
+    var(--shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+}
+.patient-page .model-card:hover {
+  box-shadow:
+    0 0 12px var(--glow-primary),
+    inset 0 0 6px var(--glow-primary),
+    var(--shadow-sm);
+}
+.patient-page .model-card--danger {
+  box-shadow:
+    0 0 8px var(--glow-danger),
+    inset 0 0 4px var(--glow-danger),
+    var(--shadow-sm);
+}
+.patient-page .model-card--danger:hover {
+  box-shadow:
+    0 0 12px var(--glow-danger),
+    inset 0 0 6px var(--glow-danger),
+    var(--shadow-sm);
+}
+.patient-page .model-card--warn {
+  box-shadow:
+    0 0 8px var(--glow-warn),
+    inset 0 0 4px var(--glow-warn),
+    var(--shadow-sm);
+}
+.patient-page .model-card--warn:hover {
+  box-shadow:
+    0 0 12px var(--glow-warn),
+    inset 0 0 6px var(--glow-warn),
+    var(--shadow-sm);
+}
+.patient-page .model-card--safe {
+  box-shadow:
+    0 0 8px var(--glow-safe),
+    inset 0 0 4px var(--glow-safe),
+    var(--shadow-sm);
+}
+.patient-page .model-card--safe:hover {
+  box-shadow:
+    0 0 12px var(--glow-safe),
+    inset 0 0 6px var(--glow-safe),
+    var(--shadow-sm);
+}
+
+/* ----------------------------------------------------
+   3. 차트 컨테이너 (VitalChart) — 미세 푸른 테두리 + 은은한 radial gradient 배경
+   ---------------------------------------------------- */
+.patient-page .vital-chart {
+  border-color: var(--glow-border);
+  background:
+    radial-gradient(
+      ellipse 60% 50% at 50% 0%,
+      var(--glow-cyan),
+      transparent 70%
+    ),
+    var(--card);
+}
+
+/* ----------------------------------------------------
+   4. 배지 — HIGH/MED 배경 글로우 (텍스트 글로우는 가독성 위해 미적용)
+   ---------------------------------------------------- */
+.patient-page .badge-danger {
+  box-shadow: 0 0 8px var(--glow-danger);
+}
+.patient-page .badge-warn {
+  box-shadow: 0 0 8px var(--glow-warn);
+}
