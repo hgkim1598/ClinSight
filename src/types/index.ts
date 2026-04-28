@@ -169,10 +169,23 @@ export interface LabDot {
   time: string;
   label: string;
   value: number;
+  /** 어느 그룹 탭에 표시할지 분류 */
+  type: 'lac' | 'cre' | 'pf_ratio' | 'platelet' | 'bilirubin';
 }
 
-/** 바이탈 차트 탭 키 */
-export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp';
+/** 바이탈 시리즈 데이터 키 — 연속 측정값 */
+export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp' | 'gcs' | 'urine_output';
+
+/** 바이탈 차트 그룹 탭 키 — SOFA + 6개 장기 시스템 + Temp */
+export type TabKey =
+  | 'sofa'
+  | 'cardio'
+  | 'resp'
+  | 'renal'
+  | 'cns'
+  | 'coag'
+  | 'hepatic'
+  | 'temp';
 
 // ---------- SOFA ----------
 
