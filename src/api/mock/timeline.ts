@@ -1,0 +1,116 @@
+import type { TimelineEvent } from '../../types';
+
+/**
+ * 임상 타임라인 mock — 환자별 24시간 이벤트 누적 (최신순).
+ * 백엔드 연결 시 GET /patients/{id}/timeline 으로 교체.
+ */
+export const mockTimeline: Record<string, TimelineEvent[]> = {
+  'PT-19482': [
+    {
+      id: 'tl-001',
+      time: '14:20',
+      title: 'MAP 58 mmHg로 하락',
+      description: 'NE 용량 증량: 0.12 → 0.18 mcg/kg/min',
+      category: 'vitals',
+      severity: 'critical',
+    },
+    {
+      id: 'tl-002',
+      time: '13:45',
+      title: 'Lactate 재검: 3.8 mmol/L',
+      description: '수액 30 mL/kg 투여에도 clearance 없음',
+      category: 'lab',
+      severity: 'warning',
+    },
+    {
+      id: 'tl-003',
+      time: '12:30',
+      title: '혈액배양 × 2세트 채취',
+      description: '항생제 투여 전 시행',
+      category: 'procedure',
+      severity: 'info',
+    },
+    {
+      id: 'tl-004',
+      time: '11:50',
+      title: 'Piperacillin/Tazobactam 개시',
+      description: '4.5g IV q8h — 1시간 번들 완료',
+      category: 'medication',
+      severity: 'info',
+    },
+    {
+      id: 'tl-005',
+      time: '10:20',
+      title: 'SOFA 점수 상승: 7 → 11',
+      description: '신기능 악화: Cr 1.4 → 2.1',
+      category: 'assessment',
+      severity: 'warning',
+    },
+    {
+      id: 'tl-006',
+      time: '08:15',
+      title: 'AI 패혈증 경보 — 고위험',
+      description: '모델 Risk 87% → 94% (2시간 내 +7%p)',
+      category: 'alert',
+      severity: 'critical',
+    },
+    {
+      id: 'tl-007',
+      time: '06:00',
+      title: '기계환기 시작',
+      description: 'FiO2 0.6, PEEP 8, P/F ratio: 152',
+      category: 'procedure',
+      severity: 'warning',
+    },
+    {
+      id: 'tl-008',
+      time: '04:30',
+      title: 'Norepinephrine 개시',
+      description: '초기 용량 0.05 mcg/kg/min, MAP 목표 ≥65',
+      category: 'medication',
+      severity: 'info',
+    },
+    {
+      id: 'tl-009',
+      time: '02:15',
+      title: '생리식염수 30 mL/kg 개시',
+      description: '중심정맥로 확보 후 1시간 내 투여 시작',
+      category: 'procedure',
+      severity: 'info',
+    },
+    {
+      id: 'tl-010',
+      time: '23:50',
+      title: 'ICU 입실 — 초기 평가',
+      description: 'HR 124, BP 90/60, RR 26, Temp 38.7°C, SpO2 92%',
+      category: 'assessment',
+      severity: 'warning',
+    },
+    {
+      id: 'tl-011',
+      time: '22:30',
+      title: '의식 수준 저하 (GCS 14 → 12)',
+      description: '혼돈, 반응 지연 관찰. 신경학적 평가 시행.',
+      category: 'vitals',
+      severity: 'warning',
+    },
+    {
+      id: 'tl-012',
+      time: '18:40',
+      title: '흉부 X-ray — 양측 폐 침윤',
+      description: '하엽 우세, 지역사회획득 폐렴 패턴',
+      category: 'lab',
+      severity: 'warning',
+    },
+    {
+      id: 'tl-013',
+      time: '16:00',
+      title: '응급실 초기 혈액검사',
+      description: 'WBC 18.4, CRP 156, Procalcitonin 4.2',
+      category: 'lab',
+      severity: 'info',
+    },
+  ],
+  'PT-20314': [],
+  'PT-20781': [],
+};

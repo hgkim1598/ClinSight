@@ -6,11 +6,13 @@ import { getPatientById } from '../api/services/patientService';
 import { getVitals } from '../api/services/vitalService';
 import { getModelPredictions } from '../api/services/modelService';
 import { getPatientReport } from '../api/services/reportService';
+import { getTimeline } from '../api/services/timelineService';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientHeader from '../components/common/PatientHeader';
 import VitalChart from '../components/common/VitalChart';
 import ModelCard from '../components/common/ModelCard';
 import ModelDetailView from '../components/common/ModelDetailView';
+import ClinicalTimeline from '../components/common/ClinicalTimeline';
 import FloatingChatButton from '../components/common/FloatingChatButton';
 import PatientReportModal from '../components/common/PatientReportModal';
 import './PatientPage.css';
@@ -38,6 +40,7 @@ export default function PatientPage() {
   const patient = useMemo(() => getPatientById(id), [id]);
   const vitals = useMemo(() => getVitals(id), [id]);
   const predictions = useMemo(() => getModelPredictions(id), [id]);
+  const timeline = useMemo(() => getTimeline(id), [id]);
   const [now, setNow] = useState(() => new Date());
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -137,6 +140,8 @@ export default function PatientPage() {
               ))}
             </div>
           </section>
+
+          <ClinicalTimeline events={timeline} />
         </>
       )}
 

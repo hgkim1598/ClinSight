@@ -274,6 +274,31 @@ export interface StaffingSnapshot {
   thresholds: StaffingThresholds;
 }
 
+// ---------- 임상 타임라인 ----------
+
+/** 이벤트 분류 — 아이콘과 라벨 매핑 키 */
+export type TimelineEventCategory =
+  | 'vitals'
+  | 'lab'
+  | 'medication'
+  | 'procedure'
+  | 'assessment'
+  | 'alert';
+
+/** 이벤트 심각도 — dot 색상 분기 */
+export type TimelineEventSeverity = 'critical' | 'warning' | 'info';
+
+/** 임상 타임라인 단일 이벤트 (24시간 누적, 최신순 정렬) */
+export interface TimelineEvent {
+  id: string;
+  /** 표시용 시각 ("14:20") 또는 ISO — 백엔드 연결 시 ISO로 통일 */
+  time: string;
+  title: string;
+  description: string;
+  category: TimelineEventCategory;
+  severity: TimelineEventSeverity;
+}
+
 // ---------- 알림 ----------
 
 /** 알림 발생 소스 — 경량 모델 / 정밀 모델 / 룰 기반 임계치 */

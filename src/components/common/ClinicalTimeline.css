@@ -1,0 +1,183 @@
+.clinical-timeline {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.clinical-timeline__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.clinical-timeline__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.clinical-timeline__meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.clinical-timeline__empty {
+  padding: var(--space-md);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.clinical-timeline__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.clinical-timeline__list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.clinical-timeline__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.clinical-timeline__list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.clinical-timeline__list::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+.clinical-timeline__item {
+  display: grid;
+  grid-template-columns: 56px 28px 1fr;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  padding-bottom: var(--space-md);
+}
+
+.clinical-timeline__item.is-last {
+  padding-bottom: 0;
+}
+
+.clinical-timeline__time {
+  font-size: 13px;
+  font-family: var(--mono);
+  font-feature-settings: 'tnum';
+  color: var(--text-secondary);
+  padding-top: 4px;
+}
+
+/* 레일 + dot — 좌측 세로선이 dot 사이를 잇는다 (마지막 항목은 선 없음) */
+.clinical-timeline__rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 2px;
+  align-self: stretch;
+}
+
+.clinical-timeline__rail::before {
+  content: '';
+  position: absolute;
+  top: 26px;
+  bottom: -16px;
+  left: 50%;
+  width: 2px;
+  background: var(--border);
+  transform: translateX(-50%);
+}
+
+.clinical-timeline__item.is-last .clinical-timeline__rail::before {
+  display: none;
+}
+
+.clinical-timeline__dot {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas);
+  border: 2px solid var(--border);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.clinical-timeline__item--critical .clinical-timeline__dot {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.clinical-timeline__item--warning .clinical-timeline__dot {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.clinical-timeline__item--info .clinical-timeline__dot {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.clinical-timeline__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.clinical-timeline__body-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.clinical-timeline__category {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.clinical-timeline__event-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.clinical-timeline__event-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
