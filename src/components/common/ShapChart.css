@@ -13,58 +13,11 @@
   border-radius: var(--radius-sm);
 }
 
-.shap-chart__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-
 .shap-chart__note {
   margin: 0;
   font-size: 11px;
   color: var(--text-muted);
   line-height: 1.4;
-}
-
-/* ---------- 토글 ---------- */
-.shap-chart__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--canvas);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 2px;
-}
-
-.shap-chart__toggle-btn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
-}
-
-.shap-chart__toggle-btn:hover {
-  color: var(--text-secondary);
-}
-
-.shap-chart__toggle-btn.is-active {
-  color: var(--primary);
-  background: var(--primary-bg);
-}
-
-.shap-chart__toggle-btn:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 1px;
 }
 
 /* ---------- 블록 뷰 ---------- */
@@ -109,58 +62,4 @@
   font-size: 11px;
   color: rgba(255, 255, 255, 0.8);
   font-feature-settings: 'tnum';
-}
-
-/* ---------- 버블 뷰 ---------- */
-.shap-chart__bubble-wrap {
-  position: relative;
-  width: 100%;
-  height: 200px;
-}
-
-.shap-chart__bubble {
-  position: absolute;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #ffffff;
-  padding: 6px;
-  box-sizing: border-box;
-  cursor: default;
-  overflow: hidden;
-  transform: translate(-50%, -50%) scale(1);
-  transition: transform 0.2s ease;
-  z-index: 1;
-}
-
-.shap-chart__bubble:hover {
-  transform: translate(-50%, -50%) scale(1.08);
-  z-index: 3;
-}
-
-.shap-chart__bubble-name {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.shap-chart__bubble--small .shap-chart__bubble-name {
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.shap-chart__bubble-value {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.85);
-  font-feature-settings: 'tnum';
-  margin-top: 2px;
-  line-height: 1;
 }
