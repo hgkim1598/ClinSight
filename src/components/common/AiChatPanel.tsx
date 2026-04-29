@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Info, Send, Sparkles, X } from 'lucide-react';
 import { getChatIntro, getChatResponse } from '../../api/services/aiInsightService';
-import { useAiMode } from '../../context/AiModeContext';
+import { useAiMode } from '../../context/aiMode';
 import type { AiInsightSection, ChatContext, ChatMessage } from '../../types';
 import './AiChatPanel.css';
 
@@ -49,25 +49,32 @@ export default function AiChatPanel() {
 
   const contextKey = buildContextKey(chatContext);
 
-  // 컨텍스트 변경 시 메시지 리셋 + 인트로 시드
+  // 컨텍스트 변경 시 동기 상태 리셋 — render-time prop 동기화 패턴.
+  // 인트로 fetch는 아래 useEffect에서 비동기로 처리.
+  const [prevContextKey, setPrevContextKey] = useState(contextKey);
+  if (prevContextKey !== contextKey) {
+    setPrevContextKey(contextKey);
+    setPendingResponse(false);
+    setInput('');
+    setMessages([]);
+  }
+
+  // 컨텍스트 변경 시 외부 자원(타이머) 정리 + 인트로 fetch
   useEffect(() => {
     if (responseTimerRef.current != null) {
       window.clearTimeout(responseTimerRef.current);
       responseTimerRef.current = null;
     }
-    setPendingResponse(false);
-    setInput('');
-    if (!chatContext) {
-      setMessages([]);
-      return;
-    }
-    setMessages([
-      {
-        id: makeId(),
-        role: 'ai',
-        text: getChatIntro(chatContext),
-      },
-    ]);
+    if (!chatContext) return;
+    let cancelled = false;
+    void (async () => {
+      const text = await getChatIntro(chatContext);
+      if (cancelled) return;
+      setMessages([{ id: makeId(), role: 'ai', text }]);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [contextKey, chatContext]);
 
   // 새 메시지 도착 시 자동 스크롤
@@ -94,16 +101,15 @@ export default function AiChatPanel() {
     setPendingResponse(true);
 
     responseTimerRef.current = window.setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: makeId(),
-          role: 'ai',
-          text: getChatResponse(chatContext, trimmed),
-        },
-      ]);
-      setPendingResponse(false);
-      responseTimerRef.current = null;
+      void (async () => {
+        const text = await getChatResponse(chatContext, trimmed);
+        setMessages((prev) => [
+          ...prev,
+          { id: makeId(), role: 'ai', text },
+        ]);
+        setPendingResponse(false);
+        responseTimerRef.current = null;
+      })();
     }, RESPONSE_DELAY_MS);
   };
 

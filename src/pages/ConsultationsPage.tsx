@@ -6,6 +6,9 @@ import { getConsultations } from '../api/services/consultService';
 import { getPatientReport } from '../api/services/reportService';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientReportModal from '../components/common/PatientReportModal';
+import LoadingState from '../components/common/LoadingState';
+import ErrorState from '../components/common/ErrorState';
+import { useAsync } from '../hooks/useAsync';
 import './ConsultationsPage.css';
 
 type FilterKey = 'all' | ConsultStatus;
@@ -106,25 +109,28 @@ export default function ConsultationsPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
 
-  const consultations = useMemo(() => getConsultations(), []);
+  const {
+    data: consultations,
+    loading,
+    error,
+    refetch,
+  } = useAsync(() => getConsultations(), []);
+
+  const { data: report } = useAsync(
+    async () =>
+      reportOpen && selectedPatientId
+        ? await getPatientReport(selectedPatientId)
+        : null,
+    [reportOpen, selectedPatientId],
+  );
 
   const countByPatient = useMemo(
     () =>
-      consultations.reduce<Record<string, number>>((acc, c) => {
+      (consultations ?? []).reduce<Record<string, number>>((acc, c) => {
         acc[c.patientId] = (acc[c.patientId] || 0) + 1;
         return acc;
       }, {}),
     [consultations],
-  );
-
-  const filtered =
-    filter === 'all'
-      ? consultations
-      : consultations.filter((c) => c.status === filter);
-
-  const report = useMemo(
-    () => (reportOpen && selectedPatientId ? getPatientReport(selectedPatientId) : null),
-    [reportOpen, selectedPatientId],
   );
 
   const handleOpenReport = (patientId: string) => {
@@ -137,7 +143,28 @@ export default function ConsultationsPage() {
     setSelectedPatientId(null);
   };
 
-  const isAllEmpty = consultations.length === 0;
+  if (loading) {
+    return (
+      <div className="consultations-page">
+        <LoadingState />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="consultations-page">
+        <ErrorState onRetry={refetch} />
+      </div>
+    );
+  }
+
+  const allConsultations: ConsultationRequest[] = consultations ?? [];
+  const filtered =
+    filter === 'all'
+      ? allConsultations
+      : allConsultations.filter((c) => c.status === filter);
+
+  const isAllEmpty = allConsultations.length === 0;
 
   return (
     <div className="consultations-page">
@@ -162,7 +189,7 @@ export default function ConsultationsPage() {
         <div className="consultations-page__title-row">
           <h1 className="consultations-page__title">협진 요청</h1>
           <span className="consultations-page__count">
-            총 {consultations.length}건
+            총 {allConsultations.length}건
           </span>
         </div>
 

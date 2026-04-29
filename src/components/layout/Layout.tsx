@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import AiChatPanel from '../common/AiChatPanel';
-import { useAiMode } from '../../context/AiModeContext';
+import { useAiMode } from '../../context/aiMode';
 import './Layout.css';
 
 export default function Layout() {

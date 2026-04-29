@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
   AlertTriangle,
   BedDouble,
-  Clock,
   Stethoscope,
   UserCheck,
   ChevronDown,
@@ -17,6 +16,10 @@ import { getStaffing } from '../api/services/staffingService';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
 import AlertBell from '../components/common/AlertBell';
+import Clock from '../components/common/Clock';
+import LoadingState from '../components/common/LoadingState';
+import ErrorState from '../components/common/ErrorState';
+import { useAsync } from '../hooks/useAsync';
 import './OverviewPage.css';
 
 const PAGE_SIZE = 10;
@@ -58,20 +61,6 @@ function sortPatients(list: Patient[], key: SortKey): Patient[] {
   }
 }
 
-function formatKstClock(date: Date): string {
-  const fmt = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-  return `${fmt.format(date)} KST`;
-}
-
 function formatAdmit(admit: string): string {
   const parts = admit.split(' ');
   if (parts.length !== 2) return admit;
@@ -109,25 +98,54 @@ function buildKpis(list: Patient[], totalBeds: number): KpiData[] {
 
 export default function OverviewPage() {
   const navigate = useNavigate();
-  const patients = useMemo(() => getPatients(), []);
-  const staffing = useMemo(() => getStaffing(), []);
-  const kpis = useMemo(
-    () => buildKpis(patients, staffing.totalBeds),
-    [patients, staffing.totalBeds],
-  );
-  const [now, setNow] = useState(() => new Date());
+  const {
+    data: patients,
+    loading: patientsLoading,
+    error: patientsError,
+    refetch: refetchPatients,
+  } = useAsync(() => getPatients(), []);
+  const {
+    data: staffing,
+    loading: staffingLoading,
+    error: staffingError,
+    refetch: refetchStaffing,
+  } = useAsync(() => getStaffing(), []);
+
   const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
   const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
+  const kpis = useMemo(
+    () => (patients && staffing ? buildKpis(patients, staffing.totalBeds) : []),
+    [patients, staffing],
+  );
 
   const sortedPatients = useMemo(
-    () => sortPatients(patients, sortKey),
+    () => (patients ? sortPatients(patients, sortKey) : []),
     [patients, sortKey],
   );
+
+  if (patientsLoading || staffingLoading) {
+    return (
+      <div className="overview">
+        <LoadingState />
+      </div>
+    );
+  }
+  if (patientsError) {
+    return (
+      <div className="overview">
+        <ErrorState onRetry={refetchPatients} />
+      </div>
+    );
+  }
+  if (staffingError) {
+    return (
+      <div className="overview">
+        <ErrorState onRetry={refetchStaffing} />
+      </div>
+    );
+  }
+  if (!patients || !staffing) return null;
 
   const totalPages = Math.max(1, Math.ceil(sortedPatients.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -157,10 +175,7 @@ export default function OverviewPage() {
       <header className="overview__header">
         <h2 className="overview__title">ICU 현황</h2>
         <div className="overview__header-right">
-          <span className="overview__clock">
-            <Clock size={14} />
-            {formatKstClock(now)}
-          </span>
+          <Clock className="overview__clock" />
           <AlertBell />
         </div>
       </header>

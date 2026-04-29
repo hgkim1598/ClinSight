@@ -5,6 +5,9 @@ import type { Alert, AlertPriority } from '../types';
 import { acknowledgeAlert, getAlerts } from '../api/services/alertService';
 import Breadcrumb from '../components/common/Breadcrumb';
 import AlertCard from '../components/alerts/AlertCard';
+import LoadingState from '../components/common/LoadingState';
+import ErrorState from '../components/common/ErrorState';
+import { useAsync } from '../hooks/useAsync';
 import './AlertsPage.css';
 
 type FilterKey = 'all' | AlertPriority;
@@ -29,22 +32,43 @@ function sortNewAlerts(list: Alert[]): Alert[] {
 
 export default function AlertsPage() {
   const navigate = useNavigate();
-  const [alerts, setAlerts] = useState<Alert[]>(() => getAlerts());
+  const { data: alerts, loading, error, refetch } = useAsync(
+    () => getAlerts(),
+    [],
+  );
   const [filter, setFilter] = useState<FilterKey>('all');
   const [showResolved, setShowResolved] = useState(false);
 
-  const handleAcknowledge = (id: string) => {
-    acknowledgeAlert(id, 'Dr. 사용자');
-    setAlerts([...getAlerts()]);
+  const handleAcknowledge = async (id: string) => {
+    await acknowledgeAlert(id, 'Dr. 사용자');
+    refetch();
   };
 
-  const filtered = alerts.filter((a) => filter === 'all' || a.priority === filter);
+  if (loading) {
+    return (
+      <div className="alerts-page">
+        <LoadingState />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="alerts-page">
+        <ErrorState onRetry={refetch} />
+      </div>
+    );
+  }
+
+  const allAlerts: Alert[] = alerts ?? [];
+  const filtered = allAlerts.filter(
+    (a) => filter === 'all' || a.priority === filter,
+  );
   const newAlerts = sortNewAlerts(filtered.filter((a) => a.status === 'new'));
   const ackAlerts = filtered.filter((a) => a.status === 'acknowledged');
   const resolvedAlerts = filtered.filter((a) => a.status === 'resolved');
 
-  const totalNewCount = alerts.filter((a) => a.status === 'new').length;
-  const isAllEmpty = alerts.length === 0;
+  const totalNewCount = allAlerts.filter((a) => a.status === 'new').length;
+  const isAllEmpty = allAlerts.length === 0;
 
   return (
     <div className="alerts-page">

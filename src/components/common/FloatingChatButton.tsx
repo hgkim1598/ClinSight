@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-import { useAiMode } from '../../context/AiModeContext';
+import { useAiMode } from '../../context/aiMode';
 import './FloatingChatButton.css';
 
 interface FloatingChatButtonProps {

@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-import type { AiInsightSection, ModelKey, ModelPrediction, RiskLevel, RiskTone } from '../../types';
+import type { AiInsightSection, ModelKey, ModelPrediction, RiskTone } from '../../types';
 import { getAiInsight } from '../../api/services/aiInsightService';
+import { toneToRisk } from '../../utils/constants';
+import { useAsync } from '../../hooks/useAsync';
 import Badge from './Badge';
 import TrendBar from './TrendBar';
 import ShapChart from './ShapChart';
@@ -39,12 +41,6 @@ function toneFallbackPct(tone: RiskTone): number {
   return 18;
 }
 
-function toneToRisk(tone: RiskTone): RiskLevel {
-  if (tone === 'danger') return 'high';
-  if (tone === 'warn') return 'med';
-  return 'low';
-}
-
 function buildDeltaText(p: ModelPrediction): string {
   const delta = p.trendWarn.delta?.trim();
   if (!delta) return '추세 데이터 부족';
@@ -59,6 +55,12 @@ export default function ModelDetailView({
 }: ModelDetailViewProps) {
   const shapRef = useRef<HTMLDivElement>(null);
   const [openSection, setOpenSection] = useState<AiInsightSection | null>(null);
+
+  const { data: insight } = useAsync(
+    async () =>
+      openSection ? await getAiInsight(selectedModel, openSection) : '',
+    [selectedModel, openSection],
+  );
 
   const prediction = predictions[selectedModel];
   const prob = currentProbability(prediction) ?? toneFallbackPct(prediction.tone);
@@ -213,7 +215,7 @@ export default function ModelDetailView({
         open={openSection !== null}
         onClose={() => setOpenSection(null)}
         title={openSection ? SECTION_TITLES[openSection] : ''}
-        insight={openSection ? getAiInsight(selectedModel, openSection) : ''}
+        insight={insight ?? 'AI 분석을 불러오는 중...'}
       >
         {openSection ? renderModalBody(openSection) : null}
       </AiInsightModal>

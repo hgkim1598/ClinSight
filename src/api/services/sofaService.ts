@@ -1,10 +1,19 @@
-import { emptySofaTrend, sofaTrendByPatient } from '../mock/sofaScores';
-import type { SofaTrend } from '../../types';
-
 /**
- * 환자의 SOFA 6개 장기 점수 추이를 반환한다.
- * 추후 백엔드 연결 시 GET /patients/{id}/sofa 같은 엔드포인트 fetch로 교체될 자리.
+ * SOFA Service
+ *
+ * 현재: mock 데이터 반환 (src/api/mock/sofaScores.ts)
+ * API 전환 시:
+ *   1. mock import 제거
+ *   2. request<T>()를 사용하여 API 호출로 교체
+ *   3. endpoint 예시:
+ *      - GET /patients/{id}/sofa
+ *      → 백엔드에서 row 시계열을 SofaTrend(times[] + scores by organ)로 pivot
+ *
+ * 참고: docs/DYNAMO_SCHEMA.md §8 SofaScores
  */
-export function getSofaTrend(patientId: string): SofaTrend {
+import type { SofaTrend } from '../../types';
+import { emptySofaTrend, sofaTrendByPatient } from '../mock/sofaScores';
+
+export async function getSofaTrend(patientId: string): Promise<SofaTrend> {
   return sofaTrendByPatient[patientId] ?? emptySofaTrend();
 }

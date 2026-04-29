@@ -1,4 +1,5 @@
-import type { ModelKey, ModelPrediction, RiskLevel } from '../../types';
+import type { ModelKey, ModelPrediction } from '../../types';
+import { toneToRisk } from '../../utils/constants';
 import Badge from './Badge';
 import MiniTrendChart from './MiniTrendChart';
 import './ModelCard.css';
@@ -19,12 +20,6 @@ function probabilityFromTone(tone: ModelPrediction['tone']): number {
   if (tone === 'danger') return 72;
   if (tone === 'warn') return 45;
   return 18;
-}
-
-function toneToRisk(tone: ModelPrediction['tone']): RiskLevel {
-  if (tone === 'danger') return 'high';
-  if (tone === 'warn') return 'med';
-  return 'low';
 }
 
 export default function ModelCard({ modelKey, prediction, onSelect, isActive }: ModelCardProps) {

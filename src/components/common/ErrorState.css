@@ -1,0 +1,35 @@
+.error-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  width: 100%;
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.error-state__text {
+  font-weight: 500;
+}
+
+.error-state__retry {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.error-state__retry:hover {
+  background: var(--danger-bg);
+}
+
+.error-state__retry:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+}

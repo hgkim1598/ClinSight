@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Clock } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import type { ModelKey } from '../types';
 import { getPatientById } from '../api/services/patientService';
 import { getVitals } from '../api/services/vitalService';
@@ -15,44 +15,54 @@ import ModelDetailView from '../components/common/ModelDetailView';
 import ClinicalTimeline from '../components/common/ClinicalTimeline';
 import FloatingChatButton from '../components/common/FloatingChatButton';
 import PatientReportModal from '../components/common/PatientReportModal';
+import Clock from '../components/common/Clock';
+import LoadingState from '../components/common/LoadingState';
+import ErrorState from '../components/common/ErrorState';
+import { useAsync } from '../hooks/useAsync';
 import './PatientPage.css';
 
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
 const LAST_UPDATED_MIN = 2;
 
-function formatKstClock(date: Date): string {
-  const fmt = new Intl.DateTimeFormat('ko-KR', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-  return `${fmt.format(date)} KST`;
-}
-
 export default function PatientPage() {
   const { id = '' } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const patient = useMemo(() => getPatientById(id), [id]);
-  const vitals = useMemo(() => getVitals(id), [id]);
-  const predictions = useMemo(() => getModelPredictions(id), [id]);
-  const timeline = useMemo(() => getTimeline(id), [id]);
-  const [now, setNow] = useState(() => new Date());
+
+  const { data: bundle, loading, error, refetch } = useAsync(async () => {
+    const [patient, vitals, predictions, timeline] = await Promise.all([
+      getPatientById(id),
+      getVitals(id),
+      getModelPredictions(id),
+      getTimeline(id),
+    ]);
+    return { patient, vitals, predictions, timeline };
+  }, [id]);
+
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
-  const report = useMemo(
-    () => (reportOpen ? getPatientReport(id) : null),
+
+  const { data: report } = useAsync(
+    async () => (reportOpen ? await getPatientReport(id) : null),
     [id, reportOpen],
   );
 
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  if (loading) {
+    return (
+      <div className="patient-page">
+        <LoadingState />
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="patient-page">
+        <ErrorState onRetry={refetch} />
+      </div>
+    );
+  }
+  if (!bundle) return null;
+
+  const { patient, vitals, predictions, timeline } = bundle;
 
   if (!patient) {
     return (
@@ -103,10 +113,7 @@ export default function PatientPage() {
             ]}
           />
         </div>
-        <span className="patient-page__clock">
-          <Clock size={14} />
-          {formatKstClock(now)}
-        </span>
+        <Clock className="patient-page__clock" />
       </nav>
 
       <PatientHeader patient={patient} onSummaryClick={() => setReportOpen(true)} />

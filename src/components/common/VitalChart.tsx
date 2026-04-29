@@ -11,8 +11,18 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import type { LabDot, TabKey, VitalData, VitalKey, VitalSeries } from '../../types';
+import type { LabDot, TabKey, VitalData } from '../../types';
 import SofaPanel from './SofaPanel';
+import { DOT_INFO, TABS, TAB_CONFIG } from './vitals/vitalConfig';
+import type { DotType } from './vitals/vitalConfig';
+import { computeAxis, computeDotsOnlyAxis } from './vitals/axisUtils';
+import {
+  BilirubinShape,
+  CreShape,
+  LacShape,
+  PfRatioShape,
+  PlateletShape,
+} from './vitals/chartShapes';
 import './VitalChart.css';
 
 interface VitalChartProps {
@@ -20,242 +30,20 @@ interface VitalChartProps {
   patientId: string;
 }
 
-type DotType = LabDot['type'];
-
-interface TabConfig {
-  lines: VitalKey[];
-  dots: DotType[];
-  yAxisLabel?: string;
-}
-
-const TABS: Array<{ key: TabKey; label: string }> = [
-  { key: 'sofa', label: 'SOFA' },
-  { key: 'cardio', label: 'Cardio' },
-  { key: 'resp', label: 'Resp' },
-  { key: 'renal', label: 'Renal' },
-  { key: 'cns', label: 'CNS' },
-  { key: 'coag', label: 'Coag' },
-  { key: 'hepatic', label: 'Hepatic' },
-  { key: 'temp', label: 'Temp' },
-];
-
-const TAB_CONFIG: Record<TabKey, TabConfig | null> = {
-  sofa: null,
-  cardio: { lines: ['map', 'hr'], dots: ['lac'], yAxisLabel: 'mmHg / bpm' },
-  resp: { lines: ['spo2', 'rr'], dots: ['pf_ratio'], yAxisLabel: '% / /min' },
-  renal: { lines: ['urine_output'], dots: ['cre'], yAxisLabel: 'mL/h' },
-  cns: { lines: ['gcs'], dots: [], yAxisLabel: '' },
-  coag: { lines: [], dots: ['platelet'], yAxisLabel: '×10³/μL' },
-  hepatic: { lines: [], dots: ['bilirubin'], yAxisLabel: 'mg/dL' },
-  temp: { lines: ['temp'], dots: [], yAxisLabel: '°C' },
-};
-
-const CRE_DANGER_THRESHOLD = 2.0;
-
-interface DotInfo {
-  label: string;
-  unit: string;
-  /** 임계치 기반 색상 분기 */
-  color: (v: number) => string;
-  /** 라인이 있을 때 하단 띠 안에서의 위치 (0=상단, 1=하단) */
-  bandOffset: number;
-}
-
-const DOT_INFO: Record<DotType, DotInfo> = {
-  lac: {
-    label: 'Lactate',
-    unit: 'mmol/L',
-    color: () => 'var(--warn)',
-    bandOffset: 0.35,
-  },
-  cre: {
-    label: 'Creatinine',
-    unit: 'mg/dL',
-    color: (v) => (v > CRE_DANGER_THRESHOLD ? 'var(--danger)' : 'var(--warn)'),
-    bandOffset: 0.75,
-  },
-  pf_ratio: {
-    label: 'P/F Ratio',
-    unit: '',
-    color: () => 'var(--warn)',
-    bandOffset: 0.5,
-  },
-  platelet: {
-    label: 'Platelet',
-    unit: '×10³/μL',
-    color: (v) => (v >= 150 ? 'var(--safe)' : v >= 100 ? 'var(--warn)' : 'var(--danger)'),
-    bandOffset: 0.5,
-  },
-  bilirubin: {
-    label: 'Bilirubin',
-    unit: 'mg/dL',
-    color: (v) => (v < 1.2 ? 'var(--safe)' : v < 6.0 ? 'var(--warn)' : 'var(--danger)'),
-    bandOffset: 0.5,
-  },
-};
-
-interface DotShapeProps {
-  cx?: number;
-  cy?: number;
-  payload?: Record<string, number | null | undefined>;
-}
-
-function LacShape({ cx, cy, payload }: DotShapeProps) {
-  const v = payload?.lacValue;
-  if (cx == null || cy == null || v == null) return null;
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={4} fill={DOT_INFO.lac.color(v)} stroke="var(--card)" strokeWidth={1} />
-      <text x={cx + 7} y={cy + 3.5} fontSize={10} fill="var(--text-secondary)">
-        Lac {v}
-      </text>
-    </g>
-  );
-}
-
-function CreShape({ cx, cy, payload }: DotShapeProps) {
-  const v = payload?.creValue;
-  if (cx == null || cy == null || v == null) return null;
-  const elevated = v > CRE_DANGER_THRESHOLD;
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={4} fill={DOT_INFO.cre.color(v)} stroke="var(--card)" strokeWidth={1} />
-      <text x={cx + 7} y={cy + 3.5} fontSize={10} fill="var(--text-secondary)">
-        Cre {v}
-        {elevated ? '↑' : ''}
-      </text>
-    </g>
-  );
-}
-
-function PfRatioShape({ cx, cy, payload }: DotShapeProps) {
-  const v = payload?.pfValue;
-  if (cx == null || cy == null || v == null) return null;
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={4} fill={DOT_INFO.pf_ratio.color(v)} stroke="var(--card)" strokeWidth={1} />
-      <text x={cx + 7} y={cy + 3.5} fontSize={10} fill="var(--text-secondary)">
-        P/F {v}
-      </text>
-    </g>
-  );
-}
-
-function PlateletShape({ cx, cy, payload }: DotShapeProps) {
-  const v = payload?.pltValue;
-  if (cx == null || cy == null || v == null) return null;
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={4} fill={DOT_INFO.platelet.color(v)} stroke="var(--card)" strokeWidth={1} />
-      <text x={cx + 7} y={cy + 3.5} fontSize={10} fill="var(--text-secondary)">
-        Plt {v}
-      </text>
-    </g>
-  );
-}
-
-function BilirubinShape({ cx, cy, payload }: DotShapeProps) {
-  const v = payload?.bilValue;
-  if (cx == null || cy == null || v == null) return null;
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={4} fill={DOT_INFO.bilirubin.color(v)} stroke="var(--card)" strokeWidth={1} />
-      <text x={cx + 7} y={cy + 3.5} fontSize={10} fill="var(--text-secondary)">
-        Bil {v}
-      </text>
-    </g>
-  );
-}
-
-interface AxisRange {
-  yMin: number;
-  yMax: number;
-  rawMin: number;
-  labBand: number;
-  normalLow: number;
-  normalHigh: number;
-}
-
-function computeAxis(series: VitalSeries, withLabBand: boolean): AxisRange {
-  const [normalLow, normalHigh] = series.normal;
-  const hasData = series.data.length > 0;
-  const rawMin = hasData ? Math.min(normalLow, ...series.data) : normalLow;
-  const rawMax = hasData ? Math.max(normalHigh, ...series.data) : normalHigh;
-  const range = Math.max(rawMax - rawMin, 1);
-  const labBand = range * 0.2;
-  const yMin = withLabBand ? rawMin - labBand - 2 : rawMin - 2;
-  const yMax = rawMax + 4;
-  return { yMin, yMax, rawMin, labBand, normalLow, normalHigh };
-}
-
-function computeDotsOnlyAxis(values: number[]): AxisRange {
-  const rawMin = values.length > 0 ? Math.min(...values) : 0;
-  const rawMax = values.length > 0 ? Math.max(...values) : 1;
-  const range = Math.max(rawMax - rawMin, 1);
-  const pad = range * 0.3;
-  return {
-    yMin: Math.max(0, rawMin - pad),
-    yMax: rawMax + pad,
-    rawMin,
-    labBand: 0,
-    normalLow: 0,
-    normalHigh: 0,
-  };
-}
-
 export default function VitalChart({ vitals, patientId }: VitalChartProps) {
-  const [selected, setSelected] = useState<TabKey[]>(['cardio']);
-  const [compareMode, setCompareMode] = useState(false);
-
-  const active = selected[0];
-  const isCompare = compareMode && selected.length === 2;
-
-  const isCompareEligible = (key: TabKey): boolean => {
-    const cfg = TAB_CONFIG[key];
-    return cfg !== null && cfg.lines.length > 0;
-  };
-
-  const handleTabClick = (key: TabKey) => {
-    if (!compareMode) {
-      setSelected([key]);
-      return;
-    }
-    if (!isCompareEligible(key)) {
-      setCompareMode(false);
-      setSelected([key]);
-      return;
-    }
-    setSelected((prev) => {
-      if (prev.includes(key)) {
-        if (prev.length === 1) return prev;
-        return prev.filter((k) => k !== key);
-      }
-      if (prev.length >= 2) return [prev[1], key];
-      return [...prev, key];
-    });
-  };
-
-  const toggleCompareMode = () => {
-    if (!isCompareEligible(active)) return;
-    if (compareMode) {
-      setSelected((prev) => [prev[0]]);
-      setCompareMode(false);
-    } else {
-      setCompareMode(true);
-    }
-  };
+  const [active, setActive] = useState<TabKey>('cardio');
 
   const renderTabs = () => (
     <div className="vital-chart__tabs" role="tablist">
       {TABS.map((t) => {
-        const isOn = selected.includes(t.key);
+        const isOn = active === t.key;
         return (
           <button
             key={t.key}
             role="tab"
             aria-selected={isOn}
             className={`vital-chart__tab ${isOn ? 'is-active' : ''}`}
-            onClick={() => handleTabClick(t.key)}
+            onClick={() => setActive(t.key)}
           >
             {t.label}
           </button>
@@ -267,12 +55,10 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   const renderCompareBtn = () => (
     <button
       type="button"
-      className={`vital-chart__compare-btn ${compareMode ? 'is-active' : ''}`}
-      onClick={toggleCompareMode}
-      disabled={!isCompareEligible(active)}
-      aria-pressed={compareMode}
-      aria-label="비교 모드"
-      title="비교 모드"
+      className="vital-chart__compare-btn"
+      disabled
+      aria-label="비교 모드 (준비 중)"
+      title="비교 모드 (준비 중)"
     >
       <Layers size={18} />
     </button>
@@ -292,21 +78,8 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
     );
   }
 
-  const baseConfig = TAB_CONFIG[active];
-  if (!baseConfig) return null;
-
-  // 비교 모드에서 두 탭이 모두 선택된 경우, 각 탭의 lines[0]을 합쳐 듀얼 라인으로 합성
-  let config: TabConfig = baseConfig;
-  if (isCompare) {
-    const cfg1 = TAB_CONFIG[selected[0]];
-    const cfg2 = TAB_CONFIG[selected[1]];
-    if (cfg1 && cfg2 && cfg1.lines.length > 0 && cfg2.lines.length > 0) {
-      config = {
-        lines: [cfg1.lines[0], cfg2.lines[0]],
-        dots: [...cfg1.dots, ...cfg2.dots],
-      };
-    }
-  }
+  const config = TAB_CONFIG[active];
+  if (!config) return null;
 
   const isEmpty = config.lines.length === 0 && config.dots.length === 0;
   if (isEmpty) {
@@ -324,7 +97,7 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   const isMulti = config.lines.length === 2;
   const isSingle = config.lines.length === 1;
   const isDotsOnly = config.lines.length === 0 && config.dots.length > 0;
-  const isCns = !isCompare && active === 'cns';
+  const isCns = active === 'cns';
 
   const series1 = config.lines[0] ? vitals.series[config.lines[0]] : null;
   const series2 = config.lines[1] ? vitals.series[config.lines[1]] : null;
@@ -333,7 +106,9 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
 
   const axis1 = series1 ? computeAxis(series1, config.dots.length > 0) : null;
   const axis2 = series2 ? computeAxis(series2, false) : null;
-  const dotsOnlyAxis = isDotsOnly ? computeDotsOnlyAxis(filteredLabs.map((l) => l.value)) : null;
+  const dotsOnlyAxis = isDotsOnly
+    ? computeDotsOnlyAxis(filteredLabs.map((l) => l.value))
+    : null;
 
   // 라인이 있으면 점은 하단 띠 영역에 배치, 없으면 실제 측정값에 배치
   const dotYFor = (lab: LabDot | undefined): number | null => {
@@ -345,7 +120,9 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   const baseTimes = series1?.times ?? series2?.times ?? vitals.series.hr.times;
 
   const findLab = (t: string, type: DotType): LabDot | undefined =>
-    config.dots.includes(type) ? filteredLabs.find((l) => l.time === t && l.type === type) : undefined;
+    config.dots.includes(type)
+      ? filteredLabs.find((l) => l.time === t && l.type === type)
+      : undefined;
 
   const chartData = baseTimes.map((t, i) => {
     const v1 = series1 ? series1.data[i] : null;
@@ -357,7 +134,9 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
     const bilLab = findLab(t, 'bilirubin');
 
     const withinNormal =
-      isSingle && v1 != null && axis1 ? v1 >= axis1.normalLow && v1 <= axis1.normalHigh : true;
+      isSingle && v1 != null && axis1
+        ? v1 >= axis1.normalLow && v1 <= axis1.normalHigh
+        : true;
 
     return {
       t,
@@ -391,7 +170,8 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   const primaryDotLabs = primaryDotType
     ? filteredLabs.filter((l) => l.type === primaryDotType)
     : [];
-  const latestDot = primaryDotLabs.length > 0 ? primaryDotLabs[primaryDotLabs.length - 1] : null;
+  const latestDot =
+    primaryDotLabs.length > 0 ? primaryDotLabs[primaryDotLabs.length - 1] : null;
 
   const single1Domain: [number, number] | undefined =
     isSingle && axis1 ? (isCns ? [3, 15] : [axis1.yMin, axis1.yMax]) : undefined;
@@ -419,7 +199,10 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
           {isMulti && series1 && series2 ? (
             <>
               <span className="vital-chart__current">
-                <span className="vital-chart__label" style={{ color: 'var(--chart-line-1)' }}>
+                <span
+                  className="vital-chart__label"
+                  style={{ color: 'var(--chart-line-1)' }}
+                >
                   {series1.label}
                 </span>
                 <span className="vital-chart__value">
@@ -428,7 +211,10 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
                 </span>
               </span>
               <span className="vital-chart__current">
-                <span className="vital-chart__label" style={{ color: 'var(--chart-line-2)' }}>
+                <span
+                  className="vital-chart__label"
+                  style={{ color: 'var(--chart-line-2)' }}
+                >
                   {series2.label}
                 </span>
                 <span className="vital-chart__value">

@@ -1,12 +1,14 @@
 import { Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getNewAlertCount } from '../../api/services/alertService';
+import { useAsync } from '../../hooks/useAsync';
 import './AlertBell.css';
 
 export default function AlertBell() {
   const navigate = useNavigate();
-  const count = getNewAlertCount();
-  const hasNew = count > 0;
+  const { data: countData } = useAsync(() => getNewAlertCount(), []);
+  const count = countData ?? 0;
+  const hasNew = countData != null && count > 0;
 
   return (
     <button

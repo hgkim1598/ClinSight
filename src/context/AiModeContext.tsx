@@ -1,15 +1,7 @@
-import { createContext, useCallback, useContext, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { ChatContext } from '../types';
-
-interface AiModeContextValue {
-  chatPanelOpen: boolean;
-  chatContext: ChatContext | null;
-  openChatPanel: (context: ChatContext) => void;
-  closeChatPanel: () => void;
-}
-
-const AiModeContext = createContext<AiModeContextValue | null>(null);
+import { AiModeContext } from './aiMode';
 
 interface AiModeProviderProps {
   children: ReactNode;
@@ -35,12 +27,4 @@ export function AiModeProvider({ children }: AiModeProviderProps) {
       {children}
     </AiModeContext.Provider>
   );
-}
-
-export function useAiMode(): AiModeContextValue {
-  const ctx = useContext(AiModeContext);
-  if (!ctx) {
-    throw new Error('useAiMode must be used within AiModeProvider');
-  }
-  return ctx;
 }

@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
-import {
-  CheckCircle,
-  ChevronDown,
-  ChevronRight,
-  X,
-} from 'lucide-react';
+import { CheckCircle, X } from 'lucide-react';
 import type {
   ConsultPriority,
   ConsultRecipient,
@@ -15,7 +10,10 @@ import {
   createConsultation,
   getDepartments,
 } from '../../api/services/consultService';
-import { showToast } from './Toast';
+import { showToast } from '../../utils/toast';
+import { useAsync } from '../../hooks/useAsync';
+import DepartmentTree from './consult/DepartmentTree';
+import RecipientChips from './consult/RecipientChips';
 import './ConsultRequestModal.css';
 
 interface ConsultRequestModalProps {
@@ -40,13 +38,19 @@ export default function ConsultRequestModal({
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const autoCloseTimerRef = useRef<number | null>(null);
 
-  const departments = useMemo(() => getDepartments(), []);
+  const { data: departmentsData } = useAsync(() => getDepartments(), []);
+  const departments = departmentsData ?? [];
 
-  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
   const [recipients, setRecipients] = useState<ConsultRecipient[]>([]);
   const [reason, setReason] = useState('');
   const [priority, setPriority] = useState<ConsultPriority>('routine');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const recipientIds = useMemo(
+    () => new Set(recipients.map((r) => r.staffId)),
+    [recipients],
+  );
 
   // ESC 닫기 + 포커스 + 모달 열림 효과
   useEffect(() => {
@@ -59,14 +63,22 @@ export default function ConsultRequestModal({
     return () => document.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
-  // 모달이 닫히면 폼 상태 초기화 + 타이머 정리
+  // open이 false로 전환되면 폼 상태 초기화 — render-time prop 동기화 패턴.
+  // 외부 자원(타이머)은 아래 useEffect cleanup에서 별도 정리.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
+      setRecipients([]);
+      setReason('');
+      setPriority('routine');
+      setSubmitted(false);
+      setSubmitting(false);
+    }
+  }
+
   useEffect(() => {
     if (open) return;
-    setExpandedDepts(new Set());
-    setRecipients([]);
-    setReason('');
-    setPriority('routine');
-    setSubmitted(false);
     if (autoCloseTimerRef.current != null) {
       window.clearTimeout(autoCloseTimerRef.current);
       autoCloseTimerRef.current = null;
@@ -88,20 +100,8 @@ export default function ConsultRequestModal({
     if (e.target === e.currentTarget) onClose();
   };
 
-  const toggleDept = (deptId: string) => {
-    setExpandedDepts((prev) => {
-      const next = new Set(prev);
-      if (next.has(deptId)) next.delete(deptId);
-      else next.add(deptId);
-      return next;
-    });
-  };
-
-  const isRecipientAdded = (staffId: string) =>
-    recipients.some((r) => r.staffId === staffId);
-
   const addRecipient = (staff: StaffMember, deptName: string) => {
-    if (isRecipientAdded(staff.id)) return;
+    if (recipientIds.has(staff.id)) return;
     setRecipients((prev) => [
       ...prev,
       {
@@ -125,27 +125,39 @@ export default function ConsultRequestModal({
     setRecipients((prev) => prev.filter((r) => r.staffId !== staffId));
   };
 
-  const canSubmit = !submitted && recipients.length > 0;
+  const canSubmit = !submitted && !submitting && recipients.length > 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
-    createConsultation({
-      patientId: patient.id,
-      patientName: patient.name,
-      patientBed: patient.bed,
-      recipients,
-      priority,
-      reason: reason.trim(),
-    });
-    setSubmitted(true);
-    autoCloseTimerRef.current = window.setTimeout(() => {
+    setSubmitting(true);
+    try {
+      await createConsultation({
+        patientId: patient.id,
+        patientName: patient.name,
+        patientBed: patient.bed,
+        recipients,
+        priority,
+        reason: reason.trim(),
+      });
+      setSubmitted(true);
+      autoCloseTimerRef.current = window.setTimeout(() => {
+        showToast({
+          message: '협진 요청이 전송되었습니다',
+          type: 'success',
+          duration: 3000,
+        });
+        onSubmitted();
+      }, AUTO_CLOSE_MS);
+    } catch (e) {
+      void e;
       showToast({
-        message: '협진 요청이 전송되었습니다',
-        type: 'success',
+        message: '협진 요청 전송에 실패했습니다',
+        type: 'error',
         duration: 3000,
       });
-      onSubmitted();
-    }, AUTO_CLOSE_MS);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSuccessClose = () => {
@@ -191,72 +203,11 @@ export default function ConsultRequestModal({
 
             <section className="consult-modal__section">
               <h3 className="consult-modal__section-title">부서/담당자 선택</h3>
-              <div className="consult-modal__tree" role="tree">
-                {departments.map((dept) => {
-                  const expanded = expandedDepts.has(dept.id);
-                  return (
-                    <div key={dept.id} className="consult-modal__dept" role="treeitem" aria-expanded={expanded}>
-                      <button
-                        type="button"
-                        className="consult-modal__dept-head"
-                        onClick={() => toggleDept(dept.id)}
-                      >
-                        {expanded ? (
-                          <ChevronDown size={14} />
-                        ) : (
-                          <ChevronRight size={14} />
-                        )}
-                        <span className="consult-modal__dept-name">{dept.name}</span>
-                        <span className="consult-modal__dept-count">
-                          ({dept.members.length})
-                        </span>
-                      </button>
-                      {expanded && (
-                        <ul className="consult-modal__staff-list">
-                          {dept.members.map((staff) => {
-                            const added = isRecipientAdded(staff.id);
-                            return (
-                              <li key={staff.id}>
-                                <button
-                                  type="button"
-                                  className={`consult-modal__staff ${added ? 'is-added' : ''}`}
-                                  onClick={() => addRecipient(staff, dept.name)}
-                                  disabled={added}
-                                >
-                                  <span
-                                    className={`consult-modal__staff-dot ${
-                                      staff.available
-                                        ? 'is-available'
-                                        : 'is-unavailable'
-                                    }`}
-                                    aria-hidden="true"
-                                  />
-                                  <span className="consult-modal__staff-name">
-                                    {staff.name}
-                                  </span>
-                                  <span className="consult-modal__staff-role">
-                                    · {staff.role}
-                                  </span>
-                                  {!staff.available && (
-                                    <span className="consult-modal__staff-absent">
-                                      (부재중)
-                                    </span>
-                                  )}
-                                  {added && (
-                                    <span className="consult-modal__staff-added" aria-label="추가됨">
-                                      ✓
-                                    </span>
-                                  )}
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <DepartmentTree
+                departments={departments}
+                selectedIds={recipientIds}
+                onSelect={addRecipient}
+              />
             </section>
 
             <section className="consult-modal__section">
@@ -266,39 +217,11 @@ export default function ConsultRequestModal({
                   {recipients.length}
                 </span>
               </h3>
-              {recipients.length === 0 ? (
-                <p className="consult-modal__hint">
-                  부서를 펼쳐 담당자를 클릭해 추가하세요.
-                </p>
-              ) : (
-                <ul className="consult-modal__chip-list">
-                  {recipients.map((r) => (
-                    <li key={r.staffId}>
-                      <span className={`consult-modal__chip consult-modal__chip--${r.role}`}>
-                        <button
-                          type="button"
-                          className="consult-modal__chip-role"
-                          onClick={() => toggleRecipientRole(r.staffId)}
-                          aria-label={`${r.name} 역할 전환`}
-                        >
-                          {r.role === 'to' ? '수신' : '참조'}
-                        </button>
-                        <span className="consult-modal__chip-name">
-                          {r.name} ({r.department})
-                        </span>
-                        <button
-                          type="button"
-                          className="consult-modal__chip-remove"
-                          onClick={() => removeRecipient(r.staffId)}
-                          aria-label={`${r.name} 제거`}
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <RecipientChips
+                recipients={recipients}
+                onToggleRole={toggleRecipientRole}
+                onRemove={removeRecipient}
+              />
             </section>
 
             <section className="consult-modal__section">
@@ -315,7 +238,11 @@ export default function ConsultRequestModal({
 
             <section className="consult-modal__section consult-modal__section--row">
               <h3 className="consult-modal__section-title">우선순위</h3>
-              <div className="consult-modal__priority" role="radiogroup" aria-label="우선순위">
+              <div
+                className="consult-modal__priority"
+                role="radiogroup"
+                aria-label="우선순위"
+              >
                 <button
                   type="button"
                   role="radio"

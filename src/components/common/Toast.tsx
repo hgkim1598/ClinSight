@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
 import { AlertCircle, CheckCircle, Info } from 'lucide-react';
 import './Toast.css';
 
@@ -52,29 +51,4 @@ export default function Toast({
       <span className="toast__message">{message}</span>
     </div>
   );
-}
-
-/**
- * 명령형 토스트 헬퍼 — 호출자의 렌더 트리와 독립된 React tree에 마운트한다.
- * 호출자 컴포넌트가 unmount되어도 토스트는 살아남으며, duration 경과 후 자동 정리.
- *
- * 사용 예:
- *   showToast({ message: '저장되었습니다', type: 'success' });
- */
-export function showToast(props: Omit<ToastProps, 'onDismiss'>): void {
-  const container = document.createElement('div');
-  container.className = 'toast-mount';
-  document.body.appendChild(container);
-
-  const root = createRoot(container);
-
-  const cleanup = () => {
-    // React render 사이클 밖에서 unmount하기 위해 0ms 지연
-    window.setTimeout(() => {
-      root.unmount();
-      container.remove();
-    }, 0);
-  };
-
-  root.render(<Toast {...props} onDismiss={cleanup} />);
 }

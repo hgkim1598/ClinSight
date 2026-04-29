@@ -1,10 +1,20 @@
+/**
+ * Patient Report Service (조합형)
+ *
+ * 현재: 다른 서비스(patient/vital/model)를 조합해 보고서 즉석 빌드.
+ * API 전환 시:
+ *   1. 옵션 A — 백엔드에 GET /patients/{id}/report 엔드포인트 추가 (BFF 권장)
+ *   2. 옵션 B — 클라이언트에서 3개 서비스를 await로 병렬 호출 후 조합 (현재 구조 유지)
+ *      Promise.all로 병렬화 권장: await Promise.all([getPatientById, getVitals, getModelPredictions])
+ *
+ * 참고: docs/DYNAMO_SCHEMA.md §17 PatientReports
+ */
 import type {
   ModelKey,
   PatientReport,
   ReportLabRow,
   ReportPrediction,
   ReportVitalRow,
-  RiskLevel,
   RiskTone,
   VitalKey,
   VitalStatusLevel,
@@ -12,6 +22,7 @@ import type {
 import { getPatientById } from './patientService';
 import { getVitals } from './vitalService';
 import { getModelPredictions } from './modelService';
+import { toneToRisk } from '../../utils/constants';
 
 /**
  * 활력징후 상태 등급 산정 (mock heuristic).
@@ -45,12 +56,6 @@ const TARGET_LABS: Array<{
   { label: 'PaO2/FiO2', source: 'ards', metric: 'PaO2/FiO2', normalRange: '> 400' },
 ];
 
-function toneToRisk(tone: RiskTone): RiskLevel {
-  if (tone === 'danger') return 'high';
-  if (tone === 'warn') return 'med';
-  return 'low';
-}
-
 function toneFallbackPct(tone: RiskTone): number {
   if (tone === 'danger') return 72;
   if (tone === 'warn') return 45;
@@ -61,12 +66,14 @@ function toneFallbackPct(tone: RiskTone): number {
  * 환자 상태 요약 보고서 데이터를 조합한다.
  * 추후 백엔드 연결 시 GET /patients/{id}/report 같은 엔드포인트 호출로 교체될 자리.
  */
-export function getPatientReport(patientId: string): PatientReport | null {
-  const patient = getPatientById(patientId);
+export async function getPatientReport(patientId: string): Promise<PatientReport | null> {
+  const patient = await getPatientById(patientId);
   if (!patient) return null;
 
-  const vitalsData = getVitals(patientId);
-  const predictionsData = getModelPredictions(patientId);
+  const [vitalsData, predictionsData] = await Promise.all([
+    getVitals(patientId),
+    getModelPredictions(patientId),
+  ]);
 
   const vitals: ReportVitalRow[] = VITAL_KEYS.map((key) => {
     const series = vitalsData.series[key];
