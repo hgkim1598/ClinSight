@@ -15,6 +15,7 @@ import {
   createConsultation,
   getDepartments,
 } from '../../api/services/consultService';
+import { showToast } from './Toast';
 import './ConsultRequestModal.css';
 
 interface ConsultRequestModalProps {
@@ -124,8 +125,7 @@ export default function ConsultRequestModal({
     setRecipients((prev) => prev.filter((r) => r.staffId !== staffId));
   };
 
-  const canSubmit =
-    !submitted && recipients.length > 0 && reason.trim().length > 0;
+  const canSubmit = !submitted && recipients.length > 0;
 
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -139,6 +139,11 @@ export default function ConsultRequestModal({
     });
     setSubmitted(true);
     autoCloseTimerRef.current = window.setTimeout(() => {
+      showToast({
+        message: '협진 요청이 전송되었습니다',
+        type: 'success',
+        duration: 3000,
+      });
       onSubmitted();
     }, AUTO_CLOSE_MS);
   };
@@ -148,6 +153,11 @@ export default function ConsultRequestModal({
       window.clearTimeout(autoCloseTimerRef.current);
       autoCloseTimerRef.current = null;
     }
+    showToast({
+      message: '협진 요청이 전송되었습니다',
+      type: 'success',
+      duration: 3000,
+    });
     onSubmitted();
   };
 
@@ -295,7 +305,7 @@ export default function ConsultRequestModal({
               <h3 className="consult-modal__section-title">요청 사유</h3>
               <textarea
                 className="consult-modal__reason"
-                placeholder="협진 요청 사유를 입력하세요"
+                placeholder="협진 요청 사유를 입력하세요 (선택)"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
