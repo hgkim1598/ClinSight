@@ -111,15 +111,48 @@
 
 .report-modal__paper {
   width: 100%;
-  max-width: 800px;
+  max-width: 760px;
   background: #ffffff;
   color: #1a1a1a;
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
-  padding: 40px 48px;
+  padding: 36px 44px;
   border-radius: 4px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   협진 요청 버튼 영역 — 보고서 종이(paper) 바깥, 인쇄 시 숨김
+   ============================================ */
+.report-modal__actions {
+  width: 100%;
+  max-width: 760px;
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.report-modal__consult-btn {
+  padding: 10px 24px;
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.report-modal__consult-btn:hover {
+  filter: brightness(1.08);
+}
+
+.report-modal__consult-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 /* 헤더 */
@@ -439,7 +472,8 @@
   }
 
   .report-modal__toolbar,
-  .report-modal__note-add {
+  .report-modal__note-add,
+  .report-modal__actions {
     display: none;
   }
 

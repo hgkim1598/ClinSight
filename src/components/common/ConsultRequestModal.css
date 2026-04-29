@@ -1,0 +1,469 @@
+/* ============================================
+   협진 요청 — 보고서 모달 위에 겹치는 2차 모달
+   ============================================ */
+
+.consult-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  z-index: 200;
+}
+
+.consult-modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 560px;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 헤더 ---------- */
+.consult-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.consult-modal__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.consult-modal__close {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.consult-modal__close:hover {
+  color: var(--text);
+  background: var(--canvas);
+}
+
+.consult-modal__close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/* ---------- 환자 요약 ---------- */
+.consult-modal__patient {
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--canvas);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- 섹션 공통 ---------- */
+.consult-modal__section {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.consult-modal__section:last-of-type {
+  border-bottom: none;
+}
+
+.consult-modal__section--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.consult-modal__section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.consult-modal__section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.consult-modal__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------- 트리 (부서/인물) ---------- */
+.consult-modal__tree {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--canvas);
+}
+
+.consult-modal__dept + .consult-modal__dept {
+  border-top: 1px solid var(--border);
+}
+
+.consult-modal__dept-head {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  transition: background-color 0.12s ease;
+}
+
+.consult-modal__dept-head:hover {
+  background: var(--card);
+}
+
+.consult-modal__dept-name {
+  flex: 1;
+}
+
+.consult-modal__dept-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.consult-modal__staff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 6px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.consult-modal__staff {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.consult-modal__staff:hover:not(:disabled) {
+  background: var(--card);
+  color: var(--text);
+}
+
+.consult-modal__staff.is-added {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.consult-modal__staff-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.consult-modal__staff-dot.is-available {
+  background: var(--safe);
+}
+
+.consult-modal__staff-dot.is-unavailable {
+  background: var(--text-muted);
+}
+
+.consult-modal__staff-name {
+  font-weight: 600;
+}
+
+.consult-modal__staff-role {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.consult-modal__staff-absent {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.consult-modal__staff-added {
+  margin-left: auto;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ---------- 수신자 칩 ---------- */
+.consult-modal__chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.consult-modal__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 6px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+}
+
+.consult-modal__chip--to {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+}
+
+.consult-modal__chip-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+}
+
+.consult-modal__chip--cc .consult-modal__chip-role {
+  background: var(--text-muted);
+}
+
+.consult-modal__chip-role--static {
+  cursor: default;
+}
+
+.consult-modal__chip-name {
+  color: var(--text);
+  padding: 0 4px;
+}
+
+.consult-modal__chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.consult-modal__chip-remove:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* ---------- 사유 textarea ---------- */
+.consult-modal__reason {
+  width: 100%;
+  resize: vertical;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--canvas);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 72px;
+}
+
+.consult-modal__reason:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+  border-color: var(--primary);
+}
+
+/* ---------- 우선순위 ---------- */
+.consult-modal__priority {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.consult-modal__priority-btn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.consult-modal__priority-btn:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.consult-modal__priority-btn.is-active {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.consult-modal__priority-btn--urgent.is-active {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ---------- 푸터 버튼 ---------- */
+.consult-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--canvas);
+}
+
+.consult-modal__btn {
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
+}
+
+.consult-modal__btn--ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.consult-modal__btn--ghost:hover {
+  border-color: var(--border-strong);
+  background: var(--card);
+}
+
+.consult-modal__btn--primary {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+}
+
+.consult-modal__btn--primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.consult-modal__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.consult-modal__btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ---------- 성공 화면 ---------- */
+.consult-modal__success {
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.consult-modal__success-icon {
+  color: var(--safe);
+}
+
+.consult-modal__success-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.consult-modal__success-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .consult-modal__overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+  .consult-modal {
+    max-height: 100vh;
+    max-width: none;
+    border-radius: 0;
+  }
+}

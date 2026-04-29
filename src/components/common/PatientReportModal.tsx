@@ -7,6 +7,7 @@ import type {
   RiskLevel,
   VitalStatusLevel,
 } from '../../types';
+import ConsultRequestModal from './ConsultRequestModal';
 import './PatientReportModal.css';
 
 interface PatientReportModalProps {
@@ -67,6 +68,7 @@ export default function PatientReportModal({
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const [notes, setNotes] = useState<ConsultationNote[]>([]);
   const [noteInput, setNoteInput] = useState('');
+  const [consultOpen, setConsultOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -83,11 +85,12 @@ export default function PatientReportModal({
     };
   }, [open, onClose]);
 
-  // 모달이 닫혔다가 다시 열리면 메모 초기화
+  // 모달이 닫혔다가 다시 열리면 메모 + 협진 모달 상태 초기화
   useEffect(() => {
     if (!open) {
       setNotes([]);
       setNoteInput('');
+      setConsultOpen(false);
     }
   }, [open]);
 
@@ -343,6 +346,26 @@ export default function PatientReportModal({
           </p>
         </footer>
       </article>
+
+      <div className="report-modal__actions">
+        <button
+          type="button"
+          className="report-modal__consult-btn"
+          onClick={() => setConsultOpen(true)}
+        >
+          협진 요청
+        </button>
+      </div>
+
+      <ConsultRequestModal
+        open={consultOpen}
+        onClose={() => setConsultOpen(false)}
+        onSubmitted={() => {
+          setConsultOpen(false);
+          onClose();
+        }}
+        patient={{ id: patient.id, name: patient.name, bed: patient.bed }}
+      />
     </div>
   );
 }

@@ -62,14 +62,14 @@ const NAV_GROUPS: NavGroup[] = [
     label: '모니터링',
     items: [
       { icon: LayoutDashboard, label: 'ICU 현황', to: '/' },
-      { icon: Bell, label: '알림 센터' },
+      { icon: Bell, label: '알림 센터', to: '/alerts' },
     ],
   },
   {
     label: '환자 관리',
     items: [
       { icon: ClipboardList, label: '인계 노트' },
-      { icon: UserPlus, label: '협진 요청' },
+      { icon: UserPlus, label: '협진 요청', to: '/consultations' },
     ],
   },
   {

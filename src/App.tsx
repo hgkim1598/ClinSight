@@ -18,6 +18,10 @@ export default function App() {
             <Route path="/patient/:id" element={<PatientPage />} />
             <Route path="/patient/:id/model/:modelKey" element={<DrilldownPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
+            <Route
+              path="/consultations"
+              element={<div style={{ padding: 24 }}>협진 요청 내역 (준비 중)</div>}
+            />
           </Route>
         </Routes>
       </AiModeProvider>

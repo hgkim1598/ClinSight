@@ -274,6 +274,57 @@ export interface StaffingSnapshot {
   thresholds: StaffingThresholds;
 }
 
+// ---------- 협진 요청 ----------
+
+/** 부서 소속 의료진 1명 */
+export interface StaffMember {
+  id: string;
+  name: string;
+  /** "전문의" / "전공의" / "수간호사" 등 표시용 라벨 */
+  role: string;
+  /** 현재 근무 중 여부 — 부재중은 false */
+  available: boolean;
+}
+
+/** 진료 부서 + 소속 인원 트리 */
+export interface Department {
+  id: string;
+  name: string;
+  members: StaffMember[];
+}
+
+/** 협진 요청 우선순위 */
+export type ConsultPriority = 'urgent' | 'routine';
+
+/** 협진 요청 상태 */
+export type ConsultStatus = 'pending' | 'accepted' | 'completed';
+
+/** 협진 수신자 — 'to'(수신) 또는 'cc'(참조) */
+export interface ConsultRecipient {
+  staffId: string;
+  name: string;
+  department: string;
+  role: 'to' | 'cc';
+}
+
+/** 협진 요청 단일 건 */
+export interface ConsultationRequest {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientBed: string;
+  /** 요청자 표시명 — Cognito 연동 전 placeholder */
+  requestedBy: string;
+  /** 요청 시각 — 화면 표시용 문자열 (ISO로 통일 예정) */
+  requestedAt: string;
+  priority: ConsultPriority;
+  status: ConsultStatus;
+  recipients: ConsultRecipient[];
+  reason: string;
+  /** 첨부된 보고서 요약 (옵션) */
+  reportSnapshot?: string;
+}
+
 // ---------- 임상 타임라인 ----------
 
 /** 이벤트 분류 — 아이콘과 라벨 매핑 키 */
