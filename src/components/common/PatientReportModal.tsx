@@ -14,6 +14,8 @@ interface PatientReportModalProps {
   open: boolean;
   onClose: () => void;
   report: PatientReport;
+  /** true이면 하단 협진 요청 버튼 영역을 렌더링하지 않음 (이미 요청된 건 열람 시 사용) */
+  hideConsultButton?: boolean;
 }
 
 interface ConsultationNote {
@@ -64,6 +66,7 @@ export default function PatientReportModal({
   open,
   onClose,
   report,
+  hideConsultButton = false,
 }: PatientReportModalProps) {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const [notes, setNotes] = useState<ConsultationNote[]>([]);
@@ -347,15 +350,17 @@ export default function PatientReportModal({
         </footer>
       </article>
 
-      <div className="report-modal__actions">
-        <button
-          type="button"
-          className="report-modal__consult-btn"
-          onClick={() => setConsultOpen(true)}
-        >
-          협진 요청
-        </button>
-      </div>
+      {!hideConsultButton && (
+        <div className="report-modal__actions">
+          <button
+            type="button"
+            className="report-modal__consult-btn"
+            onClick={() => setConsultOpen(true)}
+          >
+            협진 요청
+          </button>
+        </div>
+      )}
 
       <ConsultRequestModal
         open={consultOpen}

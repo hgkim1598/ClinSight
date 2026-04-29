@@ -6,6 +6,7 @@ import PatientPage from './pages/PatientPage';
 import DrilldownPage from './pages/DrilldownPage';
 import LoginPage from './pages/LoginPage';
 import AlertsPage from './pages/AlertsPage';
+import ConsultationsPage from './pages/ConsultationsPage';
 
 export default function App() {
   return (
@@ -18,10 +19,7 @@ export default function App() {
             <Route path="/patient/:id" element={<PatientPage />} />
             <Route path="/patient/:id/model/:modelKey" element={<DrilldownPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
-            <Route
-              path="/consultations"
-              element={<div style={{ padding: 24 }}>협진 요청 내역 (준비 중)</div>}
-            />
+            <Route path="/consultations" element={<ConsultationsPage />} />
           </Route>
         </Routes>
       </AiModeProvider>
