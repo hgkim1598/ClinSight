@@ -15,7 +15,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-001',
     timestamp: '14:20',
-    patient: { id: 'P-001', name: '김민수', bed: 'B04' },
+    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
     source: 'deep_model',
     priority: 'critical',
     status: 'new',
@@ -32,7 +32,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-002',
     timestamp: '14:15',
-    patient: { id: 'P-001', name: '김민수', bed: 'B04' },
+    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
     source: 'threshold',
     priority: 'critical',
     status: 'new',
@@ -47,7 +47,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-003',
     timestamp: '14:08',
-    patient: { id: 'P-003', name: '박서연', bed: 'B07' },
+    patient: { id: 'PT-20314', name: '박선미', bed: 'A-02' },
     source: 'light_model',
     priority: 'warning',
     status: 'new',
@@ -63,7 +63,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-004',
     timestamp: '13:50',
-    patient: { id: 'P-001', name: '김민수', bed: 'B04' },
+    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
     source: 'threshold',
     priority: 'warning',
     status: 'acknowledged',
@@ -77,7 +77,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-005',
     timestamp: '13:32',
-    patient: { id: 'P-005', name: '이준혁', bed: 'B11' },
+    patient: { id: 'PT-20781', name: '이재훈', bed: 'A-03' },
     source: 'deep_model',
     priority: 'warning',
     status: 'new',
@@ -93,7 +93,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-006',
     timestamp: '13:15',
-    patient: { id: 'P-008', name: '최하은', bed: 'B02' },
+    patient: { id: 'PT-21005', name: '최민정', bed: 'A-04' },
     source: 'light_model',
     priority: 'warning',
     status: 'new',
@@ -109,7 +109,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-007',
     timestamp: '12:48',
-    patient: { id: 'P-003', name: '박서연', bed: 'B07' },
+    patient: { id: 'PT-20314', name: '박선미', bed: 'A-02' },
     source: 'threshold',
     priority: 'warning',
     status: 'acknowledged',
@@ -123,7 +123,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-008',
     timestamp: '12:20',
-    patient: { id: 'P-005', name: '이준혁', bed: 'B11' },
+    patient: { id: 'PT-20781', name: '이재훈', bed: 'A-03' },
     source: 'threshold',
     priority: 'critical',
     status: 'resolved',
@@ -136,7 +136,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-009',
     timestamp: '11:55',
-    patient: { id: 'P-001', name: '김민수', bed: 'B04' },
+    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
     source: 'light_model',
     priority: 'warning',
     status: 'resolved',
@@ -150,7 +150,7 @@ export const mockAlerts: Alert[] = [
   {
     id: 'alert-010',
     timestamp: '11:30',
-    patient: { id: 'P-008', name: '최하은', bed: 'B02' },
+    patient: { id: 'PT-21005', name: '최민정', bed: 'A-04' },
     source: 'deep_model',
     priority: 'warning',
     status: 'acknowledged',
