@@ -10,9 +10,17 @@
  *
  * 참고: docs/DYNAMO_SCHEMA.md §12 ClinicalTimeline
  */
-import type { TimelineEvent } from '../../types';
-import { mockTimeline } from '../mock/timeline';
+import type { ScheduledEvent, TimelineEvent } from '../../types';
+import { mockSchedule, mockTimeline } from '../mock/timeline';
 
 export async function getTimeline(patientId: string): Promise<TimelineEvent[]> {
   return mockTimeline[patientId] ?? [];
+}
+
+/**
+ * 환자의 예정된 임상 이벤트(투약 다음 시점·정기 검사 등)를 반환한다.
+ * 백엔드 연결 시 GET /patients/{id}/schedule 또는 처방/오더 테이블에서 도출.
+ */
+export async function getSchedule(patientId: string): Promise<ScheduledEvent[]> {
+  return mockSchedule[patientId] ?? [];
 }

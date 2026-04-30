@@ -350,6 +350,21 @@ export interface TimelineEvent {
   severity: TimelineEventSeverity;
 }
 
+/**
+ * 예정된 임상 이벤트 — 처방·프로토콜에서 다음 시점을 계산한 항목.
+ * 과거 이벤트(severity 있음)와 달리 아직 발생하지 않았으므로 severity 대신 basis(근거)를 가진다.
+ */
+export interface ScheduledEvent {
+  id: string;
+  /** 예정 시각 ("16:00") */
+  time: string;
+  title: string;
+  description: string;
+  category: TimelineEventCategory;
+  /** 근거 — 처방 / 프로토콜 / 직전 이벤트로부터의 산정 근거 */
+  basis: string;
+}
+
 // ---------- 알림 ----------
 
 /** 알림 발생 소스 — 경량 모델 / 정밀 모델 / 룰 기반 임계치 */

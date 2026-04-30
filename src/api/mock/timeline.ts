@@ -1,4 +1,4 @@
-import type { TimelineEvent } from '../../types';
+import type { ScheduledEvent, TimelineEvent } from '../../types';
 
 /**
  * 임상 타임라인 mock — 환자별 24시간 이벤트 누적 (최신순).
@@ -113,4 +113,56 @@ export const mockTimeline: Record<string, TimelineEvent[]> = {
   ],
   'PT-20314': [],
   'PT-20781': [],
+};
+
+/**
+ * 예정 임상 이벤트 mock — 처방·프로토콜에서 산정한 다음 시점 항목.
+ * 백엔드 연결 시 GET /patients/{id}/schedule 또는 처방·오더 테이블에서 도출.
+ */
+export const mockSchedule: Record<string, ScheduledEvent[]> = {
+  'PT-19482': [
+    {
+      id: 'sch-001',
+      time: '15:50',
+      title: 'Piperacillin/Tazobactam 투여',
+      description: '4.5g IV — 3회차',
+      category: 'medication',
+      basis: '처방: q8h (직전 투여 11:50)',
+    },
+    {
+      id: 'sch-002',
+      time: '16:00',
+      title: '정기 바이탈 측정',
+      description: 'HR, MAP, SpO2, RR, Temp',
+      category: 'vitals',
+      basis: 'ICU 프로토콜: 2시간 간격',
+    },
+    {
+      id: 'sch-003',
+      time: '17:00',
+      title: 'Lactate 재검',
+      description: '이전 결과 3.8 mmol/L — clearance 확인',
+      category: 'lab',
+      basis: '처방: q4h (직전 채혈 13:45)',
+    },
+    {
+      id: 'sch-004',
+      time: '18:00',
+      title: 'ABG 검사',
+      description: 'P/F ratio 추적, 환기 설정 평가',
+      category: 'lab',
+      basis: '기계환기 중 프로토콜: q6h',
+    },
+    {
+      id: 'sch-005',
+      time: '19:50',
+      title: 'Piperacillin/Tazobactam 투여',
+      description: '4.5g IV — 4회차',
+      category: 'medication',
+      basis: '처방: q8h (직전 투여 15:50 예정 기준)',
+    },
+  ],
+  'PT-20314': [],
+  'PT-20781': [],
+  'PT-21005': [],
 };

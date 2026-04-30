@@ -6,7 +6,7 @@ import { getPatientById } from '../api/services/patientService';
 import { getVitals } from '../api/services/vitalService';
 import { getModelPredictions } from '../api/services/modelService';
 import { getPatientReport } from '../api/services/reportService';
-import { getTimeline } from '../api/services/timelineService';
+import { getSchedule, getTimeline } from '../api/services/timelineService';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientHeader from '../components/common/PatientHeader';
 import VitalChart from '../components/common/VitalChart';
@@ -29,13 +29,14 @@ export default function PatientPage() {
   const navigate = useNavigate();
 
   const { data: bundle, loading, error, refetch } = useAsync(async () => {
-    const [patient, vitals, predictions, timeline] = await Promise.all([
+    const [patient, vitals, predictions, timeline, schedule] = await Promise.all([
       getPatientById(id),
       getVitals(id),
       getModelPredictions(id),
       getTimeline(id),
+      getSchedule(id),
     ]);
-    return { patient, vitals, predictions, timeline };
+    return { patient, vitals, predictions, timeline, schedule };
   }, [id]);
 
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
@@ -62,7 +63,7 @@ export default function PatientPage() {
   }
   if (!bundle) return null;
 
-  const { patient, vitals, predictions, timeline } = bundle;
+  const { patient, vitals, predictions, timeline, schedule } = bundle;
 
   if (!patient) {
     return (
@@ -148,7 +149,7 @@ export default function PatientPage() {
             </div>
           </section>
 
-          <ClinicalTimeline events={timeline} />
+          <ClinicalTimeline events={timeline} schedule={schedule} />
         </>
       )}
 
