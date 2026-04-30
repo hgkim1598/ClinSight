@@ -115,6 +115,14 @@ DynamoDB (정규화된 flat row)
 | `time` | `timestamp` | ISO 8601 |
 | (—) | `sortKey` | DDB 합성 SK (`timestamp#eventId`) |
 
+#### ScheduledEvent
+| Frontend | DynamoDB | 비고 |
+|---|---|---|
+| `id` | `scheduleId` | |
+| `time` | `scheduledTime` | ISO 8601 (DDB SK) |
+| (—) | `patientId` | DDB PK 추가 |
+| (—) | `sourceOrderId` | 처방·오더 FK (옵션, 변경 시 재계산용) |
+
 #### Department / StaffMember
 | Frontend | DynamoDB | 비고 |
 |---|---|---|
@@ -168,14 +176,15 @@ DynamoDB (정규화된 flat row)
 | 6 | `IcuStaffing` | ICU 운영 현황 | `icuId` (S) | — | 0 |
 | 7 | `AiInsightsCache` | AI 설명 텍스트 캐시 (옵션) | `insightKey` (S) | — | 0 |
 | 8 | `Alerts` | 임상 알림 | `alertId` (S) | — | 2 |
-| 9 | `ClinicalTimeline` | 환자 24시간 이벤트 | `patientId` (S) | `timestamp#eventId` (S) | 0 |
-| 10 | `Departments` | 진료 부서 마스터 | `departmentId` (S) | — | 0 |
-| 11 | `Staff` | 의료진 마스터 | `staffId` (S) | — | 1 |
-| 12 | `Consultations` | 협진 요청 | `consultationId` (S) | — | 2 |
-| 13 | `ChatMessages` | AI 채팅 이력 | `sessionId` (S) | `timestamp` (S) | 0 |
-| 14 | `PatientReports` | 환자 요약 보고서 이력 | `patientId` (S) | `generatedAt` (S) | 0 |
+| 9 | `ClinicalTimeline` | 환자 24시간 과거 이벤트 | `patientId` (S) | `timestamp#eventId` (S) | 0 |
+| 10 | `ScheduledEvents` | 환자 예정 임상 이벤트 (처방·프로토콜 산정) | `patientId` (S) | `scheduledTime` (S) | 0 |
+| 11 | `Departments` | 진료 부서 마스터 | `departmentId` (S) | — | 0 |
+| 12 | `Staff` | 의료진 마스터 | `staffId` (S) | — | 1 |
+| 13 | `Consultations` | 협진 요청 | `consultationId` (S) | — | 2 |
+| 14 | `ChatMessages` | AI 채팅 이력 | `sessionId` (S) | `timestamp` (S) | 0 |
+| 15 | `PatientReports` | 환자 요약 보고서 이력 | `patientId` (S) | `generatedAt` (S) | 0 |
 
-> **참고**: 단일 테이블 디자인(single-table design)으로 통합도 가능하나, 가독성·온보딩을 위해 도메인별로 분리. 통합안 토의는 §17에 정리.
+> **참고**: 단일 테이블 디자인(single-table design)으로 통합도 가능하나, 가독성·온보딩을 위해 도메인별로 분리. 통합안 토의는 §19에 정리.
 
 ---
 
@@ -195,7 +204,7 @@ DynamoDB (정규화된 flat row)
 - **삭제 정책**: 임상 데이터는 soft-delete(`deletedAt`) 권장. hard-delete 금지.
 - **Streams**: `Alerts` 등 실시간 알림은 DDB Streams + Lambda + WebSocket/SNS 구성 고려.
 - **TTL**: `AiInsightsCache`(24h), `ChatMessages`(세션 종료 후 30일 등) 사용. 임상 데이터에는 TTL 사용 금지.
-- **Hot partition 주의**: 단일 ICU 운영 시 `risk='high'`처럼 카디널리티 낮은 GSI PK는 hot partition 위험. 본 문서 §4·§11·§15의 **개선 대안** 참조 (`icuId#status` 등 합성 PK).
+- **Hot partition 주의**: 단일 ICU 운영 시 `risk='high'`처럼 카디널리티 낮은 GSI PK는 hot partition 위험. 본 문서 §4·§11·§16의 **개선 대안** 참조 (`icuId#status` 등 합성 PK).
 
 ---
 
@@ -619,7 +628,7 @@ Bedrock 호출 결과를 모델×섹션 단위로 캐싱. **선택 사항** — 
 |---|---|---|
 | 캐시 hit 체크 → miss 시 Bedrock 호출 | `GetItem` → 없으면 invoke → `PutItem` | `getAiInsight(model, section)` |
 
-> 환자 컨텍스트가 들어가면 PK가 `{patientId}#{modelKey}#{section}`로 확장. 채팅(`getChatResponse`)은 ChatMessages 테이블(§16)로 분리.
+> 환자 컨텍스트가 들어가면 PK가 `{patientId}#{modelKey}#{section}`로 확장. 채팅(`getChatResponse`)은 ChatMessages 테이블(§17)로 분리.
 
 ### API 응답 형태
 - **Service**: `getAiInsight(model: ModelKey, section: AiInsightSection): string`
@@ -785,7 +794,77 @@ Bedrock 호출 결과를 모델×섹션 단위로 캐싱. **선택 사항** — 
 
 ---
 
-## 13. `Departments`
+## 13. `ScheduledEvents`
+
+### 용도
+환자별 **예정된** 임상 이벤트(투약 다음 시점, 정기 검사, 프로토콜 기반 평가 등). §12 [`ClinicalTimeline`](#12-clinicaltimeline)이 발생한 과거 기록을 보관하는 반면, `ScheduledEvents`는 처방·오더·프로토콜에서 도출되는 **미래 시점** 항목을 보관한다.
+
+### 분리 근거 (vs ClinicalTimeline)
+
+| 비교 항목 | ClinicalTimeline (과거) | ScheduledEvents (예정) |
+|---|---|---|
+| 데이터 출처 | 발생한 이벤트 로그 (append-only) | 처방·프로토콜에서 산정 (재계산 가능) |
+| 추가 필드 | `severity` (`critical`/`warning`/`info`) | `basis` (산정 근거 문자열) |
+| 시간 정렬 | 최신순 (`ScanIndexForward=false`) | 가까운 순 (`ScanIndexForward=true`) |
+| 시간 범위 | `now-24h ~ now` | `now ~ now+N` |
+| 갱신 주기 | append-only | 처방 변경 시 재계산 (영향받는 row 삭제 + 재생성) |
+
+→ 같은 도메인이지만 데이터 lifecycle·쿼리 방향·필드가 모두 달라 **별도 테이블로 분리**한다.
+
+### 키 설계
+
+| 속성 | 타입 | 역할 |
+|---|---|---|
+| `patientId` | S | **PK** |
+| `scheduledTime` | S | **SK** (ISO 8601, 시간 오름차순 정렬에 적합) |
+
+### 속성
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `patientId` | S | ✓ | PK |
+| `scheduledTime` | S | ✓ | SK (예정 시각 ISO 8601) |
+| `scheduleId` | S | ✓ | 항목 식별자 (예: `sch-001`) |
+| `title` | S | ✓ | 이벤트 제목 |
+| `description` | S | ✓ | 상세 설명 |
+| `category` | S | ✓ | `vitals` / `lab` / `medication` / `procedure` / `assessment` / `alert` (TimelineEvent와 동일 enum) |
+| `basis` | S | ✓ | 산정 근거 (예: `처방: q8h (직전 투여 11:50)`, `ICU 프로토콜: 2시간 간격`) |
+| `sourceOrderId` | S | ✗ | 처방·오더 FK (옵션, 처방 변경 시 영향받는 row 삭제용) |
+
+### DDB 저장 예시 ([timeline.ts:120-127](../src/api/mock/timeline.ts#L120-L127))
+```json
+{
+  "patientId": "PT-19482",
+  "scheduledTime": "2025-04-29T15:50:00+09:00",
+  "scheduleId": "sch-001",
+  "title": "Piperacillin/Tazobactam 투여",
+  "description": "4.5g IV — 3회차",
+  "category": "medication",
+  "basis": "처방: q8h (직전 투여 11:50)"
+}
+```
+
+### 쿼리 패턴
+
+| 시나리오 | 동작 | API 매핑 |
+|---|---|---|
+| 환자의 다가오는 N건 (가까운 순) | `Query patientId, SK > now, ScanIndexForward=true, Limit=N` | `GET /patients/{id}/schedule` ← `getSchedule(id)` |
+| 특정 시간 범위 (예: 향후 6시간) | `Query patientId, SK between (now, now+6h)` | (옵션) |
+| 처방 변경 시 영향받는 항목 삭제 | `Query patientId` + Filter `sourceOrderId=:id` → `BatchWriteItem` Delete | (오더 시스템 hook) |
+
+> **재계산 정책**: 처방·프로토콜이 변경되면 해당 `sourceOrderId`로 묶인 미래 항목을 삭제 후 재생성. 단순 `PutItem` overwrite는 같은 SK일 때만 작동 — 시간이 바뀌면 별 row이므로 명시적 cleanup 필요.
+
+### API 응답 형태
+- **Service**: `getSchedule(patientId: string): Promise<ScheduledEvent[]>`
+- **반환 타입**: [`ScheduledEvent[]`](../src/types/index.ts)
+- **Lambda 변환**: row → `ScheduledEvent`
+  - rename: `scheduleId → id`, `scheduledTime → time`
+  - drop: `patientId`, `sourceOrderId`
+  - `time`은 ISO를 그대로 둘지 표시용 형식(`"15:50"`)으로 변환할지 결정 필요 (현재 mock은 표시용)
+
+---
+
+## 14. `Departments`
 
 ### 용도
 진료 부서 마스터. 협진 요청 모달의 부서 트리에 사용.
@@ -831,7 +910,7 @@ Bedrock 호출 결과를 모델×섹션 단위로 캐싱. **선택 사항** — 
 
 ---
 
-## 14. `Staff`
+## 15. `Staff`
 
 ### 용도
 의료진 마스터. 부서별 조회 + 단건 lookup이 둘 다 필요.
@@ -884,7 +963,7 @@ Bedrock 호출 결과를 모델×섹션 단위로 캐싱. **선택 사항** — 
 
 ---
 
-## 15. `Consultations`
+## 16. `Consultations`
 
 ### 용도
 협진 요청 내역. 환자별 + 상태별 조회 모두 필요. 생성은 단순 `PutItem`.
@@ -967,7 +1046,7 @@ Bedrock 호출 결과를 모델×섹션 단위로 캐싱. **선택 사항** — 
 
 ---
 
-## 16. `ChatMessages`
+## 17. `ChatMessages`
 
 ### 용도
 AI 채팅 패널의 대화 이력 저장. 현재 프론트엔드 `getChatResponse(context, userMessage)`는 stateless이지만, **백엔드 도입 시 세션 단위로 메시지를 누적**해 컨텍스트를 유지하고 추후 모니터링·감사 로그로도 활용한다.
@@ -1035,7 +1114,7 @@ AI 채팅 패널의 대화 이력 저장. 현재 프론트엔드 `getChatRespons
 
 ---
 
-## 17. `PatientReports`
+## 18. `PatientReports`
 
 ### 용도
 환자 상태 요약 보고서 생성 이력. 현재 프론트는 매번 [`getPatientReport(patientId)`](../src/api/services/reportService.ts)에서 patientService + vitalService + modelService를 조합해 즉석 빌드한다. **백엔드 도입 시 보고서를 시점별로 동결(snapshot) 저장**해 후속 조회·인쇄·감사에 활용.
@@ -1120,7 +1199,7 @@ AI 채팅 패널의 대화 이력 저장. 현재 프론트엔드 `getChatRespons
 
 ---
 
-## 18. 단일 테이블 디자인(Single-Table Design) 대안
+## 19. 단일 테이블 디자인(Single-Table Design) 대안
 
 위 14개 분리 테이블 대신 한 테이블로 통합하는 안:
 
@@ -1141,13 +1220,13 @@ SK = "META" / "VITAL#2026-04-25T14:00:00" / "MODEL#mortality" / "ALERT#alert-001
 - 디버깅/콘솔 가독성 떨어짐
 
 ### 권장
-- MVP는 분리 테이블로 시작 (현재 문서 §4–§17)
+- MVP는 분리 테이블로 시작 (현재 문서 §4–§18)
 - 트래픽이 늘면 hot path만 단일 테이블 패턴으로 이전
-- §11(Alerts), §15(Consultations)의 합성 PK 개선 대안은 **단일 테이블 전환의 사전 단계**로도 의미가 있음
+- §11(Alerts), §16(Consultations)의 합성 PK 개선 대안은 **단일 테이블 전환의 사전 단계**로도 의미가 있음
 
 ---
 
-## 19. 미정 / 후속 결정 필요
+## 20. 미정 / 후속 결정 필요
 
 | 항목 | 비고 |
 |---|---|
