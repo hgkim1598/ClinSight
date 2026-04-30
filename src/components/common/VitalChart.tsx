@@ -31,7 +31,7 @@ interface VitalChartProps {
 }
 
 export default function VitalChart({ vitals, patientId }: VitalChartProps) {
-  const [active, setActive] = useState<TabKey>('cardio');
+  const [active, setActive] = useState<TabKey>('sofa');
 
   const renderTabs = () => (
     <div className="vital-chart__tabs" role="tablist">
