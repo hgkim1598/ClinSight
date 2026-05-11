@@ -1,58 +1,138 @@
 import { useNavigate } from 'react-router-dom';
-import type { Alert, AlertAction, AlertSource } from '../../types';
+import type { Alert, AlertAction } from '../../types';
+import { markAlertRead } from '../../api/services/alertService';
+import { useSnackbar } from '../../context/useSnackbar';
+import { formatPatientName } from '../../utils/formatPatientName';
+import { formatTime } from '../../utils/time';
 import './AlertCard.css';
 
 interface AlertCardProps {
   alert: Alert;
-  onAcknowledge: (id: string) => void;
+  onAcknowledge: (id: string) => Promise<void> | void;
+  onResolve: (id: string) => Promise<void> | void;
+  /** 카드 클릭 시 read 처리 후 호출. 보통 목록 refetch. */
+  onRead?: (id: string) => Promise<void> | void;
 }
 
-const SOURCE_TAG: Record<AlertSource, { label: string; modifier: string }> = {
-  deep_model: { label: 'AI 예측', modifier: 'alert-card__source--deep' },
-  light_model: { label: 'AI 스크리닝', modifier: 'alert-card__source--light' },
-  threshold: { label: '임계치 초과', modifier: 'alert-card__source--threshold' },
-};
+/**
+ * alert_source → 화면 표시 배지.
+ *
+ * API의 alert_source는 model_key('mortality_48h' 등) 또는 trigger_rule_key('threshold' 등)가
+ * 들어온다. 컴포넌트가 카테고리로 분류해 표시한다.
+ */
+function getSourceTag(alertSource: string): { label: string; modifier: string } {
+  if (alertSource === 'threshold') {
+    return { label: '임계치 초과', modifier: 'alert-card__source--threshold' };
+  }
+  if (alertSource.includes('light') || alertSource.includes('screen')) {
+    return { label: 'AI 스크리닝', modifier: 'alert-card__source--light' };
+  }
+  return { label: 'AI 예측', modifier: 'alert-card__source--deep' };
+}
 
-export default function AlertCard({ alert, onAcknowledge }: AlertCardProps) {
+/**
+ * severity/status에서 어떤 액션을 노출할지 결정.
+ * (1차 결정: API actions 미포함, 프론트에서 결정)
+ */
+function buildActions(alert: Alert): AlertAction[] {
+  const actions: AlertAction[] = [];
+  if (alert.status === 'active') {
+    actions.push({ type: 'acknowledge', label: '확인' });
+    if (alert.severity === 'critical') {
+      actions.push({ type: 'escalate', label: '상급 보고' });
+    }
+  }
+  if (alert.status === 'acknowledged') {
+    actions.push({ type: 'resolve', label: '해소' });
+  }
+  actions.push({ type: 'view_patient', label: '환자 보기' });
+  return actions;
+}
+
+export default function AlertCard({
+  alert,
+  onAcknowledge,
+  onResolve,
+  onRead,
+}: AlertCardProps) {
   const navigate = useNavigate();
-  const sourceTag = SOURCE_TAG[alert.source];
+  const { show } = useSnackbar();
+  const sourceTag = getSourceTag(alert.alertSource);
+  const actions = buildActions(alert);
 
-  const visibleActions = alert.actions.filter((a) => {
-    if (a.type === 'acknowledge') return alert.status === 'new';
-    return true;
-  });
-
-  const goToPatient = () => navigate(`/patient/${alert.patient.id}`);
+  const goToPatient = async () => {
+    if (alert.delivery.readAt == null) {
+      try {
+        await markAlertRead(alert.alertId);
+        onRead?.(alert.alertId);
+      } catch {
+        // 읽음 처리 실패는 사용자 흐름을 막지 않는다.
+      }
+    }
+    navigate(`/patient/${alert.stayToken}`);
+  };
 
   const handleCardClick = () => {
-    goToPatient();
+    void goToPatient();
   };
 
   const handleCardKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      goToPatient();
+      void goToPatient();
+    }
+  };
+
+  const handleAcknowledge = async () => {
+    try {
+      await onAcknowledge(alert.alertId);
+      show({ message: '알림이 확인 처리되었습니다.', type: 'success' });
+    } catch {
+      show({ message: '알림 확인 처리에 실패했습니다.', type: 'error' });
+    }
+  };
+
+  const handleResolve = async () => {
+    try {
+      await onResolve(alert.alertId);
+      show({ message: '알림이 해소 처리되었습니다.', type: 'success' });
+    } catch {
+      show({ message: '알림 해소 처리에 실패했습니다.', type: 'error' });
     }
   };
 
   const handleAction = (action: AlertAction) => {
     if (action.type === 'acknowledge') {
-      onAcknowledge(alert.id);
+      void handleAcknowledge();
     } else if (action.type === 'view_patient') {
-      goToPatient();
+      void goToPatient();
     } else if (action.type === 'escalate') {
-      window.alert('상급 보고 기능은 준비 중입니다');
+      show({ message: '상급 보고 기능은 준비 중입니다.', type: 'info' });
+    } else if (action.type === 'resolve') {
+      void handleResolve();
     }
   };
 
+  const statusClass =
+    alert.status === 'active'
+      ? 'alert-card--new'
+      : `alert-card--${alert.status}`;
+  const priorityClass =
+    alert.severity === 'critical'
+      ? 'alert-card--critical'
+      : 'alert-card--warning';
+
+  const displayName = formatPatientName(alert.stayToken.replace(/^ST-/, 'PT-'));
+  const timeLabel = formatTime(alert.createdAt);
+
   return (
     <article
-      className={`alert-card alert-card--${alert.priority} alert-card--${alert.status}`}
+      className={`alert-card ${priorityClass} ${statusClass}`}
       onClick={handleCardClick}
       onKeyDown={handleCardKeyDown}
       role="button"
       tabIndex={0}
-      aria-label={`${alert.patient.name} ${alert.title}`}
+      aria-label={`${displayName} ${alert.title}`}
     >
       <div className="alert-card__row alert-card__row--meta">
         <div className="alert-card__source-group">
@@ -61,18 +141,18 @@ export default function AlertCard({ alert, onAcknowledge }: AlertCardProps) {
           </span>
           {alert.confidence != null && (
             <span className="alert-card__confidence">
-              신뢰도 {alert.confidence}%
+              신뢰도 {Math.round(alert.confidence * 100)}%
             </span>
           )}
         </div>
         <span className="alert-card__patient-meta">
-          {alert.timestamp} · {alert.patient.name} · {alert.patient.bed}
+          {timeLabel} · {displayName} · {alert.stayToken}
         </span>
       </div>
 
       <h3 className="alert-card__title">{alert.title}</h3>
 
-      <p className="alert-card__body">{alert.body}</p>
+      <p className="alert-card__body">{alert.message}</p>
 
       {alert.tags.length > 0 && (
         <div className="alert-card__tags">
@@ -84,18 +164,18 @@ export default function AlertCard({ alert, onAcknowledge }: AlertCardProps) {
         </div>
       )}
 
-      {alert.status === 'acknowledged' && alert.acknowledgedBy && (
+      {alert.status === 'acknowledged' && alert.delivery.acknowledgedAt && (
         <div className="alert-card__status-meta">
-          {alert.acknowledgedBy} 확인 · {alert.acknowledgedAt}
+          확인 · {formatTime(alert.delivery.acknowledgedAt)}
         </div>
       )}
-      {alert.status === 'resolved' && alert.resolvedAt && (
-        <div className="alert-card__status-meta">해소 · {alert.resolvedAt}</div>
+      {alert.status === 'resolved' && (
+        <div className="alert-card__status-meta">해소됨</div>
       )}
 
-      {visibleActions.length > 0 && (
+      {actions.length > 0 && (
         <div className="alert-card__actions">
-          {visibleActions.map((action) => {
+          {actions.map((action) => {
             const isPrimary = action.type === 'acknowledge';
             return (
               <button

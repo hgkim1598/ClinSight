@@ -30,6 +30,13 @@ const CATEGORY_ICON: Record<TimelineEventCategory, ComponentType<IconProps>> = {
   procedure: Stethoscope,
   assessment: ClipboardCheck,
   alert: AlertTriangle,
+  // 모델 prediction 출처(item_type=prediction)의 detail_category가 들어왔을 때
+  // 평가 아이콘으로 매핑.
+  mortality: ClipboardCheck,
+  aki: ClipboardCheck,
+  ards: ClipboardCheck,
+  sic: ClipboardCheck,
+  shock: ClipboardCheck,
 };
 
 const CATEGORY_LABEL: Record<TimelineEventCategory, string> = {
@@ -39,6 +46,11 @@ const CATEGORY_LABEL: Record<TimelineEventCategory, string> = {
   procedure: '시술',
   assessment: '평가',
   alert: '경보',
+  mortality: '사망 위험',
+  aki: 'AKI',
+  ards: 'ARDS',
+  sic: 'SIC',
+  shock: '쇼크',
 };
 
 function PastList({ events }: { events: TimelineEvent[] }) {

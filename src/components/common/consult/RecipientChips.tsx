@@ -1,8 +1,20 @@
 import { X } from 'lucide-react';
-import type { ConsultRecipient } from '../../../types';
+
+/**
+ * Modal 내부에서 staff 선택 정보를 표시하기 위한 view-model.
+ * ConsultRecipient는 staff_id + department_code만 갖지만, 표시에는 displayName이 필요해
+ * 모달이 자체적으로 부서/이름을 결합한 형태로 보관한다.
+ */
+export interface SelectedRecipient {
+  staffId: string;
+  departmentCode: string;
+  displayName: string;
+  departmentDisplayName: string;
+  role: 'to' | 'cc';
+}
 
 interface RecipientChipsProps {
-  recipients: ConsultRecipient[];
+  recipients: SelectedRecipient[];
   onToggleRole: (staffId: string) => void;
   onRemove: (staffId: string) => void;
 }
@@ -29,18 +41,18 @@ export default function RecipientChips({
               type="button"
               className="consult-modal__chip-role"
               onClick={() => onToggleRole(r.staffId)}
-              aria-label={`${r.name} 역할 전환`}
+              aria-label={`${r.displayName} 역할 전환`}
             >
               {r.role === 'to' ? '수신' : '참조'}
             </button>
             <span className="consult-modal__chip-name">
-              {r.name} ({r.department})
+              {r.displayName} ({r.departmentDisplayName})
             </span>
             <button
               type="button"
               className="consult-modal__chip-remove"
               onClick={() => onRemove(r.staffId)}
-              aria-label={`${r.name} 제거`}
+              aria-label={`${r.displayName} 제거`}
             >
               <X size={12} />
             </button>

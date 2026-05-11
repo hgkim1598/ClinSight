@@ -5,9 +5,9 @@ interface BadgeProps {
   level: RiskLevel;
 }
 
-const config = {
+const config: Record<RiskLevel, { label: string; className: string }> = {
   high: { label: 'HIGH', className: 'badge-danger' },
-  med: { label: 'MED', className: 'badge-warn' },
+  medium: { label: 'MED', className: 'badge-warn' },
   low: { label: 'LOW', className: 'badge-safe' },
 };
 

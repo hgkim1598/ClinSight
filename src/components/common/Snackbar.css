@@ -1,0 +1,107 @@
+.snackbar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-lg, 24px);
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm, 8px);
+  padding: 12px 14px 12px 16px;
+  min-width: 280px;
+  max-width: min(640px, calc(100vw - 32px));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-md, 0 6px 16px rgba(0, 0, 0, 0.35));
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.snackbar__icon {
+  flex-shrink: 0;
+}
+
+.snackbar__message {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.snackbar__confirm,
+.snackbar__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm, 4px);
+  transition: background-color 120ms ease;
+}
+
+.snackbar__confirm {
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+}
+
+.snackbar__close {
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+}
+
+.snackbar__confirm:hover,
+.snackbar__close:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+}
+
+.snackbar__confirm:focus-visible,
+.snackbar__close:focus-visible {
+  outline: 2px solid var(--focus, var(--accent));
+  outline-offset: 2px;
+}
+
+/* type variants — 좌측 보더로 의미 색상 표시 (다크 친화) */
+.snackbar--success {
+  border-left: 4px solid var(--safe);
+}
+.snackbar--success .snackbar__icon {
+  color: var(--safe);
+}
+
+.snackbar--error {
+  border-left: 4px solid var(--danger);
+}
+.snackbar--error .snackbar__icon {
+  color: var(--danger);
+}
+
+.snackbar--info {
+  border-left: 4px solid var(--accent, #4d8df3);
+}
+.snackbar--info .snackbar__icon {
+  color: var(--accent, #4d8df3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .snackbar {
+    animation: snackbar-enter 180ms ease-out;
+  }
+}
+
+@keyframes snackbar-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

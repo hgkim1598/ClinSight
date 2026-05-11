@@ -1,168 +1,187 @@
-import type { ScheduledEvent, TimelineEvent } from '../../types';
-
 /**
- * 임상 타임라인 mock — 환자별 24시간 이벤트 누적 (최신순).
- * 백엔드 연결 시 GET /patients/{id}/timeline 으로 교체.
+ * GET /icu-stays/{stayId}/timeline + /schedule 응답을 모사한 mock.
+ *
+ * V4 명세 §6-1, §6-2.
+ * - timeline.item_type: 'prediction' | 'alert' | 'event'
+ * - timeline.detail_category: UI 아이콘 분기용 (vitals/lab/medication/...)
+ * - schedule.derivation_basis: 처방 근거 표시용
  */
-export const mockTimeline: Record<string, TimelineEvent[]> = {
-  'PT-19482': [
-    {
-      id: 'tl-001',
-      time: '14:20',
-      title: 'MAP 58 mmHg로 하락',
-      description: 'NE 용량 증량: 0.12 → 0.18 mcg/kg/min',
-      category: 'vitals',
-      severity: 'critical',
-    },
-    {
-      id: 'tl-002',
-      time: '13:45',
-      title: 'Lactate 재검: 3.8 mmol/L',
-      description: '수액 30 mL/kg 투여에도 clearance 없음',
-      category: 'lab',
-      severity: 'warning',
-    },
-    {
-      id: 'tl-003',
-      time: '12:30',
-      title: '혈액배양 × 2세트 채취',
-      description: '항생제 투여 전 시행',
-      category: 'procedure',
-      severity: 'info',
-    },
-    {
-      id: 'tl-004',
-      time: '11:50',
-      title: 'Piperacillin/Tazobactam 개시',
-      description: '4.5g IV q8h — 1시간 번들 완료',
-      category: 'medication',
-      severity: 'info',
-    },
-    {
-      id: 'tl-005',
-      time: '10:20',
-      title: 'SOFA 점수 상승: 7 → 11',
-      description: '신기능 악화: Cr 1.4 → 2.1',
-      category: 'assessment',
-      severity: 'warning',
-    },
-    {
-      id: 'tl-006',
-      time: '08:15',
-      title: 'AI 패혈증 경보 — 고위험',
-      description: '모델 Risk 87% → 94% (2시간 내 +7%p)',
-      category: 'alert',
-      severity: 'critical',
-    },
-    {
-      id: 'tl-007',
-      time: '06:00',
-      title: '기계환기 시작',
-      description: 'FiO2 0.6, PEEP 8, P/F ratio: 152',
-      category: 'procedure',
-      severity: 'warning',
-    },
-    {
-      id: 'tl-008',
-      time: '04:30',
-      title: 'Norepinephrine 개시',
-      description: '초기 용량 0.05 mcg/kg/min, MAP 목표 ≥65',
-      category: 'medication',
-      severity: 'info',
-    },
-    {
-      id: 'tl-009',
-      time: '02:15',
-      title: '생리식염수 30 mL/kg 개시',
-      description: '중심정맥로 확보 후 1시간 내 투여 시작',
-      category: 'procedure',
-      severity: 'info',
-    },
-    {
-      id: 'tl-010',
-      time: '23:50',
-      title: 'ICU 입실 — 초기 평가',
-      description: 'HR 124, BP 90/60, RR 26, Temp 38.7°C, SpO2 92%',
-      category: 'assessment',
-      severity: 'warning',
-    },
-    {
-      id: 'tl-011',
-      time: '22:30',
-      title: '의식 수준 저하 (GCS 14 → 12)',
-      description: '혼돈, 반응 지연 관찰. 신경학적 평가 시행.',
-      category: 'vitals',
-      severity: 'warning',
-    },
-    {
-      id: 'tl-012',
-      time: '18:40',
-      title: '흉부 X-ray — 양측 폐 침윤',
-      description: '하엽 우세, 지역사회획득 폐렴 패턴',
-      category: 'lab',
-      severity: 'warning',
-    },
-    {
-      id: 'tl-013',
-      time: '16:00',
-      title: '응급실 초기 혈액검사',
-      description: 'WBC 18.4, CRP 156, Procalcitonin 4.2',
-      category: 'lab',
-      severity: 'info',
-    },
-  ],
-  'PT-20314': [],
-  'PT-20781': [],
+
+export interface WireTimelineItem {
+  item_type: 'prediction' | 'alert' | 'event';
+  item_id: string;
+  timeline_time: string;
+  title: string;
+  summary: string;
+  severity: 'critical' | 'warning' | 'info' | 'high';
+  detail_category: string;
+  payload_jsonb?: Record<string, unknown>;
+}
+
+export interface WireTimelineResponse {
+  stay_token: string;
+  timeline: WireTimelineItem[];
+}
+
+export interface WireScheduledEvent {
+  event_id: string;
+  event_type: string;
+  event_category: string;
+  event_title: string;
+  event_description: string;
+  event_status: string;
+  event_time: string;
+  end_time: string | null;
+  derivation_basis: string;
+}
+
+export interface WireScheduleResponse {
+  stay_token: string;
+  scheduled_events: WireScheduledEvent[];
+}
+
+const ISO = (h: number, m: number) =>
+  `2026-05-11T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+09:00`;
+
+const PT19482_TIMELINE: WireTimelineItem[] = [
+  {
+    item_type: 'event',
+    item_id: 'tl-001',
+    timeline_time: ISO(14, 20),
+    title: 'MAP 58 mmHg로 하락',
+    summary: 'NE 용량 증량: 0.12 → 0.18 mcg/kg/min',
+    severity: 'critical',
+    detail_category: 'vitals',
+  },
+  {
+    item_type: 'event',
+    item_id: 'tl-002',
+    timeline_time: ISO(13, 45),
+    title: 'Lactate 재검: 3.8 mmol/L',
+    summary: '수액 30 mL/kg 투여에도 clearance 없음',
+    severity: 'warning',
+    detail_category: 'lab',
+  },
+  {
+    item_type: 'event',
+    item_id: 'tl-003',
+    timeline_time: ISO(12, 30),
+    title: '혈액배양 × 2세트 채취',
+    summary: '항생제 투여 전 시행',
+    severity: 'info',
+    detail_category: 'procedure',
+  },
+  {
+    item_type: 'event',
+    item_id: 'tl-004',
+    timeline_time: ISO(11, 50),
+    title: 'Piperacillin/Tazobactam 개시',
+    summary: '4.5g IV q8h — 1시간 번들 완료',
+    severity: 'info',
+    detail_category: 'medication',
+  },
+  {
+    item_type: 'prediction',
+    item_id: 'tl-005',
+    timeline_time: ISO(10, 20),
+    title: 'SOFA 점수 상승: 7 → 11',
+    summary: '신기능 악화: Cr 1.4 → 2.1',
+    severity: 'warning',
+    detail_category: 'assessment',
+  },
+  {
+    item_type: 'alert',
+    item_id: 'tl-006',
+    timeline_time: ISO(8, 15),
+    title: 'AI 패혈증 경보 — 고위험',
+    summary: '모델 Risk 87% → 94% (2시간 내 +7%p)',
+    severity: 'critical',
+    detail_category: 'alert',
+  },
+  {
+    item_type: 'event',
+    item_id: 'tl-007',
+    timeline_time: ISO(6, 0),
+    title: '기계환기 시작',
+    summary: 'FiO2 0.6, PEEP 8, P/F ratio: 152',
+    severity: 'warning',
+    detail_category: 'procedure',
+  },
+  {
+    item_type: 'event',
+    item_id: 'tl-008',
+    timeline_time: ISO(4, 30),
+    title: 'Norepinephrine 개시',
+    summary: '초기 용량 0.05 mcg/kg/min, MAP 목표 ≥65',
+    severity: 'info',
+    detail_category: 'medication',
+  },
+];
+
+export const mockTimelineByStay: Record<string, WireTimelineResponse> = {
+  'ST-19482': { stay_token: 'ST-19482', timeline: PT19482_TIMELINE },
+  'ST-20314': { stay_token: 'ST-20314', timeline: [] },
+  'ST-20781': { stay_token: 'ST-20781', timeline: [] },
 };
 
-/**
- * 예정 임상 이벤트 mock — 처방·프로토콜에서 산정한 다음 시점 항목.
- * 백엔드 연결 시 GET /patients/{id}/schedule 또는 처방·오더 테이블에서 도출.
- */
-export const mockSchedule: Record<string, ScheduledEvent[]> = {
-  'PT-19482': [
-    {
-      id: 'sch-001',
-      time: '15:50',
-      title: 'Piperacillin/Tazobactam 투여',
-      description: '4.5g IV — 3회차',
-      category: 'medication',
-      basis: '처방: q8h (직전 투여 11:50)',
-    },
-    {
-      id: 'sch-002',
-      time: '16:00',
-      title: '정기 바이탈 측정',
-      description: 'HR, MAP, SpO2, RR, Temp',
-      category: 'vitals',
-      basis: 'ICU 프로토콜: 2시간 간격',
-    },
-    {
-      id: 'sch-003',
-      time: '17:00',
-      title: 'Lactate 재검',
-      description: '이전 결과 3.8 mmol/L — clearance 확인',
-      category: 'lab',
-      basis: '처방: q4h (직전 채혈 13:45)',
-    },
-    {
-      id: 'sch-004',
-      time: '18:00',
-      title: 'ABG 검사',
-      description: 'P/F ratio 추적, 환기 설정 평가',
-      category: 'lab',
-      basis: '기계환기 중 프로토콜: q6h',
-    },
-    {
-      id: 'sch-005',
-      time: '19:50',
-      title: 'Piperacillin/Tazobactam 투여',
-      description: '4.5g IV — 4회차',
-      category: 'medication',
-      basis: '처방: q8h (직전 투여 15:50 예정 기준)',
-    },
-  ],
-  'PT-20314': [],
-  'PT-20781': [],
-  'PT-21005': [],
+const PT19482_SCHEDULE: WireScheduledEvent[] = [
+  {
+    event_id: 'sch-001',
+    event_type: 'order',
+    event_category: 'medication',
+    event_title: 'Piperacillin/Tazobactam 투여',
+    event_description: '4.5g IV — 3회차',
+    event_status: 'scheduled',
+    event_time: ISO(15, 50),
+    end_time: null,
+    derivation_basis: '처방: q8h (직전 투여 11:50)',
+  },
+  {
+    event_id: 'sch-002',
+    event_type: 'protocol',
+    event_category: 'vitals',
+    event_title: '정기 바이탈 측정',
+    event_description: 'HR, MAP, SpO2, RR, Temp',
+    event_status: 'scheduled',
+    event_time: ISO(16, 0),
+    end_time: null,
+    derivation_basis: 'ICU 프로토콜: 2시간 간격',
+  },
+  {
+    event_id: 'sch-003',
+    event_type: 'order',
+    event_category: 'lab',
+    event_title: 'Lactate 재검',
+    event_description: '이전 결과 3.8 mmol/L — clearance 확인',
+    event_status: 'scheduled',
+    event_time: ISO(17, 0),
+    end_time: null,
+    derivation_basis: '처방: q4h (직전 채혈 13:45)',
+  },
+  {
+    event_id: 'sch-004',
+    event_type: 'order',
+    event_category: 'lab',
+    event_title: 'ABG 검사',
+    event_description: 'P/F ratio 추적, 환기 설정 평가',
+    event_status: 'scheduled',
+    event_time: ISO(18, 0),
+    end_time: null,
+    derivation_basis: '기계환기 중 프로토콜: q6h',
+  },
+  {
+    event_id: 'sch-005',
+    event_type: 'order',
+    event_category: 'medication',
+    event_title: 'Piperacillin/Tazobactam 투여',
+    event_description: '4.5g IV — 4회차',
+    event_status: 'scheduled',
+    event_time: ISO(19, 50),
+    end_time: null,
+    derivation_basis: '처방: q8h (직전 투여 15:50 예정 기준)',
+  },
+];
+
+export const mockScheduleByStay: Record<string, WireScheduleResponse> = {
+  'ST-19482': { stay_token: 'ST-19482', scheduled_events: PT19482_SCHEDULE },
 };

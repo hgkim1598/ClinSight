@@ -3,17 +3,17 @@ import { useAiMode } from '../../context/aiMode';
 import './FloatingChatButton.css';
 
 interface FloatingChatButtonProps {
-  patientId: string;
+  stayToken: string;
 }
 
-export default function FloatingChatButton({ patientId }: FloatingChatButtonProps) {
+export default function FloatingChatButton({ stayToken }: FloatingChatButtonProps) {
   const { chatPanelOpen, openChatPanel, closeChatPanel } = useAiMode();
 
   const handleClick = () => {
     if (chatPanelOpen) {
       closeChatPanel();
     } else {
-      openChatPanel({ type: 'patient', patientId });
+      openChatPanel({ type: 'patient', stayToken });
     }
   };
 

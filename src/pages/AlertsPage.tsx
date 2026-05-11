@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Alert, AlertPriority } from '../types';
-import { acknowledgeAlert, getAlerts } from '../api/services/alertService';
+import type { Alert, AlertSeverity } from '../types';
+import {
+  acknowledgeAlert,
+  getAlerts,
+  resolveAlert,
+} from '../api/services/alertService';
 import Breadcrumb from '../components/common/Breadcrumb';
 import AlertCard from '../components/alerts/AlertCard';
 import LoadingState from '../components/common/LoadingState';
@@ -10,23 +14,27 @@ import ErrorState from '../components/common/ErrorState';
 import { useAsync } from '../hooks/useAsync';
 import './AlertsPage.css';
 
-type FilterKey = 'all' | AlertPriority;
+type FilterKey = 'all' | AlertSeverity;
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
   { key: 'all', label: '전체' },
   { key: 'critical', label: 'Critical' },
   { key: 'warning', label: 'Warning' },
+  { key: 'info', label: 'Info' },
 ];
 
-const PRIORITY_RANK: Record<AlertPriority, number> = { critical: 2, warning: 1 };
+const SEVERITY_RANK: Record<AlertSeverity, number> = {
+  critical: 3,
+  warning: 2,
+  info: 1,
+};
 
-function sortNewAlerts(list: Alert[]): Alert[] {
+function sortActiveAlerts(list: Alert[]): Alert[] {
   return [...list].sort((a, b) => {
-    if (a.priority !== b.priority) {
-      return PRIORITY_RANK[b.priority] - PRIORITY_RANK[a.priority];
+    if (a.severity !== b.severity) {
+      return SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity];
     }
-    // 같은 우선순위 내에서는 timestamp 내림차순 (HH:MM 문자열은 lex 비교 OK)
-    return b.timestamp.localeCompare(a.timestamp);
+    return b.createdAt.localeCompare(a.createdAt);
   });
 }
 
@@ -40,7 +48,16 @@ export default function AlertsPage() {
   const [showResolved, setShowResolved] = useState(false);
 
   const handleAcknowledge = async (id: string) => {
-    await acknowledgeAlert(id, 'Dr. 사용자');
+    await acknowledgeAlert(id);
+    refetch();
+  };
+
+  const handleResolve = async (id: string) => {
+    await resolveAlert(id);
+    refetch();
+  };
+
+  const handleRead = () => {
     refetch();
   };
 
@@ -61,13 +78,13 @@ export default function AlertsPage() {
 
   const allAlerts: Alert[] = alerts ?? [];
   const filtered = allAlerts.filter(
-    (a) => filter === 'all' || a.priority === filter,
+    (a) => filter === 'all' || a.severity === filter,
   );
-  const newAlerts = sortNewAlerts(filtered.filter((a) => a.status === 'new'));
+  const activeAlerts = sortActiveAlerts(filtered.filter((a) => a.status === 'active'));
   const ackAlerts = filtered.filter((a) => a.status === 'acknowledged');
   const resolvedAlerts = filtered.filter((a) => a.status === 'resolved');
 
-  const totalNewCount = allAlerts.filter((a) => a.status === 'new').length;
+  const totalActiveCount = allAlerts.filter((a) => a.status === 'active').length;
   const isAllEmpty = allAlerts.length === 0;
 
   return (
@@ -92,9 +109,9 @@ export default function AlertsPage() {
 
         <div className="alerts-page__title-row">
           <h1 className="alerts-page__title">알림 센터</h1>
-          {totalNewCount > 0 && (
-            <span className="alerts-page__count" aria-label={`미확인 알림 ${totalNewCount}건`}>
-              {totalNewCount}건 미확인
+          {totalActiveCount > 0 && (
+            <span className="alerts-page__count" aria-label={`미확인 알림 ${totalActiveCount}건`}>
+              {totalActiveCount}건 미확인
             </span>
           )}
         </div>
@@ -124,15 +141,21 @@ export default function AlertsPage() {
               <header className="alerts-section__head">
                 <span className="alerts-section__label">미확인</span>
                 <span className="alerts-section__count alerts-section__count--danger">
-                  {newAlerts.length}
+                  {activeAlerts.length}
                 </span>
               </header>
-              {newAlerts.length === 0 ? (
+              {activeAlerts.length === 0 ? (
                 <div className="alerts-empty">새로운 알림이 없습니다.</div>
               ) : (
                 <div className="alerts-list">
-                  {newAlerts.map((a) => (
-                    <AlertCard key={a.id} alert={a} onAcknowledge={handleAcknowledge} />
+                  {activeAlerts.map((a) => (
+                    <AlertCard
+                      key={a.alertId}
+                      alert={a}
+                      onAcknowledge={handleAcknowledge}
+                      onResolve={handleResolve}
+                      onRead={handleRead}
+                    />
                   ))}
                 </div>
               )}
@@ -146,7 +169,13 @@ export default function AlertsPage() {
                 </header>
                 <div className="alerts-list">
                   {ackAlerts.map((a) => (
-                    <AlertCard key={a.id} alert={a} onAcknowledge={handleAcknowledge} />
+                    <AlertCard
+                      key={a.alertId}
+                      alert={a}
+                      onAcknowledge={handleAcknowledge}
+                      onResolve={handleResolve}
+                      onRead={handleRead}
+                    />
                   ))}
                 </div>
               </section>
@@ -167,7 +196,13 @@ export default function AlertsPage() {
                 {showResolved && (
                   <div className="alerts-list">
                     {resolvedAlerts.map((a) => (
-                      <AlertCard key={a.id} alert={a} onAcknowledge={handleAcknowledge} />
+                      <AlertCard
+                      key={a.alertId}
+                      alert={a}
+                      onAcknowledge={handleAcknowledge}
+                      onResolve={handleResolve}
+                      onRead={handleRead}
+                    />
                     ))}
                   </div>
                 )}

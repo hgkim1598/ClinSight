@@ -8,13 +8,13 @@ interface EscalationCardProps {
 
 function probabilityToRisk(pct: number): RiskLevel {
   if (pct >= 60) return 'high';
-  if (pct >= 30) return 'med';
+  if (pct >= 30) return 'medium';
   return 'low';
 }
 
 export default function EscalationCard({ escalation }: EscalationCardProps) {
   const risk = probabilityToRisk(escalation.probability);
-  const isInUse = escalation.currentStatus === 'inUse';
+  const isHighNeed = escalation.need === 'highNeed';
   const maxAbs = Math.max(
     ...escalation.shap.map((f) => Math.abs(f.value)),
     0.001,
@@ -36,11 +36,14 @@ export default function EscalationCard({ escalation }: EscalationCardProps) {
         <Badge level={risk} />
         <div
           className={`escalation__status ${
-            isInUse ? 'escalation__status--inuse' : 'escalation__status--unused'
+            isHighNeed
+              ? 'escalation__status--high-need'
+              : 'escalation__status--low-need'
           }`}
+          title="모델 예측 기반 필요 가능성 — 현재 사용 상태가 아님"
         >
           <span className="escalation__status-dot" aria-hidden="true" />
-          {isInUse ? '사용 중' : '미사용'}
+          {isHighNeed ? '필요 가능성 높음' : '필요 가능성 낮음'}
         </div>
       </div>
 

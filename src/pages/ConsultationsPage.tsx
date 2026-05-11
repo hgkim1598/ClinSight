@@ -1,9 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import type { ConsultationRequest, ConsultStatus } from '../types';
-import { getConsultations } from '../api/services/consultService';
+import type {
+  ConsultationRequest,
+  ConsultStatus,
+  Department,
+} from '../types';
+import {
+  getConsultations,
+  getDepartments,
+} from '../api/services/consultationService';
 import { getPatientReport } from '../api/services/reportService';
+import { formatPatientName } from '../utils/formatPatientName';
+import { formatDateTime } from '../utils/time';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientReportModal from '../components/common/PatientReportModal';
 import LoadingState from '../components/common/LoadingState';
@@ -15,28 +24,37 @@ type FilterKey = 'all' | ConsultStatus;
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
   { key: 'all', label: '전체' },
-  { key: 'pending', label: '대기중' },
-  { key: 'accepted', label: '수락됨' },
+  { key: 'requested', label: '요청됨' },
+  { key: 'in_progress', label: '진행 중' },
   { key: 'completed', label: '완료' },
 ];
 
 const STATUS_LABEL: Record<ConsultStatus, string> = {
-  pending: '대기중',
-  accepted: '수락됨',
+  requested: '요청됨',
+  in_progress: '진행 중',
   completed: '완료',
 };
 
 interface ConsultRowProps {
   consult: ConsultationRequest;
   patientCount: number;
-  onOpenReport: (patientId: string) => void;
+  departmentMap: Record<string, string>;
+  onOpenReport: (stayToken: string) => void;
 }
 
-function ConsultRow({ consult, patientCount, onOpenReport }: ConsultRowProps) {
+function ConsultRow({
+  consult,
+  patientCount,
+  departmentMap,
+  onOpenReport,
+}: ConsultRowProps) {
   const navigate = useNavigate();
   const toRecipients = consult.recipients.filter((r) => r.role === 'to');
   const primary = toRecipients[0];
   const moreCount = toRecipients.length - 1;
+  // PT 토큰은 stayToken 그대로 매핑하지 못함 — patient_token으로 변환은 detail 호출이 필요하지만,
+  // 표시용 단축 매핑으로 stayToken에서 PT-XXXXX를 유추 (mock 한정)
+  const displayName = formatPatientName(consult.stayToken.replace(/^ST-/, 'PT-'));
 
   return (
     <tr className="consult-row">
@@ -50,7 +68,7 @@ function ConsultRow({ consult, patientCount, onOpenReport }: ConsultRowProps) {
       <td>
         <div className="consult-row__patient">
           <span className="consult-row__patient-name">
-            {consult.patientName} · {consult.patientBed}
+            {displayName} · {consult.stayToken}
           </span>
           <span
             className="consult-row__patient-count"
@@ -63,7 +81,7 @@ function ConsultRow({ consult, patientCount, onOpenReport }: ConsultRowProps) {
       <td className="consult-row__recipient">
         {primary ? (
           <>
-            {primary.name} ({primary.department})
+            {departmentMap[primary.departmentCode] ?? primary.departmentCode}
             {moreCount > 0 && (
               <span className="consult-row__recipient-more"> 외 {moreCount}명</span>
             )}
@@ -77,13 +95,13 @@ function ConsultRow({ consult, patientCount, onOpenReport }: ConsultRowProps) {
           <span className="consult-row__priority">긴급</span>
         )}
       </td>
-      <td className="consult-row__time">{consult.requestedAt}</td>
+      <td className="consult-row__time">{formatDateTime(consult.createdAt)}</td>
       <td>
         <div className="consult-row__actions">
           <button
             type="button"
             className="consult-row__action"
-            onClick={() => onOpenReport(consult.patientId)}
+            onClick={() => onOpenReport(consult.stayToken)}
           >
             요청 내용
           </button>
@@ -93,7 +111,7 @@ function ConsultRow({ consult, patientCount, onOpenReport }: ConsultRowProps) {
           <button
             type="button"
             className="consult-row__action"
-            onClick={() => navigate(`/patient/${consult.patientId}`)}
+            onClick={() => navigate(`/patient/${consult.stayToken}`)}
           >
             환자 보기
           </button>
@@ -107,7 +125,7 @@ export default function ConsultationsPage() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [reportOpen, setReportOpen] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [selectedStayToken, setSelectedStayToken] = useState<string | null>(null);
 
   const {
     data: consultations,
@@ -116,31 +134,51 @@ export default function ConsultationsPage() {
     refetch,
   } = useAsync(() => getConsultations(), []);
 
-  const { data: report } = useAsync(
-    async () =>
-      reportOpen && selectedPatientId
-        ? await getPatientReport(selectedPatientId)
-        : null,
-    [reportOpen, selectedPatientId],
+  const [departments, setDepartments] = useState<Department[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void getDepartments().then((d) => {
+      if (!cancelled) setDepartments(d);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const departmentMap = useMemo(
+    () =>
+      departments.reduce<Record<string, string>>((acc, d) => {
+        acc[d.configKey] = d.displayName;
+        return acc;
+      }, {}),
+    [departments],
   );
 
-  const countByPatient = useMemo(
+  const { data: report } = useAsync(
+    async () =>
+      reportOpen && selectedStayToken
+        ? await getPatientReport(selectedStayToken)
+        : null,
+    [reportOpen, selectedStayToken],
+  );
+
+  const countByStay = useMemo(
     () =>
       (consultations ?? []).reduce<Record<string, number>>((acc, c) => {
-        acc[c.patientId] = (acc[c.patientId] || 0) + 1;
+        acc[c.stayToken] = (acc[c.stayToken] || 0) + 1;
         return acc;
       }, {}),
     [consultations],
   );
 
-  const handleOpenReport = (patientId: string) => {
-    setSelectedPatientId(patientId);
+  const handleOpenReport = (stayToken: string) => {
+    setSelectedStayToken(stayToken);
     setReportOpen(true);
   };
 
   const handleCloseReport = () => {
     setReportOpen(false);
-    setSelectedPatientId(null);
+    setSelectedStayToken(null);
   };
 
   if (loading) {
@@ -232,9 +270,10 @@ export default function ConsultationsPage() {
               <tbody>
                 {filtered.map((c) => (
                   <ConsultRow
-                    key={c.id}
+                    key={c.consultationId}
                     consult={c}
-                    patientCount={countByPatient[c.patientId] ?? 1}
+                    patientCount={countByStay[c.stayToken] ?? 1}
+                    departmentMap={departmentMap}
                     onOpenReport={handleOpenReport}
                   />
                 ))}

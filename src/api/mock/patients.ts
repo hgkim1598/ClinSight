@@ -1,101 +1,338 @@
-import type { Patient } from '../../types';
+/**
+ * V4 응답 모양으로 작성된 mock 데이터.
+ *
+ * 두 가지 페이로드를 제공:
+ *  - mockDashboardPayload   : GET /dashboard/icu/{icuId} 의 응답 본문 (data 부분)
+ *  - mockPatientDetailByStay: GET /icu-stays/{stayId} 응답 모음 (stayToken 키)
+ *
+ * 모든 필드명은 API 명세 그대로(snake_case 가 아닌 camelCase로 미리 매핑된 상태가 아니라
+ * "wire response의 JSON 키와 동일한 camelCase"). 실제 백엔드는 snake_case로 내려보내며,
+ * service 함수에서 명시 매핑한다. mock은 service의 매핑 함수가 받을 입력 형태로 둔다.
+ */
 
-export const patients: Patient[] = [
+// snake_case API 응답을 그대로 옮긴 wire 형태. service에서 camelCase로 변환.
+export interface WireDashboardPatient {
+  stay_id: string;
+  stay_token: string;
+  patient_token: string;
+  current_bed_label: string;
+  age_group: string;
+  sex: 'M' | 'F';
+  latest_mortality_risk_score: number;
+  latest_mortality_risk_label: 'high' | 'medium' | 'low';
+  latest_complication_risk_score: number;
+  latest_sofa_total: number;
+  active_alert_count: number;
+  last_prediction_at: string;
+  last_observation_at: string;
+}
+
+export interface WireDashboardResponse {
+  icu_unit: { unit_code: string; display_name: string };
+  patients: WireDashboardPatient[];
+  summary: {
+    total_patients: number;
+    high_risk_count: number;
+    critical_alert_count: number;
+  };
+}
+
+export interface WirePatientDetail {
+  stay_id: string;
+  stay_token: string;
+  patient_token: string;
+  age_years: number;
+  age_group: string;
+  sex: 'M' | 'F';
+  admission_type: string;
+  primary_diagnosis_code: string;
+  primary_diagnosis_text: string;
+  hospital_admit_at: string;
+  icu_in_at: string;
+  icu_out_at: string | null;
+  current_unit_code: string;
+  current_bed_label: string;
+  status: string;
+  sepsis_onset_at: string | null;
+}
+
+const dashboardPatients: WireDashboardPatient[] = [
   {
-    bed: 'A-01',
-    id: 'PT-19482',
-    name: '김영호',
-    age: 72,
+    stay_id: 'stay-19482',
+    stay_token: 'ST-19482',
+    patient_token: 'PT-19482',
+    current_bed_label: 'A-01',
+    age_group: '70s',
     sex: 'M',
-    admit: '2026-04-21 08:14',
-    diag: '지역사회획득 폐렴, 패혈성 쇼크 의심',
-    risk: 'high',
-    status: '집중관찰',
-    sofa: 12,
-    sepsisOnset: '2026-04-23 11:40',
+    latest_mortality_risk_score: 0.74,
+    latest_mortality_risk_label: 'high',
+    latest_complication_risk_score: 0.68,
+    latest_sofa_total: 12,
+    active_alert_count: 3,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-02',
-    id: 'PT-20314',
-    name: '박선미',
-    age: 64,
+    stay_id: 'stay-20314',
+    stay_token: 'ST-20314',
+    patient_token: 'PT-20314',
+    current_bed_label: 'A-02',
+    age_group: '60s',
     sex: 'F',
-    admit: '2026-04-22 17:02',
-    diag: '다발성 외상 (교통사고)',
-    risk: 'high',
-    status: '집중관찰',
-    sofa: 11,
+    latest_mortality_risk_score: 0.66,
+    latest_mortality_risk_label: 'high',
+    latest_complication_risk_score: 0.54,
+    latest_sofa_total: 11,
+    active_alert_count: 2,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-03',
-    id: 'PT-20781',
-    name: '이재훈',
-    age: 58,
+    stay_id: 'stay-20781',
+    stay_token: 'ST-20781',
+    patient_token: 'PT-20781',
+    current_bed_label: 'A-03',
+    age_group: '50s',
     sex: 'M',
-    admit: '2026-04-22 21:38',
-    diag: '급성 췌장염',
-    risk: 'med',
-    status: '주의관찰',
-    sofa: 8,
+    latest_mortality_risk_score: 0.45,
+    latest_mortality_risk_label: 'medium',
+    latest_complication_risk_score: 0.42,
+    latest_sofa_total: 8,
+    active_alert_count: 1,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-04',
-    id: 'PT-21005',
-    name: '최민정',
-    age: 69,
+    stay_id: 'stay-21005',
+    stay_token: 'ST-21005',
+    patient_token: 'PT-21005',
+    current_bed_label: 'A-04',
+    age_group: '60s',
     sex: 'F',
-    admit: '2026-04-23 06:11',
-    diag: '울혈성 심부전 악화',
-    risk: 'med',
-    status: '주의관찰',
-    sofa: 7,
+    latest_mortality_risk_score: 0.41,
+    latest_mortality_risk_label: 'medium',
+    latest_complication_risk_score: 0.38,
+    latest_sofa_total: 7,
+    active_alert_count: 1,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-05',
-    id: 'PT-21219',
-    name: '정태식',
-    age: 55,
+    stay_id: 'stay-21219',
+    stay_token: 'ST-21219',
+    patient_token: 'PT-21219',
+    current_bed_label: 'A-05',
+    age_group: '50s',
     sex: 'M',
-    admit: '2026-04-23 12:47',
-    diag: '복강 내 감염 수술 후 관찰',
-    risk: 'med',
-    status: '주의관찰',
-    sofa: 6,
+    latest_mortality_risk_score: 0.36,
+    latest_mortality_risk_label: 'medium',
+    latest_complication_risk_score: 0.32,
+    latest_sofa_total: 6,
+    active_alert_count: 0,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-06',
-    id: 'PT-21442',
-    name: '한수경',
-    age: 47,
+    stay_id: 'stay-21442',
+    stay_token: 'ST-21442',
+    patient_token: 'PT-21442',
+    current_bed_label: 'A-06',
+    age_group: '40s',
     sex: 'F',
-    admit: '2026-04-23 19:22',
-    diag: '당뇨성 케톤산증',
-    risk: 'low',
-    status: '안정',
-    sofa: 4,
+    latest_mortality_risk_score: 0.18,
+    latest_mortality_risk_label: 'low',
+    latest_complication_risk_score: 0.15,
+    latest_sofa_total: 4,
+    active_alert_count: 0,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-07',
-    id: 'PT-21508',
-    name: '오상혁',
-    age: 61,
+    stay_id: 'stay-21508',
+    stay_token: 'ST-21508',
+    patient_token: 'PT-21508',
+    current_bed_label: 'A-07',
+    age_group: '60s',
     sex: 'M',
-    admit: '2026-04-24 02:05',
-    diag: 'COPD 악화 후 회복',
-    risk: 'low',
-    status: '안정',
-    sofa: 3,
+    latest_mortality_risk_score: 0.15,
+    latest_mortality_risk_label: 'low',
+    latest_complication_risk_score: 0.13,
+    latest_sofa_total: 3,
+    active_alert_count: 0,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
   {
-    bed: 'A-08',
-    id: 'PT-21603',
-    name: '윤지원',
-    age: 38,
+    stay_id: 'stay-21603',
+    stay_token: 'ST-21603',
+    patient_token: 'PT-21603',
+    current_bed_label: 'A-08',
+    age_group: '30s',
     sex: 'F',
-    admit: '2026-04-24 09:18',
-    diag: '복강경 담낭 절제 후 관찰',
-    risk: 'low',
-    status: '안정',
-    sofa: 2,
+    latest_mortality_risk_score: 0.11,
+    latest_mortality_risk_label: 'low',
+    latest_complication_risk_score: 0.10,
+    latest_sofa_total: 2,
+    active_alert_count: 0,
+    last_prediction_at: '2026-05-11T08:30:00Z',
+    last_observation_at: '2026-05-11T08:45:00Z',
   },
 ];
+
+export const mockDashboardPayload: WireDashboardResponse = {
+  icu_unit: { unit_code: 'ICU_A', display_name: '내과 중환자실 A' },
+  patients: dashboardPatients,
+  summary: {
+    total_patients: dashboardPatients.length,
+    high_risk_count: dashboardPatients.filter((p) => p.latest_mortality_risk_label === 'high').length,
+    critical_alert_count: dashboardPatients.reduce((sum, p) => sum + p.active_alert_count, 0),
+  },
+};
+
+/** stay_token 키. /icu-stays/{stayId} 응답 모음. */
+export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
+  'ST-19482': {
+    stay_id: 'stay-19482',
+    stay_token: 'ST-19482',
+    patient_token: 'PT-19482',
+    age_years: 72,
+    age_group: '70s',
+    sex: 'M',
+    admission_type: 'emergency',
+    primary_diagnosis_code: 'J18.9',
+    primary_diagnosis_text: '지역사회획득 폐렴, 패혈성 쇼크 의심',
+    hospital_admit_at: '2026-04-21T08:14:00+09:00',
+    icu_in_at: '2026-04-21T10:00:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-01',
+    status: 'active',
+    sepsis_onset_at: '2026-04-23T11:40:00+09:00',
+  },
+  'ST-20314': {
+    stay_id: 'stay-20314',
+    stay_token: 'ST-20314',
+    patient_token: 'PT-20314',
+    age_years: 64,
+    age_group: '60s',
+    sex: 'F',
+    admission_type: 'emergency',
+    primary_diagnosis_code: 'T07',
+    primary_diagnosis_text: '다발성 외상 (교통사고)',
+    hospital_admit_at: '2026-04-22T17:02:00+09:00',
+    icu_in_at: '2026-04-22T19:30:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-02',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+  'ST-20781': {
+    stay_id: 'stay-20781',
+    stay_token: 'ST-20781',
+    patient_token: 'PT-20781',
+    age_years: 58,
+    age_group: '50s',
+    sex: 'M',
+    admission_type: 'emergency',
+    primary_diagnosis_code: 'K85.9',
+    primary_diagnosis_text: '급성 췌장염',
+    hospital_admit_at: '2026-04-22T21:38:00+09:00',
+    icu_in_at: '2026-04-23T00:30:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-03',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+  'ST-21005': {
+    stay_id: 'stay-21005',
+    stay_token: 'ST-21005',
+    patient_token: 'PT-21005',
+    age_years: 69,
+    age_group: '60s',
+    sex: 'F',
+    admission_type: 'planned',
+    primary_diagnosis_code: 'I50.9',
+    primary_diagnosis_text: '울혈성 심부전 악화',
+    hospital_admit_at: '2026-04-23T06:11:00+09:00',
+    icu_in_at: '2026-04-23T08:00:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-04',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+  'ST-21219': {
+    stay_id: 'stay-21219',
+    stay_token: 'ST-21219',
+    patient_token: 'PT-21219',
+    age_years: 55,
+    age_group: '50s',
+    sex: 'M',
+    admission_type: 'post_op',
+    primary_diagnosis_code: 'K65.9',
+    primary_diagnosis_text: '복강 내 감염 수술 후 관찰',
+    hospital_admit_at: '2026-04-23T12:47:00+09:00',
+    icu_in_at: '2026-04-23T15:00:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-05',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+  'ST-21442': {
+    stay_id: 'stay-21442',
+    stay_token: 'ST-21442',
+    patient_token: 'PT-21442',
+    age_years: 47,
+    age_group: '40s',
+    sex: 'F',
+    admission_type: 'emergency',
+    primary_diagnosis_code: 'E10.1',
+    primary_diagnosis_text: '당뇨성 케톤산증',
+    hospital_admit_at: '2026-04-23T19:22:00+09:00',
+    icu_in_at: '2026-04-23T21:00:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-06',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+  'ST-21508': {
+    stay_id: 'stay-21508',
+    stay_token: 'ST-21508',
+    patient_token: 'PT-21508',
+    age_years: 61,
+    age_group: '60s',
+    sex: 'M',
+    admission_type: 'emergency',
+    primary_diagnosis_code: 'J44.1',
+    primary_diagnosis_text: 'COPD 악화 후 회복',
+    hospital_admit_at: '2026-04-24T02:05:00+09:00',
+    icu_in_at: '2026-04-24T04:30:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-07',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+  'ST-21603': {
+    stay_id: 'stay-21603',
+    stay_token: 'ST-21603',
+    patient_token: 'PT-21603',
+    age_years: 38,
+    age_group: '30s',
+    sex: 'F',
+    admission_type: 'post_op',
+    primary_diagnosis_code: 'K80.0',
+    primary_diagnosis_text: '복강경 담낭 절제 후 관찰',
+    hospital_admit_at: '2026-04-24T09:18:00+09:00',
+    icu_in_at: '2026-04-24T11:30:00+09:00',
+    icu_out_at: null,
+    current_unit_code: 'ICU_A',
+    current_bed_label: 'A-08',
+    status: 'active',
+    sepsis_onset_at: null,
+  },
+};

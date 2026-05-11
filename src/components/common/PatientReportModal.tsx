@@ -145,7 +145,7 @@ export default function PatientReportModal({
           setConsultOpen(false);
           onClose();
         }}
-        patient={{ id: patient.id, name: patient.name, bed: patient.bed }}
+        patient={patient}
       />
     </div>
   );

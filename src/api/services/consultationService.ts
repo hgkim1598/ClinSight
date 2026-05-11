@@ -1,0 +1,221 @@
+/**
+ * Consultation / Department / Staff Service
+ *
+ *  - GET  /staff/departments        → getDepartments()
+ *  - GET  /staff?department_code=&role=  → getStaff()
+ *  - GET  /consultations[?stay_token=&status=]  → getConsultations()
+ *  - GET  /consultations/{id}        → getConsultationDetail()
+ *  - POST /consultations             → createConsultation()
+ *  - PATCH /consultations/{id}/status → updateConsultationStatus()
+ *
+ * 부서별 의료진은 별도 endpoint(/staff)로 조회. mock Department.members 임베드 폐기.
+ */
+import type {
+  ConsultPriority,
+  ConsultRecipient,
+  ConsultStatus,
+  ConsultationDetail,
+  ConsultationRequest,
+  Department,
+  StaffMember,
+} from '../../types';
+import { MOCK_MODE, request } from '../client';
+import { mockDepartments, type WireDepartment } from '../mock/departments';
+import { mockStaff, type WireStaff } from '../mock/staff';
+import {
+  mockConsultations,
+  type WireConsultation,
+  type WireRecipient,
+} from '../mock/consultations';
+
+// -------- 매핑 --------
+
+function mapDepartment(w: WireDepartment): Department {
+  return {
+    configKey: w.config_key,
+    displayName: w.display_name,
+    sortOrder: w.sort_order,
+  };
+}
+
+function mapStaff(w: WireStaff): StaffMember {
+  return {
+    staffId: w.staff_id,
+    displayName: w.display_name,
+    role: w.role,
+    primaryDepartmentCode: w.primary_department_code,
+    status: w.status,
+  };
+}
+
+function mapRecipient(w: WireRecipient): ConsultRecipient {
+  return {
+    staffId: w.staff_id,
+    departmentCode: w.department_code,
+    role: w.role,
+  };
+}
+
+function mapConsultation(w: WireConsultation): ConsultationRequest {
+  return {
+    consultationId: w.consultation_id,
+    stayToken: w.stay_token,
+    subject: w.subject,
+    priority: w.priority,
+    status: w.status,
+    requesterStaffId: w.requester_staff_id,
+    requesterDepartmentCode: w.requester_department_code,
+    recipients: w.recipients_jsonb.map(mapRecipient),
+    attachedReportId: w.attached_report_id,
+    createdAt: w.created_at,
+  };
+}
+
+function mapConsultationDetail(w: WireConsultation): ConsultationDetail {
+  return {
+    ...mapConsultation(w),
+    message: w.message,
+    notes: [],
+    statusHistory: [],
+    updatedAt: w.updated_at,
+  };
+}
+
+// -------- public API --------
+
+export async function getDepartments(): Promise<Department[]> {
+  if (MOCK_MODE) {
+    return mockDepartments.map(mapDepartment).sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+  const w = await request<{ departments: WireDepartment[] }>('/staff/departments');
+  return w.departments.map(mapDepartment);
+}
+
+export async function getStaff(
+  departmentCode?: string,
+  role?: string,
+): Promise<StaffMember[]> {
+  if (MOCK_MODE) {
+    let list = mockStaff;
+    if (departmentCode) {
+      list = list.filter((s) => s.primary_department_code === departmentCode);
+    }
+    if (role) {
+      list = list.filter((s) => s.role === role);
+    }
+    return list.map(mapStaff);
+  }
+  const qs = new URLSearchParams();
+  if (departmentCode) qs.set('department_code', departmentCode);
+  if (role) qs.set('role', role);
+  const path = `/staff${qs.toString() ? `?${qs.toString()}` : ''}`;
+  const w = await request<{ staff: WireStaff[] }>(path);
+  return w.staff.map(mapStaff);
+}
+
+export async function getConsultations(
+  filter?: { stayToken?: string; status?: ConsultStatus },
+): Promise<ConsultationRequest[]> {
+  if (MOCK_MODE) {
+    let list = mockConsultations;
+    if (filter?.stayToken) list = list.filter((c) => c.stay_token === filter.stayToken);
+    if (filter?.status) list = list.filter((c) => c.status === filter.status);
+    return list.map(mapConsultation);
+  }
+  const qs = new URLSearchParams();
+  if (filter?.stayToken) qs.set('stay_token', filter.stayToken);
+  if (filter?.status) qs.set('status', filter.status);
+  const path = `/consultations${qs.toString() ? `?${qs.toString()}` : ''}`;
+  const w = await request<{ consultations: WireConsultation[] }>(path);
+  return w.consultations.map(mapConsultation);
+}
+
+export async function getConsultationDetail(
+  consultationId: string,
+): Promise<ConsultationDetail | null> {
+  if (MOCK_MODE) {
+    const w = mockConsultations.find((c) => c.consultation_id === consultationId);
+    return w ? mapConsultationDetail(w) : null;
+  }
+  const w = await request<WireConsultation>(
+    `/consultations/${encodeURIComponent(consultationId)}`,
+  );
+  return mapConsultationDetail(w);
+}
+
+export interface CreateConsultationPayload {
+  stayToken: string;
+  subject: string;
+  message: string;
+  priority: ConsultPriority;
+  recipients: Array<{ departmentCode: string; staffId?: string | null; role: 'to' | 'cc' }>;
+  attachedReportId?: string | null;
+}
+
+export async function createConsultation(
+  payload: CreateConsultationPayload,
+): Promise<ConsultationRequest> {
+  if (MOCK_MODE) {
+    const wire: WireConsultation = {
+      consultation_id: `consult-${Date.now()}`,
+      stay_token: payload.stayToken,
+      subject: payload.subject,
+      message: payload.message,
+      priority: payload.priority,
+      status: 'requested',
+      requester_staff_id: 'staff-010',
+      requester_department_code: 'icu',
+      recipients_jsonb: payload.recipients.map((r) => ({
+        department_code: r.departmentCode,
+        staff_id: r.staffId ?? null,
+        role: r.role,
+      })),
+      attached_report_id: payload.attachedReportId ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    mockConsultations.unshift(wire);
+    return mapConsultation(wire);
+  }
+  const body = JSON.stringify({
+    stay_token: payload.stayToken,
+    subject: payload.subject,
+    message: payload.message,
+    priority: payload.priority,
+    recipients: payload.recipients.map((r) => ({
+      department_code: r.departmentCode,
+      staff_id: r.staffId ?? null,
+      role: r.role,
+    })),
+    attached_report_id: payload.attachedReportId ?? null,
+  });
+  await request<{ consultation_id: string; status: string; created_at: string }>(
+    '/consultations',
+    { method: 'POST', body },
+  );
+  const all = await getConsultations({ stayToken: payload.stayToken });
+  return all[0];
+}
+
+export async function updateConsultationStatus(
+  consultationId: string,
+  status: ConsultStatus,
+  note?: string,
+): Promise<void> {
+  if (MOCK_MODE) {
+    const w = mockConsultations.find((c) => c.consultation_id === consultationId);
+    if (w) {
+      w.status = status;
+      w.updated_at = new Date().toISOString();
+    }
+    void note;
+    return;
+  }
+  await request<{ consultation_id: string; status: string; updated_at: string }>(
+    `/consultations/${encodeURIComponent(consultationId)}/status`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ status, note }),
+    },
+  );
+}

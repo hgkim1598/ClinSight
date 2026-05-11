@@ -4,6 +4,8 @@ import type {
   VitalStatusLevel,
 } from '../../../types';
 import { RISK_LABELS } from '../../../utils/constants';
+import { formatPatientName } from '../../../utils/formatPatientName';
+import { formatDateTime } from '../../../utils/time';
 
 interface ReportContentProps {
   report: PatientReport;
@@ -33,28 +35,28 @@ export default function ReportContent({ report }: ReportContentProps) {
         <table className="report-table report-table--info">
           <tbody>
             <tr>
-              <th>환자 ID</th>
-              <td>{patient.id}</td>
+              <th>환자 토큰</th>
+              <td>{patient.patientToken}</td>
               <th>이름</th>
-              <td>{patient.name}</td>
+              <td>{formatPatientName(patient.patientToken)}</td>
             </tr>
             <tr>
               <th>나이/성별</th>
-              <td>{`${patient.age}세 / ${patient.sex}`}</td>
+              <td>{`${patient.ageGroup} / ${patient.sex}`}</td>
               <th>병상</th>
-              <td>{patient.bed}</td>
+              <td>{patient.currentBedLabel}</td>
             </tr>
             <tr>
               <th>입실시간</th>
-              <td>{patient.admit}</td>
+              <td>{formatDateTime(patient.icuInAt)}</td>
               <th>주진단</th>
-              <td>{patient.diag}</td>
+              <td>{patient.primaryDiagnosisText}</td>
             </tr>
             <tr>
-              <th>SOFA</th>
-              <td>{patient.sofa}</td>
+              <th>입원유형</th>
+              <td>{patient.admissionType}</td>
               <th>Sepsis Onset</th>
-              <td>{patient.sepsisOnset ?? '—'}</td>
+              <td>{patient.sepsisOnsetAt ? formatDateTime(patient.sepsisOnsetAt) : '—'}</td>
             </tr>
           </tbody>
         </table>

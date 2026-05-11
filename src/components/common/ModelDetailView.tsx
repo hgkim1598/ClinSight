@@ -1,9 +1,17 @@
 import { useRef, useState } from 'react';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
-import type { AiInsightSection, ModelKey, ModelPrediction, RiskTone } from '../../types';
+import type {
+  AiInsightSection,
+  ModelKey,
+  ModelPrediction,
+  RawMetric,
+  RiskTone,
+} from '../../types';
 import { getAiInsight } from '../../api/services/aiInsightService';
 import { toneToRisk } from '../../utils/constants';
 import { useAsync } from '../../hooks/useAsync';
+import { useClinicalData } from '../../context/useClinicalData';
+import { useMeta } from '../../context/useMeta';
 import Badge from './Badge';
 import TrendBar from './TrendBar';
 import ShapChart from './ShapChart';
@@ -12,6 +20,14 @@ import EscalationCard from './EscalationCard';
 import AiInsightButton from './AiInsightButton';
 import AiInsightModal from './AiInsightModal';
 import './ModelDetailView.css';
+
+/** target_name → API model_key 매핑 — useMeta().modelByTarget으로 동적 lookup. */
+function findApiModelKeyForTarget(
+  target: ModelKey,
+  modelByTarget: Record<string, { modelKey: string }>,
+): string | null {
+  return modelByTarget[target]?.modelKey ?? null;
+}
 
 interface ModelDetailViewProps {
   selectedModel: ModelKey;
@@ -67,6 +83,17 @@ export default function ModelDetailView({
   const risk = toneToRisk(prediction.tone);
   const otherModels = MODEL_ORDER.filter((k) => k !== selectedModel);
 
+  // Raw 임상지표: PatientPage가 캐싱한 ClinicalDataProvider에서 가져와 모델별로 가공.
+  // 컨텍스트의 raw가 비어 있으면 prediction.raw (service 빌드 결과)로 fallback.
+  const clinicalData = useClinicalData();
+  const { modelByTarget } = useMeta();
+  const apiModelKey = findApiModelKeyForTarget(selectedModel, modelByTarget);
+  const rawFromContext: RawMetric[] = apiModelKey
+    ? clinicalData.buildRawForModel(apiModelKey)
+    : [];
+  const rawMetrics: RawMetric[] =
+    rawFromContext.length > 0 ? rawFromContext : prediction.raw;
+
   const showEscalation =
     (selectedModel === 'ards' || selectedModel === 'shock') && prediction.escalation != null;
   const bannerBgClass =
@@ -83,7 +110,7 @@ export default function ModelDetailView({
       case 'shap':
         return <ShapChart features={prediction.shap} />;
       case 'rawMetrics':
-        return <RawMetrics metrics={prediction.raw} />;
+        return <RawMetrics metrics={rawMetrics} />;
       case 'auxiliary':
         return prediction.escalation ? (
           <EscalationCard escalation={prediction.escalation} />
@@ -197,7 +224,7 @@ export default function ModelDetailView({
             <h4 className="model-detail__section-title">{SECTION_TITLES.rawMetrics}</h4>
             <AiInsightButton onClick={() => setOpenSection('rawMetrics')} />
           </div>
-          <RawMetrics metrics={prediction.raw} />
+          <RawMetrics metrics={rawMetrics} />
         </section>
 
         {showEscalation && prediction.escalation && (

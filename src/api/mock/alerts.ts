@@ -1,165 +1,183 @@
-import type { Alert } from '../../types';
-
 /**
- * 알림 mock — 누적 페이지/토스트 양쪽이 공유한다.
- * 백엔드 연결 시 alertService 안의 구현만 fetch로 바꾸고 mock은 보존.
+ * GET /alerts 응답을 모사한 mock.
  *
- * 데이터 구성:
- * - 환자 4명에 분산 (P-001/003/005/008)
- * - source: light_model / deep_model / threshold 골고루
- * - priority: critical 3건, warning 7건
- * - status: new 5건, acknowledged 3건, resolved 2건
- * - 최신순 정렬 (timestamp 내림차순)
+ * V4 명세 §9-1을 따른다.
+ *  - severity: 'info' | 'warning' | 'critical'
+ *  - status: 'active' | 'acknowledged' | 'resolved'   ('new' 폐기)
+ *  - delivery: per-user read/acknowledge
+ *  - tags_jsonb, confidence (0~1 실수), alert_source 포함
+ *  - 환자 실명은 응답에 없음. patient_token만.
+ *
+ * mock mutation은 alertService 내부에서 처리.
  */
-export const mockAlerts: Alert[] = [
+
+export interface WireAlertDelivery {
+  delivery_id: string;
+  read_at: string | null;
+  acknowledged_at: string | null;
+}
+
+export interface WireAlert {
+  alert_id: string;
+  stay_token: string;
+  alert_type: string;
+  alert_source: string;
+  severity: 'info' | 'warning' | 'critical';
+  status: 'active' | 'acknowledged' | 'resolved';
+  title: string;
+  message: string;
+  tags_jsonb: string[];
+  confidence: number | null;
+  created_at: string;
+  delivery: WireAlertDelivery;
+}
+
+export interface WireAlertsResponse {
+  alerts: WireAlert[];
+}
+
+const ISO = (h: number, m: number): string =>
+  `2026-05-11T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00+09:00`;
+
+export const mockAlertsWire: WireAlert[] = [
   {
-    id: 'alert-001',
-    timestamp: '14:20',
-    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
-    source: 'deep_model',
-    priority: 'critical',
-    status: 'new',
+    alert_id: 'alert-001',
+    stay_token: 'ST-19482',
+    alert_type: 'risk_threshold',
+    alert_source: 'mortality_48h',
+    severity: 'critical',
+    status: 'active',
     title: '패혈증 고위험 — Risk 87%',
-    body: 'MAP 58 mmHg, NE 0.18 mcg/kg/min 투여 중. Lactate 3.8 mmol/L (2배 이상 증가). SOFA 11 (+4). Sepsis-3 기준 충족.',
-    tags: ['MAP <65', 'SOFA +4', 'Lactate ↑', 'No Lactate Clearance'],
-    confidence: 87,
-    actions: [
-      { type: 'acknowledge', label: '확인' },
-      { type: 'view_patient', label: '환자 보기' },
-      { type: 'escalate', label: '상급 보고' },
-    ],
+    message: 'MAP 58 mmHg, NE 0.18 mcg/kg/min 투여 중. Lactate 3.8 mmol/L (2배 이상 증가). SOFA 11 (+4). Sepsis-3 기준 충족.',
+    tags_jsonb: ['MAP <65', 'SOFA +4', 'Lactate ↑', 'No Lactate Clearance'],
+    confidence: 0.87,
+    created_at: ISO(14, 20),
+    delivery: { delivery_id: 'dlv-001', read_at: null, acknowledged_at: null },
   },
   {
-    id: 'alert-002',
-    timestamp: '14:15',
-    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
-    source: 'threshold',
-    priority: 'critical',
-    status: 'new',
+    alert_id: 'alert-002',
+    stay_token: 'ST-19482',
+    alert_type: 'vital_breach',
+    alert_source: 'threshold',
+    severity: 'critical',
+    status: 'active',
     title: '호흡부전 — P/F Ratio 152',
-    body: 'SpO2 91%, FiO2 0.6 (P/F=152, 중등도 ARDS). RR 28/min. Plateau pressure 한계 접근 중. Prone positioning 고려.',
-    tags: ['P/F <200', '중등도 ARDS', 'SpO2 91%', 'RR 28/min'],
-    actions: [
-      { type: 'acknowledge', label: '확인' },
-      { type: 'view_patient', label: '환자 보기' },
-    ],
+    message: 'SpO2 91%, FiO2 0.6 (P/F=152, 중등도 ARDS). RR 28/min. Plateau pressure 한계 접근 중. Prone positioning 고려.',
+    tags_jsonb: ['P/F <200', '중등도 ARDS', 'SpO2 91%', 'RR 28/min'],
+    confidence: null,
+    created_at: ISO(14, 15),
+    delivery: { delivery_id: 'dlv-002', read_at: null, acknowledged_at: null },
   },
   {
-    id: 'alert-003',
-    timestamp: '14:08',
-    patient: { id: 'PT-20314', name: '박선미', bed: 'A-02' },
-    source: 'light_model',
-    priority: 'warning',
-    status: 'new',
+    alert_id: 'alert-003',
+    stay_token: 'ST-20314',
+    alert_type: 'risk_threshold',
+    alert_source: 'sepsis_light',
+    severity: 'warning',
+    status: 'active',
     title: '패혈증 의심 — qSOFA 2/3',
-    body: 'HR 118, Temp 39.1°C, WBC 21.3, CRP 156. 패혈증 번들 시작 고려.',
-    tags: ['72% Risk', 'qSOFA 2/3', 'Rising Trend'],
-    confidence: 72,
-    actions: [
-      { type: 'acknowledge', label: '확인' },
-      { type: 'view_patient', label: '환자 보기' },
-    ],
+    message: 'HR 118, Temp 39.1°C, WBC 21.3, CRP 156. 패혈증 번들 시작 고려.',
+    tags_jsonb: ['72% Risk', 'qSOFA 2/3', 'Rising Trend'],
+    confidence: 0.72,
+    created_at: ISO(14, 8),
+    delivery: { delivery_id: 'dlv-003', read_at: null, acknowledged_at: null },
   },
   {
-    id: 'alert-004',
-    timestamp: '13:50',
-    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
-    source: 'threshold',
-    priority: 'warning',
+    alert_id: 'alert-004',
+    stay_token: 'ST-19482',
+    alert_type: 'vital_breach',
+    alert_source: 'threshold',
+    severity: 'warning',
     status: 'acknowledged',
-    acknowledgedBy: 'Dr. 윤',
-    acknowledgedAt: '14:05',
     title: 'AKI 진행 — Creatinine 2.1 mg/dL',
-    body: 'Creatinine 2.1 (baseline 0.9, ×2.3 증가). UO 0.28 mL/kg/h (6시간). AKI Stage 2 (KDIGO). 신장내과 협진 권고.',
-    tags: ['Cr ×2.3', 'UO ↓', 'KDIGO Stage 2'],
-    actions: [{ type: 'view_patient', label: '환자 보기' }],
+    message: 'Creatinine 2.1 (baseline 0.9, ×2.3 증가). UO 0.28 mL/kg/h (6시간). AKI Stage 2 (KDIGO). 신장내과 협진 권고.',
+    tags_jsonb: ['Cr ×2.3', 'UO ↓', 'KDIGO Stage 2'],
+    confidence: null,
+    created_at: ISO(13, 50),
+    delivery: { delivery_id: 'dlv-004', read_at: ISO(14, 0), acknowledged_at: ISO(14, 5) },
   },
   {
-    id: 'alert-005',
-    timestamp: '13:32',
-    patient: { id: 'PT-20781', name: '이재훈', bed: 'A-03' },
-    source: 'deep_model',
-    priority: 'warning',
-    status: 'new',
+    alert_id: 'alert-005',
+    stay_token: 'ST-20781',
+    alert_type: 'risk_threshold',
+    alert_source: 'septic_shock_12h',
+    severity: 'warning',
+    status: 'active',
     title: '패혈성 쇼크 진행 가능성 — Risk 64%',
-    body: 'MAP 64 mmHg (경계), Lactate 2.6 mmol/L. Vasopressor 시작 고려 단계. 1시간 내 재평가 필요.',
-    tags: ['64% Risk', 'MAP 경계', 'Lactate 2.6'],
-    confidence: 64,
-    actions: [
-      { type: 'acknowledge', label: '확인' },
-      { type: 'view_patient', label: '환자 보기' },
-    ],
+    message: 'MAP 64 mmHg (경계), Lactate 2.6 mmol/L. Vasopressor 시작 고려 단계. 1시간 내 재평가 필요.',
+    tags_jsonb: ['64% Risk', 'MAP 경계', 'Lactate 2.6'],
+    confidence: 0.64,
+    created_at: ISO(13, 32),
+    delivery: { delivery_id: 'dlv-005', read_at: null, acknowledged_at: null },
   },
   {
-    id: 'alert-006',
-    timestamp: '13:15',
-    patient: { id: 'PT-21005', name: '최민정', bed: 'A-04' },
-    source: 'light_model',
-    priority: 'warning',
-    status: 'new',
+    alert_id: 'alert-006',
+    stay_token: 'ST-21005',
+    alert_type: 'risk_threshold',
+    alert_source: 'sepsis_light',
+    severity: 'warning',
+    status: 'active',
     title: '패혈증 초기 의심 — Risk 58%',
-    body: 'HR 108, Temp 38.4°C, RR 22/min. SIRS 3/4 충족. 감염원 확인 권고.',
-    tags: ['58% Risk', 'SIRS 3/4', '초기'],
-    confidence: 58,
-    actions: [
-      { type: 'acknowledge', label: '확인' },
-      { type: 'view_patient', label: '환자 보기' },
-    ],
+    message: 'HR 108, Temp 38.4°C, RR 22/min. SIRS 3/4 충족. 감염원 확인 권고.',
+    tags_jsonb: ['58% Risk', 'SIRS 3/4', '초기'],
+    confidence: 0.58,
+    created_at: ISO(13, 15),
+    delivery: { delivery_id: 'dlv-006', read_at: null, acknowledged_at: null },
   },
   {
-    id: 'alert-007',
-    timestamp: '12:48',
-    patient: { id: 'PT-20314', name: '박선미', bed: 'A-02' },
-    source: 'threshold',
-    priority: 'warning',
+    alert_id: 'alert-007',
+    stay_token: 'ST-20314',
+    alert_type: 'vital_breach',
+    alert_source: 'threshold',
+    severity: 'warning',
     status: 'acknowledged',
-    acknowledgedBy: 'Dr. 정',
-    acknowledgedAt: '13:00',
     title: 'Lactate 상승 — 3.2 mmol/L',
-    body: 'Lactate 3.2 (1시간 전 2.4). 관류 저하 신호. 수액 반응성 평가 권고.',
-    tags: ['Lactate ↑', '관류 저하'],
-    actions: [{ type: 'view_patient', label: '환자 보기' }],
+    message: 'Lactate 3.2 (1시간 전 2.4). 관류 저하 신호. 수액 반응성 평가 권고.',
+    tags_jsonb: ['Lactate ↑', '관류 저하'],
+    confidence: null,
+    created_at: ISO(12, 48),
+    delivery: { delivery_id: 'dlv-007', read_at: ISO(12, 55), acknowledged_at: ISO(13, 0) },
   },
   {
-    id: 'alert-008',
-    timestamp: '12:20',
-    patient: { id: 'PT-20781', name: '이재훈', bed: 'A-03' },
-    source: 'threshold',
-    priority: 'critical',
+    alert_id: 'alert-008',
+    stay_token: 'ST-20781',
+    alert_type: 'vital_breach',
+    alert_source: 'threshold',
+    severity: 'critical',
     status: 'resolved',
-    resolvedAt: '12:42',
     title: 'SpO2 저하 — 88%',
-    body: 'SpO2 88%, FiO2 0.4 → 0.5 상향 후 94%로 회복. 추가 모니터링 중.',
-    tags: ['SpO2 저하', '회복'],
-    actions: [{ type: 'view_patient', label: '환자 보기' }],
+    message: 'SpO2 88%, FiO2 0.4 → 0.5 상향 후 94%로 회복. 추가 모니터링 중.',
+    tags_jsonb: ['SpO2 저하', '회복'],
+    confidence: null,
+    created_at: ISO(12, 20),
+    delivery: { delivery_id: 'dlv-008', read_at: ISO(12, 30), acknowledged_at: ISO(12, 35) },
   },
   {
-    id: 'alert-009',
-    timestamp: '11:55',
-    patient: { id: 'PT-19482', name: '김영호', bed: 'A-01' },
-    source: 'light_model',
-    priority: 'warning',
+    alert_id: 'alert-009',
+    stay_token: 'ST-19482',
+    alert_type: 'risk_threshold',
+    alert_source: 'sepsis_light',
+    severity: 'warning',
     status: 'resolved',
-    resolvedAt: '12:30',
     title: 'HR 변동성 증가 — Risk 51%',
-    body: 'HR variability 증가 후 안정화. Sinus tachycardia 지속 중이나 추세 안정.',
-    tags: ['51% Risk', '안정화'],
-    confidence: 51,
-    actions: [{ type: 'view_patient', label: '환자 보기' }],
+    message: 'HR variability 증가 후 안정화. Sinus tachycardia 지속 중이나 추세 안정.',
+    tags_jsonb: ['51% Risk', '안정화'],
+    confidence: 0.51,
+    created_at: ISO(11, 55),
+    delivery: { delivery_id: 'dlv-009', read_at: ISO(12, 0), acknowledged_at: ISO(12, 10) },
   },
   {
-    id: 'alert-010',
-    timestamp: '11:30',
-    patient: { id: 'PT-21005', name: '최민정', bed: 'A-04' },
-    source: 'deep_model',
-    priority: 'warning',
+    alert_id: 'alert-010',
+    stay_token: 'ST-21005',
+    alert_type: 'risk_threshold',
+    alert_source: 'mortality_48h',
+    severity: 'warning',
     status: 'acknowledged',
-    acknowledgedBy: 'Dr. 윤',
-    acknowledgedAt: '11:48',
     title: '사망 위험도 상승 — Risk 42%',
-    body: '사망 예측 모델 위험도 28% → 42% 상승. SOFA +2 변화. 추세 모니터링 권고.',
-    tags: ['42% Risk', 'SOFA +2'],
-    confidence: 42,
-    actions: [{ type: 'view_patient', label: '환자 보기' }],
+    message: '사망 예측 모델 위험도 28% → 42% 상승. SOFA +2 변화. 추세 모니터링 권고.',
+    tags_jsonb: ['42% Risk', 'SOFA +2'],
+    confidence: 0.42,
+    created_at: ISO(11, 30),
+    delivery: { delivery_id: 'dlv-010', read_at: ISO(11, 40), acknowledged_at: ISO(11, 48) },
   },
 ];

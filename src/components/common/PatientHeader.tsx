@@ -1,44 +1,41 @@
 import { FileText } from 'lucide-react';
-import type { Patient } from '../../types';
+import type { PatientDetail } from '../../types';
+import { formatPatientName } from '../../utils/formatPatientName';
+import { formatDateTime } from '../../utils/time';
 import './PatientHeader.css';
 
 interface PatientHeaderProps {
-  patient: Patient;
+  patient: PatientDetail;
   onSummaryClick?: () => void;
 }
 
-function hoursSince(admit: string): number | null {
-  // "YYYY-MM-DD HH:mm" → Date
-  const isoish = admit.replace(' ', 'T');
-  const d = new Date(isoish);
+function hoursSinceIso(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
   const diffMs = Date.now() - d.getTime();
-  const hours = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
-  return hours;
-}
-
-function formatShort(ts?: string): string {
-  if (!ts) return '—';
-  const parts = ts.split(' ');
-  if (parts.length !== 2) return ts;
-  return `${parts[0].split('-').slice(1).join('-')} ${parts[1]}`;
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
 }
 
 export default function PatientHeader({ patient, onSummaryClick }: PatientHeaderProps) {
-  const hours = hoursSince(patient.admit);
-  const avatarLetter = patient.name.charAt(0);
+  const displayName = formatPatientName(patient.patientToken);
+  const hours = hoursSinceIso(patient.icuInAt);
+  const avatarLetter = displayName.charAt(0) || patient.patientToken.charAt(0);
 
   const fields: Array<{ label: string; value: string }> = [
-    { label: '환자 ID', value: patient.id },
-    { label: '나이/성별', value: `${patient.age}세 / ${patient.sex}` },
-    { label: '병상', value: patient.bed },
-    { label: '입실시간', value: formatShort(patient.admit) },
-    { label: '주진단', value: patient.diag },
+    { label: '환자', value: patient.patientToken },
+    { label: '나이/성별', value: `${patient.ageGroup} / ${patient.sex}` },
+    { label: '병상', value: patient.currentBedLabel },
+    { label: '입실시간', value: formatDateTime(patient.icuInAt) },
+    { label: '주진단', value: patient.primaryDiagnosisText },
     {
-      label: 'SOFA',
-      value: hours != null ? `${patient.sofa} · 재실 ${hours}h` : `${patient.sofa}`,
+      label: '재실',
+      value: hours != null ? `${hours}h` : '—',
     },
-    { label: 'SEPSIS ONSET', value: formatShort(patient.sepsisOnset) },
+    {
+      label: 'SEPSIS ONSET',
+      value: patient.sepsisOnsetAt ? formatDateTime(patient.sepsisOnsetAt) : '—',
+    },
   ];
 
   return (
@@ -48,8 +45,8 @@ export default function PatientHeader({ patient, onSummaryClick }: PatientHeader
       </div>
       <div className="patient-header__main">
         <div className="patient-header__name">
-          <span className="patient-header__name-id">{patient.id}</span>
-          <span className="patient-header__name-text">{patient.name}</span>
+          <span className="patient-header__name-id">{patient.patientToken}</span>
+          <span className="patient-header__name-text">{displayName}</span>
         </div>
         <dl className="patient-header__grid">
           {fields.slice(1).map((f) => (

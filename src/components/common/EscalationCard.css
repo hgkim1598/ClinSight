@@ -80,20 +80,20 @@
   border-radius: 50%;
 }
 
-.escalation__status--unused {
+.escalation__status--low-need {
   color: var(--text-secondary);
 }
 
-.escalation__status--unused .escalation__status-dot {
+.escalation__status--low-need .escalation__status-dot {
   background: var(--text-muted);
 }
 
-.escalation__status--inuse {
+.escalation__status--high-need {
   color: var(--primary);
   border-color: var(--primary);
 }
 
-.escalation__status--inuse .escalation__status-dot {
+.escalation__status--high-need .escalation__status-dot {
   background: var(--primary);
 }
 

@@ -44,17 +44,19 @@ function findLatestValid(scores: Array<number | null>): number | null {
 }
 
 const ORGAN_LEGEND_LABEL: Record<OrganKey, string> = {
-  cardio: '심혈관',
-  resp: '호흡기',
+  cardiovascular: '심혈관',
+  respiration: '호흡기',
   cns: 'CNS',
-  hepatic: '간',
+  liver: '간',
   renal: '신장',
-  coag: '응고계',
+  coagulation: '응고계',
 };
 
 const EMPTY_TREND: SofaTrend = {
   times: [],
-  scores: { cardio: [], resp: [], cns: [], hepatic: [], renal: [], coag: [] },
+  scores: {
+    cardiovascular: [], respiration: [], cns: [], liver: [], renal: [], coagulation: [],
+  },
 };
 
 export default function SofaPanel({ patientId }: SofaPanelProps) {
@@ -72,12 +74,12 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
     () =>
       trend.times.map((t, i) => ({
         t,
-        cardio: trend.scores.cardio[i],
-        resp: trend.scores.resp[i],
+        cardiovascular: trend.scores.cardiovascular[i],
+        respiration: trend.scores.respiration[i],
         cns: trend.scores.cns[i],
-        hepatic: trend.scores.hepatic[i],
+        liver: trend.scores.liver[i],
         renal: trend.scores.renal[i],
-        coag: trend.scores.coag[i],
+        coagulation: trend.scores.coagulation[i],
       })),
     [trend],
   );
@@ -87,7 +89,14 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
       acc[key] = findLatestValid(trend.scores[key]);
       return acc;
     },
-    { cardio: null, resp: null, cns: null, hepatic: null, renal: null, coag: null },
+    {
+      cardiovascular: null,
+      respiration: null,
+      cns: null,
+      liver: null,
+      renal: null,
+      coagulation: null,
+    },
   );
 
   const selectedHasNoData =

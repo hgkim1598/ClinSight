@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AiModeProvider } from './context/AiModeContext';
+import { MetaProvider } from './context/MetaContext';
+import { SnackbarProvider } from './context/SnackbarContext';
 import Layout from './components/layout/Layout';
 import OverviewPage from './pages/OverviewPage';
 import PatientPage from './pages/PatientPage';
@@ -11,18 +13,25 @@ import ConsultationsPage from './pages/ConsultationsPage';
 export default function App() {
   return (
     <BrowserRouter>
-      <AiModeProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route element={<Layout />}>
-            <Route path="/" element={<OverviewPage />} />
-            <Route path="/patient/:id" element={<PatientPage />} />
-            <Route path="/patient/:id/model/:modelKey" element={<DrilldownPage />} />
-            <Route path="/alerts" element={<AlertsPage />} />
-            <Route path="/consultations" element={<ConsultationsPage />} />
-          </Route>
-        </Routes>
-      </AiModeProvider>
+      <MetaProvider>
+        <SnackbarProvider>
+          <AiModeProvider>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route element={<Layout />}>
+                <Route path="/" element={<OverviewPage />} />
+                <Route path="/patient/:stayId" element={<PatientPage />} />
+                <Route
+                  path="/patient/:stayId/model/:modelKey"
+                  element={<DrilldownPage />}
+                />
+                <Route path="/alerts" element={<AlertsPage />} />
+                <Route path="/consultations" element={<ConsultationsPage />} />
+              </Route>
+            </Routes>
+          </AiModeProvider>
+        </SnackbarProvider>
+      </MetaProvider>
     </BrowserRouter>
   );
 }

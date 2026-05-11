@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Info, Send, Sparkles, X } from 'lucide-react';
-import { getChatIntro, getChatResponse } from '../../api/services/aiInsightService';
+import {
+  createChatSession,
+  getChatIntro,
+  postChatMessage,
+} from '../../api/services/aiInsightService';
 import { useAiMode } from '../../context/aiMode';
+import { useSnackbar } from '../../context/useSnackbar';
 import type { AiInsightSection, ChatContext, ChatMessage } from '../../types';
 import './AiChatPanel.css';
 
@@ -12,8 +17,6 @@ const SECTION_LABEL: Record<AiInsightSection, string> = {
   rawMetrics: 'Raw 임상 지표',
   auxiliary: '보조지표 (치료 에스컬레이션)',
 };
-
-const RESPONSE_DELAY_MS = 450;
 
 const PATIENT_PROMPT_EXAMPLES: string[] = [
   '현재 환자 상태를 요약해주세요',
@@ -25,14 +28,19 @@ const PATIENT_PROMPT_EXAMPLES: string[] = [
 
 function buildHeaderTitle(context: ChatContext | null): string {
   if (!context) return 'AI 어시스턴트';
-  if (context.type === 'patient') return `환자 AI 어시스턴트 · ${context.patientId}`;
+  if (context.type === 'patient') return `환자 AI 어시스턴트 · ${context.stayToken}`;
   return `${SECTION_LABEL[context.section]} · AI 설명`;
 }
 
 function buildContextKey(context: ChatContext | null): string {
   if (!context) return 'none';
-  if (context.type === 'patient') return `patient:${context.patientId}`;
+  if (context.type === 'patient') return `patient:${context.stayToken}`;
   return `section:${context.modelKey}:${context.section}`;
+}
+
+function buildSessionTitle(context: ChatContext): string {
+  if (context.type === 'patient') return `환자 ${context.stayToken} 문의`;
+  return `${SECTION_LABEL[context.section]} 문의`;
 }
 
 function makeId(): string {
@@ -41,36 +49,39 @@ function makeId(): string {
 
 export default function AiChatPanel() {
   const { chatPanelOpen, chatContext, closeChatPanel } = useAiMode();
+  const { show: showSnackbar } = useSnackbar();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [pendingResponse, setPendingResponse] = useState(false);
+  const [sessionKey, setSessionKey] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const responseTimerRef = useRef<number | null>(null);
 
   const contextKey = buildContextKey(chatContext);
 
   // 컨텍스트 변경 시 동기 상태 리셋 — render-time prop 동기화 패턴.
-  // 인트로 fetch는 아래 useEffect에서 비동기로 처리.
   const [prevContextKey, setPrevContextKey] = useState(contextKey);
   if (prevContextKey !== contextKey) {
     setPrevContextKey(contextKey);
     setPendingResponse(false);
     setInput('');
     setMessages([]);
+    setSessionKey(null);
   }
 
-  // 컨텍스트 변경 시 외부 자원(타이머) 정리 + 인트로 fetch
+  // 컨텍스트 변경 시 세션 생성 + 인트로 메시지 표시.
   useEffect(() => {
-    if (responseTimerRef.current != null) {
-      window.clearTimeout(responseTimerRef.current);
-      responseTimerRef.current = null;
-    }
     if (!chatContext) return;
     let cancelled = false;
     void (async () => {
-      const text = await getChatIntro(chatContext);
+      const stayToken =
+        chatContext.type === 'patient' ? chatContext.stayToken : 'unknown';
+      const [session, introText] = await Promise.all([
+        createChatSession(stayToken, buildSessionTitle(chatContext)),
+        getChatIntro(chatContext),
+      ]);
       if (cancelled) return;
-      setMessages([{ id: makeId(), role: 'ai', text }]);
+      setSessionKey(session.sessionKey);
+      setMessages([{ id: makeId(), role: 'ai', text: introText }]);
     })();
     return () => {
       cancelled = true;
@@ -83,39 +94,44 @@ export default function AiChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, chatPanelOpen]);
 
-  // 언마운트 시 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (responseTimerRef.current != null) {
-        window.clearTimeout(responseTimerRef.current);
-      }
-    };
-  }, []);
-
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || !chatContext || pendingResponse) return;
 
     const userMsg: ChatMessage = { id: makeId(), role: 'user', text: trimmed };
     setMessages((prev) => [...prev, userMsg]);
     setPendingResponse(true);
-
-    responseTimerRef.current = window.setTimeout(() => {
-      void (async () => {
-        const text = await getChatResponse(chatContext, trimmed);
-        setMessages((prev) => [
-          ...prev,
-          { id: makeId(), role: 'ai', text },
-        ]);
-        setPendingResponse(false);
-        responseTimerRef.current = null;
-      })();
-    }, RESPONSE_DELAY_MS);
+    try {
+      // 세션 생성이 아직 진행 중일 수 있어 lazily 재생성.
+      let key = sessionKey;
+      if (!key) {
+        const session = await createChatSession(
+          chatContext.type === 'patient' ? chatContext.stayToken : 'unknown',
+          buildSessionTitle(chatContext),
+        );
+        key = session.sessionKey;
+        setSessionKey(key);
+      }
+      const reply = await postChatMessage(key, trimmed);
+      // adapter: assistant → ai, content → text
+      setMessages((prev) => [
+        ...prev,
+        { id: makeId(), role: 'ai', text: reply.content },
+      ]);
+    } catch {
+      // 응답 없이 typing dot만 꺼지면 사용자가 상태를 알 수 없으므로 Snackbar로 안내.
+      showSnackbar({
+        message: '메시지 전송에 실패했습니다. 다시 시도해주세요.',
+        type: 'error',
+      });
+    } finally {
+      setPendingResponse(false);
+    }
   };
 
   const handleSend = () => {
     if (!input.trim()) return;
-    sendMessage(input);
+    void sendMessage(input);
     setInput('');
   };
 
@@ -173,7 +189,7 @@ export default function AiChatPanel() {
                 key={prompt}
                 type="button"
                 className="ai-chat__prompt"
-                onClick={() => sendMessage(prompt)}
+                onClick={() => void sendMessage(prompt)}
                 disabled={pendingResponse}
               >
                 {prompt}

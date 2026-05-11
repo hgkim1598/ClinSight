@@ -3,16 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users,
   AlertTriangle,
-  BedDouble,
+  Activity,
   Stethoscope,
   UserCheck,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import type { KpiData, Patient, RiskLevel } from '../types';
-import { getPatients } from '../api/services/patientService';
+import type {
+  DashboardPatient,
+  DashboardResponse,
+  DashboardStaffing,
+  KpiData,
+  RiskLevel,
+} from '../types';
+import { getDashboardPatients } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
+import { CURRENT_ICU_ID } from '../utils/constants';
+import { formatPatientName } from '../utils/formatPatientName';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
 import AlertBell from '../components/common/AlertBell';
@@ -27,71 +35,103 @@ const PAGE_SIZE = 10;
 type SortKey =
   | 'risk-desc'
   | 'risk-asc'
-  | 'admit-desc'
-  | 'admit-asc'
+  | 'recent-desc'
+  | 'recent-asc'
   | 'sofa-desc'
-  | 'age-desc';
+  | 'alert-desc';
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'risk-desc', label: '위험도순 (높은순)' },
   { value: 'risk-asc', label: '위험도순 (낮은순)' },
-  { value: 'admit-desc', label: '입실시간순 (최신순)' },
-  { value: 'admit-asc', label: '입실시간순 (오래된순)' },
+  { value: 'recent-desc', label: '최근 관측순 (최신순)' },
+  { value: 'recent-asc', label: '최근 관측순 (오래된순)' },
   { value: 'sofa-desc', label: 'SOFA 점수순 (높은순)' },
-  { value: 'age-desc', label: '나이순 (높은순)' },
+  { value: 'alert-desc', label: '알림 많은순' },
 ];
 
-const RISK_RANK: Record<RiskLevel, number> = { high: 3, med: 2, low: 1 };
+const RISK_RANK: Record<RiskLevel, number> = { high: 3, medium: 2, low: 1 };
 
-function sortPatients(list: Patient[], key: SortKey): Patient[] {
+function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[] {
   const arr = [...list];
   switch (key) {
     case 'risk-desc':
-      return arr.sort((a, b) => RISK_RANK[b.risk] - RISK_RANK[a.risk]);
+      return arr.sort(
+        (a, b) =>
+          RISK_RANK[b.latestMortalityRiskLabel] - RISK_RANK[a.latestMortalityRiskLabel],
+      );
     case 'risk-asc':
-      return arr.sort((a, b) => RISK_RANK[a.risk] - RISK_RANK[b.risk]);
-    case 'admit-desc':
-      return arr.sort((a, b) => b.admit.localeCompare(a.admit));
-    case 'admit-asc':
-      return arr.sort((a, b) => a.admit.localeCompare(b.admit));
+      return arr.sort(
+        (a, b) =>
+          RISK_RANK[a.latestMortalityRiskLabel] - RISK_RANK[b.latestMortalityRiskLabel],
+      );
+    case 'recent-desc':
+      return arr.sort((a, b) => b.lastObservationAt.localeCompare(a.lastObservationAt));
+    case 'recent-asc':
+      return arr.sort((a, b) => a.lastObservationAt.localeCompare(b.lastObservationAt));
     case 'sofa-desc':
-      return arr.sort((a, b) => b.sofa - a.sofa);
-    case 'age-desc':
-      return arr.sort((a, b) => b.age - a.age);
+      return arr.sort((a, b) => b.latestSofaTotal - a.latestSofaTotal);
+    case 'alert-desc':
+      return arr.sort((a, b) => b.activeAlertCount - a.activeAlertCount);
   }
 }
 
-function formatAdmit(admit: string): string {
-  const parts = admit.split(' ');
-  if (parts.length !== 2) return admit;
-  const date = parts[0].split('-').slice(1).join('-');
-  return `${date} ${parts[1]}`;
+/**
+ * 배정 assignments[]에서 role별로 고유 staff_id를 집계.
+ * 한 의료진이 여러 환자에 배정될 수 있으므로 중복 제거 후 인원 카운트.
+ */
+function countUniqueStaff(
+  staffing: DashboardStaffing | null,
+  role: string,
+): number {
+  if (!staffing) return 0;
+  const ids = new Set<string>();
+  for (const a of staffing.assignments) {
+    for (const s of a.assignedStaff) {
+      if (s.role === role) ids.add(s.staffId);
+    }
+  }
+  return ids.size;
 }
 
-function buildKpis(list: Patient[], totalBeds: number): KpiData[] {
-  const total = list.length;
-  const highCount = list.filter((p) => p.risk === 'high').length;
-  const remaining = totalBeds - total;
-  const occupancyPct = Math.round((total / totalBeds) * 100);
+function buildKpis(
+  dashboard: DashboardResponse,
+  staffing: DashboardStaffing | null,
+): KpiData[] {
+  const { totalPatients, highRiskCount, criticalAlertCount } = dashboard.summary;
+  const physicianCount = countUniqueStaff(staffing, 'physician');
+  const nurseCount = countUniqueStaff(staffing, 'nurse');
+  const myPatients = staffing?.summary.myPatientsCount ?? 0;
 
   return [
     {
-      label: '총 환자 수',
-      value: `${total}명`,
-      sub: `병상 ${totalBeds}개 중`,
-      tone: 'default',
-    },
-    {
-      label: '병상 점유율',
-      value: `${occupancyPct}%`,
-      sub: `잔여 ${remaining} 병상`,
+      label: '입실 환자',
+      value: `${totalPatients}명`,
+      sub: `${dashboard.icuUnit.displayName}`,
       tone: 'default',
     },
     {
       label: '고위험 환자',
-      value: `${highCount}명`,
+      value: `${highRiskCount}명`,
       sub: '즉각 모니터링 필요',
       tone: 'danger',
+    },
+    {
+      label: '활성 알림',
+      value: `${criticalAlertCount}건`,
+      sub: '미처리 critical',
+      tone: criticalAlertCount > 0 ? 'warn' : 'default',
+    },
+    {
+      label: '담당 의사',
+      value: `${physicianCount}명`,
+      sub: myPatients > 0 ? `내 담당 ${myPatients}명` : '근무 중',
+      tone: 'default',
+    },
+    {
+      label: '담당 간호사',
+      value: `${nurseCount}명`,
+      sub: '근무 중',
+      tone: 'default',
     },
   ];
 }
@@ -99,53 +139,42 @@ function buildKpis(list: Patient[], totalBeds: number): KpiData[] {
 export default function OverviewPage() {
   const navigate = useNavigate();
   const {
-    data: patients,
-    loading: patientsLoading,
-    error: patientsError,
-    refetch: refetchPatients,
-  } = useAsync(() => getPatients(), []);
-  const {
-    data: staffing,
-    loading: staffingLoading,
-    error: staffingError,
-    refetch: refetchStaffing,
-  } = useAsync(() => getStaffing(), []);
+    data: dashboard,
+    loading,
+    error,
+    refetch,
+  } = useAsync(() => getDashboardPatients(CURRENT_ICU_ID), []);
+
+  const { data: staffing } = useAsync(() => getStaffing(CURRENT_ICU_ID), []);
 
   const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
   const [page, setPage] = useState(0);
 
   const kpis = useMemo(
-    () => (patients && staffing ? buildKpis(patients, staffing.totalBeds) : []),
-    [patients, staffing],
+    () => (dashboard ? buildKpis(dashboard, staffing ?? null) : []),
+    [dashboard, staffing],
   );
 
   const sortedPatients = useMemo(
-    () => (patients ? sortPatients(patients, sortKey) : []),
-    [patients, sortKey],
+    () => sortPatients(dashboard?.patients ?? [], sortKey),
+    [dashboard, sortKey],
   );
 
-  if (patientsLoading || staffingLoading) {
+  if (loading) {
     return (
       <div className="overview">
         <LoadingState />
       </div>
     );
   }
-  if (patientsError) {
+  if (error) {
     return (
       <div className="overview">
-        <ErrorState onRetry={refetchPatients} />
+        <ErrorState onRetry={refetch} />
       </div>
     );
   }
-  if (staffingError) {
-    return (
-      <div className="overview">
-        <ErrorState onRetry={refetchStaffing} />
-      </div>
-    );
-  }
-  if (!patients || !staffing) return null;
+  if (!dashboard) return null;
 
   const totalPages = Math.max(1, Math.ceil(sortedPatients.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
@@ -156,19 +185,11 @@ export default function OverviewPage() {
 
   const kpiIcons = [
     <Users size={16} />,
-    <BedDouble size={16} />,
     <AlertTriangle size={16} />,
+    <Activity size={16} />,
+    <Stethoscope size={16} />,
+    <UserCheck size={16} />,
   ];
-
-  const nurseRatio = patients.length / staffing.nurses.onDuty;
-  const nurseRatioLabel = `1 : ${
-    Number.isInteger(nurseRatio) ? nurseRatio : nurseRatio.toFixed(1)
-  }`;
-  const nurseStatusOk = nurseRatio <= staffing.thresholds.maxPatientsPerNurse;
-  const nurseStatusLabel = nurseStatusOk ? '권장 수준' : '주의';
-  const nurseTagClass = nurseStatusOk
-    ? 'capacity-tag capacity-tag--safe'
-    : 'capacity-tag capacity-tag--warn';
 
   return (
     <div className="overview">
@@ -184,39 +205,6 @@ export default function OverviewPage() {
         {kpis.map((kpi, idx) => (
           <KpiCard key={kpi.label} data={kpi} icon={kpiIcons[idx]} />
         ))}
-      </section>
-
-      <section className="overview__capacity" aria-label="Capacity">
-        <div className="capacity-card">
-          <span className="capacity-card__icon">
-            <Stethoscope size={16} />
-          </span>
-          <div className="capacity-card__body">
-            <span className="capacity-card__label">담당 의사 가용</span>
-            <span className="capacity-card__value">
-              {staffing.doctors.onDuty} / {staffing.doctors.total}명
-            </span>
-            {staffing.doctors.activities.map((activity) => (
-              <span
-                key={activity.label}
-                className="capacity-tag capacity-tag--info"
-              >
-                <span className="capacity-tag__label">{activity.label}</span>
-                <span className="capacity-tag__count">{activity.count}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="capacity-card">
-          <span className="capacity-card__icon">
-            <UserCheck size={16} />
-          </span>
-          <div className="capacity-card__body">
-            <span className="capacity-card__label">간호사 : 환자 비율</span>
-            <span className="capacity-card__value">{nurseRatioLabel}</span>
-            <span className={nurseTagClass}>{nurseStatusLabel}</span>
-          </div>
-        </div>
       </section>
 
       <section className="overview__section">
@@ -252,10 +240,10 @@ export default function OverviewPage() {
             <thead>
               <tr>
                 <th>병상</th>
-                <th>환자 ID</th>
+                <th>환자</th>
                 <th>나이/성별</th>
-                <th>입실시간</th>
-                <th>주진단</th>
+                <th>최근 관측</th>
+                <th>알림</th>
                 <th>SOFA</th>
                 <th>패혈증 위험도</th>
               </tr>
@@ -263,22 +251,28 @@ export default function OverviewPage() {
             <tbody>
               {pagedPatients.map((p) => (
                 <tr
-                  key={p.id}
-                  className={p.risk === 'high' ? 'is-high' : ''}
-                  onClick={() => navigate(`/patient/${p.id}`)}
+                  key={p.stayToken}
+                  className={p.latestMortalityRiskLabel === 'high' ? 'is-high' : ''}
+                  onClick={() => navigate(`/patient/${p.stayToken}`)}
                 >
-                  <td className="cell-bed">{p.bed}</td>
-                  <td className="cell-id">{p.id}</td>
-                  <td>
-                    {p.age}세/{p.sex}
+                  <td className="cell-bed">{p.currentBedLabel}</td>
+                  <td className="cell-id">
+                    {formatPatientName(p.patientToken)}
+                    <span className="cell-id__token"> · {p.patientToken}</span>
                   </td>
-                  <td className="cell-admit">{formatAdmit(p.admit)}</td>
-                  <td className="cell-diag" title={p.diag}>
-                    {p.diag}
-                  </td>
-                  <td className="cell-sofa">{p.sofa}</td>
                   <td>
-                    <Badge level={p.risk} />
+                    {p.ageGroup}/{p.sex}
+                  </td>
+                  <td className="cell-admit">
+                    {new Date(p.lastObservationAt).toLocaleTimeString('ko-KR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td className="cell-sofa">{p.activeAlertCount}</td>
+                  <td className="cell-sofa">{p.latestSofaTotal}</td>
+                  <td>
+                    <Badge level={p.latestMortalityRiskLabel} />
                   </td>
                 </tr>
               ))}

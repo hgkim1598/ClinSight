@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import type { ModelKey } from '../types';
-import { getPatientById } from '../api/services/patientService';
-import { getVitals } from '../api/services/vitalService';
+import { getPatientDetail } from '../api/services/patientService';
+import { observationsToVitalData } from '../api/services/vitalService';
 import { getModelPredictions } from '../api/services/modelService';
 import { getPatientReport } from '../api/services/reportService';
 import { getSchedule, getTimeline } from '../api/services/timelineService';
+import { formatPatientName } from '../utils/formatPatientName';
+import { ClinicalDataProvider } from '../context/ClinicalDataContext';
+import { useClinicalData } from '../context/useClinicalData';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientHeader from '../components/common/PatientHeader';
 import VitalChart from '../components/common/VitalChart';
@@ -24,30 +27,56 @@ import './PatientPage.css';
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
 const LAST_UPDATED_MIN = 2;
 
+/**
+ * Provider 밖에서 stayId를 잡아 ClinicalDataProvider 트리를 세팅.
+ * `key={stayId}` 로 stay 전환 시 Provider가 자연 remount되어 캐시가 깨끗하게 리셋된다.
+ */
 export default function PatientPage() {
-  const { id = '' } = useParams<{ id: string }>();
+  const { stayId = '' } = useParams<{ stayId: string }>();
+  return (
+    <ClinicalDataProvider key={stayId} stayId={stayId}>
+      <PatientPageContent stayId={stayId} />
+    </ClinicalDataProvider>
+  );
+}
+
+interface PatientPageContentProps {
+  stayId: string;
+}
+
+function PatientPageContent({ stayId }: PatientPageContentProps) {
   const navigate = useNavigate();
 
+  // /clinical-data는 ClinicalDataProvider가 소유. 본 컴포넌트는 소비만.
+  const clinical = useClinicalData();
+
+  // 그 외 환자 상세 묶음은 한 번에 fetch.
   const { data: bundle, loading, error, refetch } = useAsync(async () => {
-    const [patient, vitals, predictions, timeline, schedule] = await Promise.all([
-      getPatientById(id),
-      getVitals(id),
-      getModelPredictions(id),
-      getTimeline(id),
-      getSchedule(id),
+    const [patient, predictions, timeline, schedule] = await Promise.all([
+      getPatientDetail(stayId),
+      getModelPredictions(stayId),
+      getTimeline(stayId),
+      getSchedule(stayId),
     ]);
-    return { patient, vitals, predictions, timeline, schedule };
-  }, [id]);
+    return { patient, predictions, timeline, schedule };
+  }, [stayId]);
+
+  // VitalChart용 view-model은 observations에서 즉시 파생.
+  const vitals = useMemo(
+    () => observationsToVitalData(clinical.observations),
+    [clinical.observations],
+  );
 
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
 
   const { data: report } = useAsync(
-    async () => (reportOpen ? await getPatientReport(id) : null),
-    [id, reportOpen],
+    async () => (reportOpen ? await getPatientReport(stayId) : null),
+    [stayId, reportOpen],
   );
 
-  if (loading) {
+  // clinical 데이터와 bundle 모두 준비된 후 렌더.
+  if (loading || clinical.loading) {
     return (
       <div className="patient-page">
         <LoadingState />
@@ -61,9 +90,16 @@ export default function PatientPage() {
       </div>
     );
   }
+  if (clinical.error) {
+    return (
+      <div className="patient-page">
+        <ErrorState onRetry={clinical.refetch} />
+      </div>
+    );
+  }
   if (!bundle) return null;
 
-  const { patient, vitals, predictions, timeline, schedule } = bundle;
+  const { patient, predictions, timeline, schedule } = bundle;
 
   if (!patient) {
     return (
@@ -87,12 +123,13 @@ export default function PatientPage() {
           </div>
         </nav>
         <div className="patient-page__empty">
-          환자를 찾을 수 없습니다. (id: {id || '없음'})
+          환자를 찾을 수 없습니다. (stayId: {stayId || '없음'})
         </div>
       </div>
     );
   }
 
+  const displayName = formatPatientName(patient.patientToken);
   const isDetail = selectedModel != null;
 
   return (
@@ -110,7 +147,7 @@ export default function PatientPage() {
           <Breadcrumb
             items={[
               { label: 'ICU 대시보드', path: '/' },
-              { label: `${patient.name} (${patient.bed})` },
+              { label: `${displayName} (${patient.currentBedLabel})` },
             ]}
           />
         </div>
@@ -128,7 +165,7 @@ export default function PatientPage() {
         />
       ) : (
         <>
-          <VitalChart vitals={vitals} patientId={id} />
+          <VitalChart vitals={vitals} patientId={stayId} />
 
           <section className="patient-page__models">
             <header className="patient-page__models-head">
@@ -153,7 +190,7 @@ export default function PatientPage() {
         </>
       )}
 
-      <FloatingChatButton patientId={patient.id} />
+      <FloatingChatButton stayToken={patient.stayToken} />
 
       {report && (
         <PatientReportModal

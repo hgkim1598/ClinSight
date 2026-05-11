@@ -1,26 +1,86 @@
 /**
  * Clinical Timeline Service
  *
- * 현재: mock 데이터 반환 (src/api/mock/timeline.ts)
- * API 전환 시:
- *   1. mock import 제거
- *   2. request<T>()를 사용하여 API 호출로 교체
- *   3. endpoint 예시:
- *      - GET /patients/{id}/timeline (24시간 이벤트, 최신순)
+ *  - GET /icu-stays/{stayId}/timeline → getTimeline()
+ *  - GET /icu-stays/{stayId}/schedule → getSchedule()
  *
- * 참고: docs/DYNAMO_SCHEMA.md §12 ClinicalTimeline
+ * API의 ISO 시각/필드명을 컴포넌트 view-model로 변환한다.
  */
-import type { ScheduledEvent, TimelineEvent } from '../../types';
-import { mockSchedule, mockTimeline } from '../mock/timeline';
+import type {
+  ScheduledEvent,
+  TimelineEvent,
+  TimelineEventCategory,
+  TimelineEventSeverity,
+  TimelineItemType,
+} from '../../types';
+import { MOCK_MODE, request } from '../client';
+import {
+  mockScheduleByStay,
+  mockTimelineByStay,
+  type WireScheduleResponse,
+  type WireScheduledEvent,
+  type WireTimelineItem,
+  type WireTimelineResponse,
+} from '../mock/timeline';
+import { formatTime } from '../../utils/time';
 
-export async function getTimeline(patientId: string): Promise<TimelineEvent[]> {
-  return mockTimeline[patientId] ?? [];
+function mapCategory(detailCategory: string): TimelineEventCategory {
+  const allowed: TimelineEventCategory[] = [
+    'vitals', 'lab', 'medication', 'procedure', 'assessment',
+    'alert', 'mortality', 'aki', 'ards', 'sic', 'shock',
+  ];
+  return (allowed.includes(detailCategory as TimelineEventCategory)
+    ? (detailCategory as TimelineEventCategory)
+    : 'assessment');
 }
 
-/**
- * 환자의 예정된 임상 이벤트(투약 다음 시점·정기 검사 등)를 반환한다.
- * 백엔드 연결 시 GET /patients/{id}/schedule 또는 처방/오더 테이블에서 도출.
- */
-export async function getSchedule(patientId: string): Promise<ScheduledEvent[]> {
-  return mockSchedule[patientId] ?? [];
+function mapSeverity(s: string): TimelineEventSeverity {
+  if (s === 'critical' || s === 'high') return 'critical';
+  if (s === 'warning') return 'warning';
+  return 'info';
+}
+
+function mapTimelineItem(w: WireTimelineItem): TimelineEvent {
+  return {
+    id: w.item_id,
+    time: formatTime(w.timeline_time),
+    title: w.title,
+    description: w.summary,
+    category: mapCategory(w.detail_category),
+    severity: mapSeverity(w.severity),
+    itemType: w.item_type as TimelineItemType,
+  };
+}
+
+function mapScheduledEvent(w: WireScheduledEvent): ScheduledEvent {
+  return {
+    id: w.event_id,
+    time: formatTime(w.event_time),
+    title: w.event_title,
+    description: w.event_description,
+    category: mapCategory(w.event_category),
+    basis: w.derivation_basis,
+  };
+}
+
+export async function getTimeline(stayId: string): Promise<TimelineEvent[]> {
+  if (MOCK_MODE) {
+    const w = mockTimelineByStay[stayId];
+    return (w?.timeline ?? []).map(mapTimelineItem);
+  }
+  const w = await request<WireTimelineResponse>(
+    `/icu-stays/${encodeURIComponent(stayId)}/timeline`,
+  );
+  return w.timeline.map(mapTimelineItem);
+}
+
+export async function getSchedule(stayId: string): Promise<ScheduledEvent[]> {
+  if (MOCK_MODE) {
+    const w = mockScheduleByStay[stayId];
+    return (w?.scheduled_events ?? []).map(mapScheduledEvent);
+  }
+  const w = await request<WireScheduleResponse>(
+    `/icu-stays/${encodeURIComponent(stayId)}/schedule`,
+  );
+  return w.scheduled_events.map(mapScheduledEvent);
 }

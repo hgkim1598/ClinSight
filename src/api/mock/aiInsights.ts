@@ -107,8 +107,8 @@ const SECTION_CHAT_RESPONSES: Record<AiInsightSection, string[]> = {
   ],
 };
 
-export function buildPatientChatIntro(patientId: string): string {
-  return `안녕하세요. ${patientId} 환자의 현재 상태에 대해 질문해주세요. 모델 예측, 추세, 임상 지표 어느 항목이든 답변드립니다.`;
+export function buildPatientChatIntro(stayToken: string): string {
+  return `안녕하세요. ${stayToken} 환자의 현재 상태에 대해 질문해주세요. 모델 예측, 추세, 임상 지표 어느 항목이든 답변드립니다.`;
 }
 
 const PATIENT_CHAT_RESPONSES: string[] = [

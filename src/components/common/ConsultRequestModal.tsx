@@ -1,30 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { CheckCircle, X } from 'lucide-react';
-import type {
-  ConsultPriority,
-  ConsultRecipient,
-  StaffMember,
-} from '../../types';
+import type { ConsultPriority, PatientDetail, StaffMember } from '../../types';
 import {
   createConsultation,
   getDepartments,
-} from '../../api/services/consultService';
+} from '../../api/services/consultationService';
+import { formatPatientName } from '../../utils/formatPatientName';
 import { showToast } from '../../utils/toast';
 import { useAsync } from '../../hooks/useAsync';
 import DepartmentTree from './consult/DepartmentTree';
-import RecipientChips from './consult/RecipientChips';
+import RecipientChips, {
+  type SelectedRecipient,
+} from './consult/RecipientChips';
 import './ConsultRequestModal.css';
 
 interface ConsultRequestModalProps {
   open: boolean;
   onClose: () => void;
   onSubmitted: () => void;
-  patient: {
-    id: string;
-    name: string;
-    bed: string;
-  };
+  patient: PatientDetail;
 }
 
 const AUTO_CLOSE_MS = 2000;
@@ -41,8 +36,9 @@ export default function ConsultRequestModal({
   const { data: departmentsData } = useAsync(() => getDepartments(), []);
   const departments = departmentsData ?? [];
 
-  const [recipients, setRecipients] = useState<ConsultRecipient[]>([]);
-  const [reason, setReason] = useState('');
+  const [recipients, setRecipients] = useState<SelectedRecipient[]>([]);
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
   const [priority, setPriority] = useState<ConsultPriority>('routine');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -52,7 +48,6 @@ export default function ConsultRequestModal({
     [recipients],
   );
 
-  // ESC 닫기 + 포커스 + 모달 열림 효과
   useEffect(() => {
     if (!open) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -63,14 +58,13 @@ export default function ConsultRequestModal({
     return () => document.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
-  // open이 false로 전환되면 폼 상태 초기화 — render-time prop 동기화 패턴.
-  // 외부 자원(타이머)은 아래 useEffect cleanup에서 별도 정리.
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
     setPrevOpen(open);
     if (!open) {
       setRecipients([]);
-      setReason('');
+      setSubject('');
+      setMessage('');
       setPriority('routine');
       setSubmitted(false);
       setSubmitting(false);
@@ -85,7 +79,6 @@ export default function ConsultRequestModal({
     }
   }, [open]);
 
-  // 언마운트 시 타이머 정리
   useEffect(() => {
     return () => {
       if (autoCloseTimerRef.current != null) {
@@ -100,14 +93,15 @@ export default function ConsultRequestModal({
     if (e.target === e.currentTarget) onClose();
   };
 
-  const addRecipient = (staff: StaffMember, deptName: string) => {
-    if (recipientIds.has(staff.id)) return;
+  const addRecipient = (staff: StaffMember, deptDisplayName: string) => {
+    if (recipientIds.has(staff.staffId)) return;
     setRecipients((prev) => [
       ...prev,
       {
-        staffId: staff.id,
-        name: staff.name,
-        department: deptName,
+        staffId: staff.staffId,
+        departmentCode: staff.primaryDepartmentCode,
+        displayName: staff.displayName,
+        departmentDisplayName: deptDisplayName,
         role: 'to',
       },
     ]);
@@ -125,19 +119,23 @@ export default function ConsultRequestModal({
     setRecipients((prev) => prev.filter((r) => r.staffId !== staffId));
   };
 
-  const canSubmit = !submitted && !submitting && recipients.length > 0;
+  const canSubmit =
+    !submitted && !submitting && recipients.length > 0 && subject.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
       await createConsultation({
-        patientId: patient.id,
-        patientName: patient.name,
-        patientBed: patient.bed,
-        recipients,
+        stayToken: patient.stayToken,
+        subject: subject.trim(),
+        message: message.trim(),
         priority,
-        reason: reason.trim(),
+        recipients: recipients.map((r) => ({
+          departmentCode: r.departmentCode,
+          staffId: r.staffId,
+          role: r.role,
+        })),
       });
       setSubmitted(true);
       autoCloseTimerRef.current = window.setTimeout(() => {
@@ -173,6 +171,8 @@ export default function ConsultRequestModal({
     onSubmitted();
   };
 
+  const displayName = formatPatientName(patient.patientToken);
+
   return (
     <div
       className="consult-modal__overlay"
@@ -198,7 +198,7 @@ export default function ConsultRequestModal({
             </header>
 
             <div className="consult-modal__patient">
-              {patient.name} ({patient.bed}) · {patient.id}
+              {displayName} ({patient.currentBedLabel}) · {patient.patientToken}
             </div>
 
             <section className="consult-modal__section">
@@ -225,12 +225,24 @@ export default function ConsultRequestModal({
             </section>
 
             <section className="consult-modal__section">
+              <h3 className="consult-modal__section-title">제목</h3>
+              <input
+                type="text"
+                className="consult-modal__reason"
+                placeholder="협진 요청 제목 (필수)"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                aria-label="협진 요청 제목"
+              />
+            </section>
+
+            <section className="consult-modal__section">
               <h3 className="consult-modal__section-title">요청 사유</h3>
               <textarea
                 className="consult-modal__reason"
                 placeholder="협진 요청 사유를 입력하세요 (선택)"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 rows={3}
                 aria-label="협진 요청 사유"
               />
@@ -300,7 +312,7 @@ export default function ConsultRequestModal({
                       {r.role === 'to' ? '수신' : '참조'}
                     </span>
                     <span className="consult-modal__chip-name">
-                      {r.name} ({r.department})
+                      {r.displayName} ({r.departmentDisplayName})
                     </span>
                   </span>
                 </li>

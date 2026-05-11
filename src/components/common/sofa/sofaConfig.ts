@@ -28,7 +28,7 @@ export interface OrganDef {
  */
 export const ORGANS: OrganDef[] = [
   {
-    key: 'cardio',
+    key: 'cardiovascular',
     label: '심혈관',
     color: '#E24B4A',
     buttonPos: { left: '0%', top: '10%' },
@@ -36,7 +36,7 @@ export const ORGANS: OrganDef[] = [
     target: { x: '52%', y: '50%' },
   },
   {
-    key: 'hepatic',
+    key: 'liver',
     label: '간',
     color: '#EF9F27',
     buttonPos: { left: '0%', top: '40%' },
@@ -44,7 +44,7 @@ export const ORGANS: OrganDef[] = [
     target: { x: '46%', y: '58%' },
   },
   {
-    key: 'coag',
+    key: 'coagulation',
     label: '응고계',
     color: '#D85A30',
     buttonPos: { left: '0%', top: '70%' },
@@ -60,7 +60,7 @@ export const ORGANS: OrganDef[] = [
     target: { x: '50%', y: '14%' },
   },
   {
-    key: 'resp',
+    key: 'respiration',
     label: '호흡기',
     color: '#378ADD',
     buttonPos: { right: '0%', top: '40%' },
@@ -87,10 +87,10 @@ export function scoreToToneClass(score: number): 'safe' | 'warn' | 'danger' {
 
 /** OrganKey → 아이콘 컴포넌트 매핑 */
 export const ORGAN_ICON: Record<OrganKey, ComponentType> = {
-  cardio: HeartIcon,
-  resp: LungsIcon,
+  cardiovascular: HeartIcon,
+  respiration: LungsIcon,
   cns: BrainIcon,
-  hepatic: LiverIcon,
+  liver: LiverIcon,
   renal: KidneysIcon,
-  coag: BloodCellsIcon,
+  coagulation: BloodCellsIcon,
 };

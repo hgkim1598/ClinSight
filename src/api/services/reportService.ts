@@ -1,13 +1,11 @@
 /**
  * Patient Report Service (조합형)
  *
- * 현재: 다른 서비스(patient/vital/model)를 조합해 보고서 즉석 빌드.
- * API 전환 시:
- *   1. 옵션 A — 백엔드에 GET /patients/{id}/report 엔드포인트 추가 (BFF 권장)
- *   2. 옵션 B — 클라이언트에서 3개 서비스를 await로 병렬 호출 후 조합 (현재 구조 유지)
- *      Promise.all로 병렬화 권장: await Promise.all([getPatientById, getVitals, getModelPredictions])
+ *  기본: 프론트가 여러 API를 조합해 즉석 빌드 (저장 안 함, 가볍고 빠름)
+ *  저장: POST /icu-stays/{stayId}/reports → ReportLambda가 S3에 PDF/HTML 저장
+ *  조회: GET /icu-stays/{stayId}/report/latest → presigned URL
  *
- * 참고: docs/DYNAMO_SCHEMA.md §17 PatientReports
+ * V4 명세 §7.
  */
 import type {
   ModelKey,
@@ -16,21 +14,17 @@ import type {
   ReportPrediction,
   ReportVitalRow,
   RiskTone,
+  SavedReport,
   VitalKey,
   VitalStatusLevel,
 } from '../../types';
-import { getPatientById } from './patientService';
+import { getPatientDetail } from './patientService';
 import { getVitals } from './vitalService';
 import { getModelPredictions } from './modelService';
 import { toneToRisk } from '../../utils/constants';
+import { MOCK_MODE, request } from '../client';
 
-/**
- * 활력징후 상태 등급 산정 (mock heuristic).
- * - in-range: normal
- * - 범위 밖이지만 범위 폭의 20% 이내 일탈: attention
- * - 그 이상: critical
- * 임상 정확도가 아닌 시연용 휴리스틱이며, 실제 임계치는 임상 정책 기반 별도 테이블로 대체될 자리.
- */
+/** 활력징후 상태 등급 산정 (mock heuristic — 백엔드 value_status로 대체될 자리). */
 function computeVitalStatus(value: number, [lo, hi]: [number, number]): VitalStatusLevel {
   if (value >= lo && value <= hi) return 'normal';
   const range = hi - lo;
@@ -40,7 +34,6 @@ function computeVitalStatus(value: number, [lo, hi]: [number, number]): VitalSta
 }
 
 const VITAL_KEYS: VitalKey[] = ['hr', 'map', 'spo2', 'rr', 'temp'];
-
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
 
 /** 보고서에 노출할 검사 항목과 출처(predictions의 어느 모델 raw에서 가져올지). */
@@ -63,16 +56,16 @@ function toneFallbackPct(tone: RiskTone): number {
 }
 
 /**
- * 환자 상태 요약 보고서 데이터를 조합한다.
- * 추후 백엔드 연결 시 GET /patients/{id}/report 같은 엔드포인트 호출로 교체될 자리.
+ * 환자 상태 요약 보고서 데이터를 조합한다 (프론트 BFF 방식).
+ * 저장 흐름은 saveReport()를 별도로 호출.
  */
-export async function getPatientReport(patientId: string): Promise<PatientReport | null> {
-  const patient = await getPatientById(patientId);
+export async function getPatientReport(stayId: string): Promise<PatientReport | null> {
+  const patient = await getPatientDetail(stayId);
   if (!patient) return null;
 
   const [vitalsData, predictionsData] = await Promise.all([
-    getVitals(patientId),
-    getModelPredictions(patientId),
+    getVitals(stayId),
+    getModelPredictions(stayId),
   ]);
 
   const vitals: ReportVitalRow[] = VITAL_KEYS.map((key) => {
@@ -126,7 +119,7 @@ export async function getPatientReport(patientId: string): Promise<PatientReport
       key,
       title: pred.title,
       probability,
-      risk: toneToRisk(pred.tone),
+      risk: pred.riskLabel ?? toneToRisk(pred.tone),
     };
   });
 
@@ -137,4 +130,76 @@ export async function getPatientReport(patientId: string): Promise<PatientReport
     labs,
     predictions,
   };
+}
+
+// -------- 저장된 보고서 (presigned URL) --------
+
+interface WireSavedReport {
+  report_id: string;
+  stay_token: string;
+  report_type: string;
+  report_title: string;
+  report_status: string;
+  generated_at: string;
+  generated_by_staff_id: string;
+  available_formats: Array<'html' | 'pdf'>;
+  html_download_url: string;
+  pdf_download_url: string;
+}
+
+function mapSavedReport(w: WireSavedReport): SavedReport {
+  return {
+    reportId: w.report_id,
+    stayToken: w.stay_token,
+    reportType: w.report_type,
+    reportTitle: w.report_title,
+    reportStatus: w.report_status,
+    generatedAt: w.generated_at,
+    generatedByStaffId: w.generated_by_staff_id,
+    availableFormats: w.available_formats,
+    htmlDownloadUrl: w.html_download_url,
+    pdfDownloadUrl: w.pdf_download_url,
+  };
+}
+
+export async function getLatestSavedReport(stayId: string): Promise<SavedReport | null> {
+  if (MOCK_MODE) return null;
+  try {
+    const w = await request<WireSavedReport>(
+      `/icu-stays/${encodeURIComponent(stayId)}/report/latest`,
+    );
+    return mapSavedReport(w);
+  } catch {
+    return null;
+  }
+}
+
+export interface SaveReportPayload {
+  reportType: 'daily' | 'ai_assisted' | string;
+  reportTitle: string;
+  observationRange: { from: string; to: string };
+  includePredictions?: boolean;
+  includeAiSummary?: boolean;
+}
+
+export async function saveReport(
+  stayId: string,
+  payload: SaveReportPayload,
+): Promise<SavedReport | null> {
+  if (MOCK_MODE) {
+    // mock 모드에서는 저장 시뮬레이션만.
+    return null;
+  }
+  const body = JSON.stringify({
+    report_type: payload.reportType,
+    report_title: payload.reportTitle,
+    observation_range: payload.observationRange,
+    include_predictions: payload.includePredictions,
+    include_ai_summary: payload.includeAiSummary,
+  });
+  const w = await request<WireSavedReport>(
+    `/icu-stays/${encodeURIComponent(stayId)}/reports`,
+    { method: 'POST', body },
+  );
+  return mapSavedReport(w);
 }
