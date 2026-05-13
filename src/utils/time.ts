@@ -39,3 +39,49 @@ export function toRelativeLabel(iso: string, referenceIso: string): string {
   if (hours <= 0) return '현재';
   return `-${hours}h`;
 }
+
+// ============================================
+// 일수 계산 — 임상 관행상 자정 기준
+// ============================================
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+/** Date를 로컬 자정으로 떨어뜨린다 (시/분/초/밀리초 = 0). */
+function startOfLocalDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/**
+ * `iso` 시점부터 `now`까지 경과한 로컬 일수 차이를 반환한다.
+ * 같은 날이면 0. 시간대 영향을 최소화하기 위해 두 시각을 로컬 자정으로
+ * 떨어뜨린 뒤 일수 차이를 계산한다.
+ */
+export function daysSinceLocalMidnight(iso: string, now: Date = new Date()): number {
+  const start = startOfLocalDay(new Date(iso));
+  const end = startOfLocalDay(now);
+  return Math.floor((end.getTime() - start.getTime()) / MS_PER_DAY);
+}
+
+/**
+ * HOD (Hospital Day) — 입원한 날을 1일로 카운트.
+ * 피드백 §1-2 — 한국 병원 임상 관행.
+ */
+export function hospitalDay(admitIso: string, now?: Date): number {
+  return daysSinceLocalMidnight(admitIso, now) + 1;
+}
+
+/**
+ * POD (Postoperative Day) — 수술 당일을 POD #0으로 카운트.
+ * 피드백 §1-2 — "수술 당일은 POD #0, 다음 날이 POD #1".
+ */
+export function postOpDay(surgeryIso: string, now?: Date): number {
+  return daysSinceLocalMidnight(surgeryIso, now);
+}
+
+/**
+ * Onset 일수 — 발병 당일을 1일째로 카운트.
+ * 피드백 §6-3.
+ */
+export function onsetDay(onsetIso: string, now?: Date): number {
+  return daysSinceLocalMidnight(onsetIso, now) + 1;
+}

@@ -30,6 +30,10 @@ function mapDashboardPatient(w: WireDashboardPatient): DashboardPatient {
     currentBedLabel: w.current_bed_label,
     ageGroup: w.age_group,
     sex: w.sex,
+    departmentCode: w.department_code,
+    attendingStaffId: w.attending_staff_id,
+    hospitalAdmitAt: w.hospital_admit_at,
+    surgeryAt: w.surgery_at,
     latestMortalityRiskScore: w.latest_mortality_risk_score,
     latestMortalityRiskLabel: w.latest_mortality_risk_label,
     latestComplicationRiskScore: w.latest_complication_risk_score,
@@ -73,6 +77,7 @@ function mapPatientDetail(w: WirePatientDetail): PatientDetail {
     currentBedLabel: w.current_bed_label,
     status: w.status,
     sepsisOnsetAt: w.sepsis_onset_at,
+    surgeryAt: w.surgery_at,
   };
 }
 

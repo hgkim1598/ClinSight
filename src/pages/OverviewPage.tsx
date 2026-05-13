@@ -20,7 +20,11 @@ import type {
 import { getDashboardPatients } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { CURRENT_ICU_ID } from '../utils/constants';
-import { formatPatientName } from '../utils/formatPatientName';
+import {
+  formatPatientName,
+  formatStaffName,
+} from '../utils/formatPatientName';
+import { hospitalDay, postOpDay } from '../utils/time';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
 import AlertBell from '../components/common/AlertBell';
@@ -31,6 +35,26 @@ import { useAsync } from '../hooks/useAsync';
 import './OverviewPage.css';
 
 const PAGE_SIZE = 10;
+
+/**
+ * 부서 코드 → 표시명. 페이지 내부 상수로 관리 (피드백 §1-1).
+ * 부서 목록은 변동성이 낮고 정렬용으로만 쓰여 /staff/departments 호출 없이 처리.
+ */
+const DEPT_LABEL: Record<string, string> = {
+  pulmonology: '호흡기내과',
+  cardiology: '심장내과',
+  nephrology: '신장내과',
+  infectious: '감염내과',
+  surgery: '외과',
+  icu: '중환자의학과',
+};
+
+/** HOD/POD를 한 셀에 인라인 표시. 예: "21일 (POD 19)" 또는 "21일". */
+function formatHodPodLabel(hospitalAdmitAt: string, surgeryAt: string | null): string {
+  const hod = hospitalDay(hospitalAdmitAt);
+  if (!surgeryAt) return `${hod}일`;
+  return `${hod}일 (POD ${postOpDay(surgeryAt)})`;
+}
 
 type SortKey =
   | 'risk-desc'
@@ -259,8 +283,11 @@ export default function OverviewPage() {
             <thead>
               <tr>
                 <th>병상</th>
+                <th>과</th>
+                <th>담당의</th>
                 <th>환자</th>
                 <th>나이/성별</th>
+                <th>재원</th>
                 <th>최근 관측</th>
                 <th>알림</th>
                 <th>SOFA</th>
@@ -275,12 +302,17 @@ export default function OverviewPage() {
                   onClick={() => navigate(`/patient/${p.stayToken}`)}
                 >
                   <td className="cell-bed">{p.currentBedLabel}</td>
+                  <td>{DEPT_LABEL[p.departmentCode] ?? p.departmentCode}</td>
+                  <td>{formatStaffName(p.attendingStaffId)}</td>
                   <td className="cell-id">
                     {formatPatientName(p.patientToken)}
                     <span className="cell-id__token"> · {p.patientToken}</span>
                   </td>
                   <td>
                     {p.ageGroup}/{p.sex}
+                  </td>
+                  <td className="cell-admit">
+                    {formatHodPodLabel(p.hospitalAdmitAt, p.surgeryAt)}
                   </td>
                   <td className="cell-admit">
                     {new Date(p.lastObservationAt).toLocaleTimeString('ko-KR', {

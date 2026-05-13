@@ -118,6 +118,14 @@ export interface DashboardPatient {
   currentBedLabel: string;
   ageGroup: string;
   sex: 'M' | 'F';
+  /** 환자 소속 진료과 코드 (config_items.config_key). 피드백 §1-1 */
+  departmentCode: string;
+  /** 담당 의사 staff_id. 피드백 §1-1 */
+  attendingStaffId: string;
+  /** 입원 시각 ISO. HOD 계산에 사용. 피드백 §1-2 */
+  hospitalAdmitAt: string;
+  /** 수술 시각 ISO. 수술 환자만 채워짐. POD 계산에 사용. 피드백 §1-2 */
+  surgeryAt: string | null;
   latestMortalityRiskScore: number;
   latestMortalityRiskLabel: RiskLevel;
   latestComplicationRiskScore: number;
@@ -165,6 +173,8 @@ export interface PatientDetail {
   currentBedLabel: string;
   status: string;
   sepsisOnsetAt: string | null;
+  /** 수술 시각 ISO. 수술 환자만 채워짐. POD 계산에 사용. 피드백 §1-2 */
+  surgeryAt: string | null;
 }
 
 // ---------- /dashboard staffing (Phase 3 — 현재 미사용) ----------
