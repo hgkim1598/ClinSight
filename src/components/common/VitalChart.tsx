@@ -61,6 +61,8 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
         showSnackbar({
           message: '이 탭은 비교 모드를 지원하지 않습니다.',
           type: 'info',
+          // 안내성 메시지라 사용자가 명시 확인을 누를 필요 없음 — 3초 후 자동 닫힘 + X로 일찍 닫기 가능.
+          autoHideMs: 3000,
         });
         return;
       }

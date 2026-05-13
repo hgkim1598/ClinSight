@@ -18,6 +18,7 @@ interface SnackbarState {
   id: number;
   message: string;
   type: SnackbarType;
+  autoHideMs?: number;
 }
 
 export function SnackbarProvider({ children }: { children: ReactNode }) {
@@ -28,6 +29,7 @@ export function SnackbarProvider({ children }: { children: ReactNode }) {
       id: Date.now(),
       message: options.message,
       type: options.type ?? 'info',
+      autoHideMs: options.autoHideMs,
     });
   }, []);
 
@@ -48,6 +50,7 @@ export function SnackbarProvider({ children }: { children: ReactNode }) {
           key={current.id}
           message={current.message}
           type={current.type}
+          autoHideMs={current.autoHideMs}
           onDismiss={dismiss}
         />
       )}
