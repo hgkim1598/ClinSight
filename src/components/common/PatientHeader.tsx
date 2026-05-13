@@ -1,7 +1,12 @@
 import { FileText } from 'lucide-react';
 import type { PatientDetail } from '../../types';
 import { formatPatientName } from '../../utils/formatPatientName';
-import { formatDateTime } from '../../utils/time';
+import {
+  formatDateTime,
+  hospitalDay,
+  onsetDay,
+  postOpDay,
+} from '../../utils/time';
 import './PatientHeader.css';
 
 interface PatientHeaderProps {
@@ -9,18 +14,23 @@ interface PatientHeaderProps {
   onSummaryClick?: () => void;
 }
 
-function hoursSinceIso(iso: string | null | undefined): number | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  const diffMs = Date.now() - d.getTime();
-  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
-}
-
 export default function PatientHeader({ patient, onSummaryClick }: PatientHeaderProps) {
   const displayName = formatPatientName(patient.patientToken);
-  const hours = hoursSinceIso(patient.icuInAt);
   const avatarLetter = displayName.charAt(0) || patient.patientToken.charAt(0);
+
+  // 재원 일수 — HOD에 수술 환자는 POD 인라인 부기 (피드백 §1-2)
+  const hodLabel = (() => {
+    const hod = hospitalDay(patient.hospitalAdmitAt);
+    if (patient.surgeryAt) {
+      return `HOD ${hod}일째 (POD ${postOpDay(patient.surgeryAt)})`;
+    }
+    return `HOD ${hod}일째`;
+  })();
+
+  // Sepsis Onset 일수 — 발병일 표시 (피드백 §6-3)
+  const onsetLabel = patient.sepsisOnsetAt
+    ? `${formatDateTime(patient.sepsisOnsetAt)} · Onset ${onsetDay(patient.sepsisOnsetAt)}일째`
+    : '—';
 
   const fields: Array<{ label: string; value: string }> = [
     { label: '환자', value: patient.patientToken },
@@ -28,14 +38,8 @@ export default function PatientHeader({ patient, onSummaryClick }: PatientHeader
     { label: '병상', value: patient.currentBedLabel },
     { label: '입실시간', value: formatDateTime(patient.icuInAt) },
     { label: '주진단', value: patient.primaryDiagnosisText },
-    {
-      label: '재실',
-      value: hours != null ? `${hours}h` : '—',
-    },
-    {
-      label: 'SEPSIS ONSET',
-      value: patient.sepsisOnsetAt ? formatDateTime(patient.sepsisOnsetAt) : '—',
-    },
+    { label: '재원', value: hodLabel },
+    { label: 'SEPSIS ONSET', value: onsetLabel },
   ];
 
   return (
