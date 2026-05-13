@@ -88,9 +88,10 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  /* 한글/영문 혼합에서 단어 단위로 줄바꿈, 너무 긴 토큰은 어디서든 끊기게 */
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  /* 한글은 단어 단위로 줄바꿈 — "패혈성 쇼크"가 "패혈/성 쇼크"로 쪼개지지 않도록.
+     너무 긴 단일 토큰(영문 약어 등)이 컨테이너를 넘치면 break-word로만 끊는다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
   /* 1줄 필드라도 dd 영역 시작점이 dt 바로 아래로 고정 */
   align-self: stretch;
 }
