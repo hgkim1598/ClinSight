@@ -81,9 +81,9 @@
   --text-inverse-secondary: #cbd5e1;
   --text-inverse-muted: #94a3b8;
 
-  /* 폰트 */
---sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
---mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* 폰트 — 한글 임상 UI에 맞춰 단일 패밀리 사용.
+     숫자 컬럼 정렬은 body { font-variant-numeric: tabular-nums } 로 처리한다. */
+  --sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* 간격 (4px 기반) */
   --space-xs: 4px;

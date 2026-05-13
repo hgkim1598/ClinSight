@@ -44,7 +44,7 @@
 }
 
 .trend-bar__tooltip-time {
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 .trend-bar__tooltip-pct {

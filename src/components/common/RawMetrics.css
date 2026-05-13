@@ -21,7 +21,7 @@
 .raw-metrics__time {
   font-size: 12px;
   color: var(--text-muted);
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 .raw-metrics__grid {
@@ -71,7 +71,7 @@
 .raw-metrics__cell-time {
   font-size: 12px;
   color: var(--text-muted);
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 .raw-metrics--empty {

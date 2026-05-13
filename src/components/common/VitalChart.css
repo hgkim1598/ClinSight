@@ -187,7 +187,7 @@
 
 .vital-chart__lab-time {
   color: var(--text-muted);
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 .vital-chart__lab-label {

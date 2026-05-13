@@ -185,7 +185,7 @@
   font-size: 12px;
   color: #4b5563;
   text-align: right;
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 /* 섹션 */
@@ -243,7 +243,6 @@
 }
 
 .report-table__num {
-  font-family: var(--mono);
   font-feature-settings: 'tnum';
   white-space: nowrap;
 }
@@ -336,7 +335,7 @@
 .report-paper__note-meta {
   font-size: 11px;
   color: #6b7280;
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 .report-modal__note-add {

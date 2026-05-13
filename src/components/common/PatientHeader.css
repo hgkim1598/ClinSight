@@ -39,7 +39,8 @@
 }
 
 .patient-header__name-id {
-  font-family: var(--mono);
+  /* 식별자 톤을 letter-spacing으로 유지 (mono 폰트 대신) */
+  letter-spacing: 0.3px;
   font-size: 14px;
   color: var(--text-secondary);
 }

@@ -235,7 +235,7 @@
   margin-top: 4px;
   font-size: 12px;
   color: var(--text-muted);
-  font-family: var(--mono);
+  font-feature-settings: 'tnum';
 }
 
 .model-detail__header-value {

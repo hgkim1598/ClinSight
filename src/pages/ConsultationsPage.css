@@ -261,7 +261,6 @@
 /* 시각 */
 .consult-row__time {
   color: var(--text-muted);
-  font-family: var(--mono);
   font-feature-settings: 'tnum';
   white-space: nowrap;
   font-size: 12px;

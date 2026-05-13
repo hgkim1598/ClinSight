@@ -108,7 +108,6 @@
 
 .clinical-timeline__time {
   font-size: 13px;
-  font-family: var(--mono);
   font-feature-settings: 'tnum';
   color: var(--text-secondary);
   padding-top: 4px;
