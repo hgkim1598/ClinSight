@@ -32,6 +32,7 @@ import Clock from '../components/common/Clock';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
 import { useAsync } from '../hooks/useAsync';
+import { useMe } from '../context/useMeta';
 import './OverviewPage.css';
 
 const PAGE_SIZE = 10;
@@ -75,28 +76,62 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 const RISK_RANK: Record<RiskLevel, number> = { high: 3, medium: 2, low: 1 };
 
-function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[] {
-  const arr = [...list];
+/**
+ * 비교 함수를 합성한다. 첫 번째 함수가 0이면 다음 함수로 fallback.
+ * "내 환자 우선" 정렬을 1차 키로 두기 위한 헬퍼.
+ */
+function chainComparators<T>(
+  ...cmps: Array<(a: T, b: T) => number>
+): (a: T, b: T) => number {
+  return (a, b) => {
+    for (const cmp of cmps) {
+      const d = cmp(a, b);
+      if (d !== 0) return d;
+    }
+    return 0;
+  };
+}
+
+function sortPatients(
+  list: DashboardPatient[],
+  key: SortKey,
+  myStaffId: string | null | undefined,
+): DashboardPatient[] {
+  // 1차 키: 내 담당 환자 우선 (피드백 §1-1).
+  // 로그인 사용자 정보가 없으면 효과 없음.
+  const byMyPatient = (a: DashboardPatient, b: DashboardPatient) => {
+    if (!myStaffId) return 0;
+    const aMine = a.attendingStaffId === myStaffId ? 0 : 1;
+    const bMine = b.attendingStaffId === myStaffId ? 0 : 1;
+    return aMine - bMine;
+  };
+
+  // 2차 키: 사용자가 고른 정렬 옵션.
+  let byChoice: (a: DashboardPatient, b: DashboardPatient) => number;
   switch (key) {
     case 'risk-desc':
-      return arr.sort(
-        (a, b) =>
-          RISK_RANK[b.latestMortalityRiskLabel] - RISK_RANK[a.latestMortalityRiskLabel],
-      );
+      byChoice = (a, b) =>
+        RISK_RANK[b.latestMortalityRiskLabel] - RISK_RANK[a.latestMortalityRiskLabel];
+      break;
     case 'risk-asc':
-      return arr.sort(
-        (a, b) =>
-          RISK_RANK[a.latestMortalityRiskLabel] - RISK_RANK[b.latestMortalityRiskLabel],
-      );
+      byChoice = (a, b) =>
+        RISK_RANK[a.latestMortalityRiskLabel] - RISK_RANK[b.latestMortalityRiskLabel];
+      break;
     case 'recent-desc':
-      return arr.sort((a, b) => b.lastObservationAt.localeCompare(a.lastObservationAt));
+      byChoice = (a, b) => b.lastObservationAt.localeCompare(a.lastObservationAt);
+      break;
     case 'recent-asc':
-      return arr.sort((a, b) => a.lastObservationAt.localeCompare(b.lastObservationAt));
+      byChoice = (a, b) => a.lastObservationAt.localeCompare(b.lastObservationAt);
+      break;
     case 'sofa-desc':
-      return arr.sort((a, b) => b.latestSofaTotal - a.latestSofaTotal);
+      byChoice = (a, b) => b.latestSofaTotal - a.latestSofaTotal;
+      break;
     case 'alert-desc':
-      return arr.sort((a, b) => b.activeAlertCount - a.activeAlertCount);
+      byChoice = (a, b) => b.activeAlertCount - a.activeAlertCount;
+      break;
   }
+
+  return [...list].sort(chainComparators(byMyPatient, byChoice));
 }
 
 /**
@@ -155,6 +190,10 @@ export default function OverviewPage() {
 
   const { data: staffing } = useAsync(() => getStaffing(CURRENT_ICU_ID), []);
 
+  // 로그인 사용자의 staff_id — 자기 환자 상단 정렬 1차 키 (피드백 §1-1).
+  const me = useMe();
+  const myStaffId = me?.staffId;
+
   const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
   const [page, setPage] = useState(0);
 
@@ -179,8 +218,8 @@ export default function OverviewPage() {
     : 'capacity-tag capacity-tag--warn';
 
   const sortedPatients = useMemo(
-    () => sortPatients(dashboard?.patients ?? [], sortKey),
-    [dashboard, sortKey],
+    () => sortPatients(dashboard?.patients ?? [], sortKey, myStaffId),
+    [dashboard, sortKey, myStaffId],
   );
 
   if (loading) {
