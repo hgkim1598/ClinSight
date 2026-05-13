@@ -15,9 +15,33 @@ import RecipientChips, {
 } from './consult/RecipientChips';
 import './ConsultRequestModal.css';
 
-/** §7-2 의뢰서 양식 가이드 — message placeholder. */
-const MESSAGE_TEMPLATE =
-  '상기환자는 OO세 O환자, OO으로 입원함\n(상세 내용 기술)\n고신 선처 부탁드립니다\n감사합니다';
+/**
+ * 의뢰서 본문에서 사용자가 채워 넣어야 하는 자리표시자 — 모달 진입 시 이 문구가
+ * 텍스트로 자동 선택되어 사용자가 바로 덮어쓸 수 있다.
+ */
+const DETAIL_PLACEHOLDER = '(이 부분에 상세 내용을 작성해주세요)';
+
+/**
+ * §7-2 의뢰서 양식을 환자 정보로 자동 채운다.
+ * 사용자는 첫 줄과 마지막 두 줄도 자유롭게 편집 가능하지만, 보통 가운데 상세 내용만
+ * 갱신하면 되도록 가운데 자리표시자를 두고 모달이 열릴 때 그 부분을 셀렉트한다.
+ */
+function buildMessageTemplate(patient: PatientDetail): string {
+  const ageText =
+    patient.ageYears != null && Number.isFinite(patient.ageYears)
+      ? `${patient.ageYears}`
+      : patient.ageGroup;
+  const sexText = patient.sex === 'M' ? '남' : '여';
+  const dx = patient.primaryDiagnosisText || '진단명 미상';
+  return [
+    `상기환자는 ${ageText}세 ${sexText}환자, ${dx}으로 입원함`,
+    '',
+    DETAIL_PLACEHOLDER,
+    '',
+    '고신 선처 부탁드립니다',
+    '감사합니다',
+  ].join('\n');
+}
 
 interface ConsultRequestModalProps {
   open: boolean;
@@ -35,6 +59,7 @@ export default function ConsultRequestModal({
   patient,
 }: ConsultRequestModalProps) {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autoCloseTimerRef = useRef<number | null>(null);
 
   const { data: departmentsData } = useAsync(() => getDepartments(), []);
@@ -54,14 +79,16 @@ export default function ConsultRequestModal({
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKey);
-    closeBtnRef.current?.focus();
     return () => document.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
 
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
     setPrevOpen(open);
-    if (!open) {
+    if (open) {
+      // 모달이 새로 열릴 때 의뢰서 양식을 환자 정보로 자동 채운다.
+      setMessage(buildMessageTemplate(patient));
+    } else {
       setRecipient(null);
       setSubject('');
       setMessage('');
@@ -70,6 +97,24 @@ export default function ConsultRequestModal({
       setSubmitting(false);
     }
   }
+
+  // 모달이 열린 직후 textarea에 포커스를 주고, 상세 내용 자리표시자를
+  // 셀렉트해 사용자가 바로 덮어쓸 수 있게 한다.
+  useEffect(() => {
+    if (!open || submitted) return;
+    const timer = window.setTimeout(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      const idx = ta.value.indexOf(DETAIL_PLACEHOLDER);
+      if (idx >= 0) {
+        ta.focus();
+        ta.setSelectionRange(idx, idx + DETAIL_PLACEHOLDER.length);
+      } else {
+        ta.focus();
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [open, submitted]);
 
   useEffect(() => {
     if (open) return;
@@ -222,11 +267,11 @@ export default function ConsultRequestModal({
             <section className="consult-modal__section">
               <h3 className="consult-modal__section-title">요청 사유</h3>
               <textarea
+                ref={textareaRef}
                 className="consult-modal__reason"
-                placeholder={MESSAGE_TEMPLATE}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={5}
+                rows={7}
                 aria-label="협진 요청 사유"
               />
             </section>
