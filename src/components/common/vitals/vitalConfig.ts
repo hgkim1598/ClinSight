@@ -10,7 +10,6 @@ export interface TabConfig {
 
 export const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'sofa', label: 'SOFA' },
-  { key: 'vs', label: 'V/S' },
   { key: 'io', label: 'I/O' },
   { key: 'cardio', label: 'Cardio' },
   { key: 'resp', label: 'Resp' },
@@ -23,11 +22,13 @@ export const TABS: Array<{ key: TabKey; label: string }> = [
 
 /**
  * 표준 TAB_CONFIG. 1-line / 2-line / dots-only 케이스만 다룬다.
- * sofa, vs 는 다중 차트 구성이라 별도 렌더 경로를 사용 (`null`).
+ * sofa 는 다중 차트 구성이라 별도 렌더 경로를 사용 (`null`).
+ *
+ * V/S 세트(BP/HR/RR/SpO2/Temp)를 한 화면에서 보고 싶으면 Compare 모드에서
+ * Cardio / Resp / Temp 를 조합해 겹쳐본다.
  */
 export const TAB_CONFIG: Record<TabKey, TabConfig | null> = {
   sofa: null,
-  vs: null,
   // I/O — Intake/Output 2-line (피드백 §4-3)
   io: { lines: ['intake_volume', 'urine_output'], dots: [], yAxisLabel: 'mL/h' },
   cardio: { lines: ['map', 'hr'], dots: ['lac'], yAxisLabel: 'mmHg / bpm' },
@@ -38,22 +39,6 @@ export const TAB_CONFIG: Record<TabKey, TabConfig | null> = {
   hepatic: { lines: [], dots: ['bilirubin'], yAxisLabel: 'mg/dL' },
   temp: { lines: ['temp'], dots: [], yAxisLabel: '°C' },
 };
-
-/**
- * V/S 탭 구성: 임상에서 한 세트로 함께 보는 5개 지표를 3개 차트로 묶음.
- *  - 차트 1 (혈역학): Dual Y-axis — 왼쪽 MAP(mmHg), 오른쪽 HR(bpm)
- *  - 차트 2 (호흡): Dual Y-axis — 왼쪽 SpO₂(%), 오른쪽 RR(회/분)
- *  - 차트 3 (체온): 단일 — Temperature(°C)
- * 가로 배치(grid)로 노출. 세로 스택은 사용하지 않음 (피드백 §2-1, §6-2).
- */
-export const VS_PANEL_CONFIGS: Array<
-  | { kind: 'dual'; title: string; leftKey: VitalKey; rightKey: VitalKey }
-  | { kind: 'single'; title: string; key: VitalKey }
-> = [
-  { kind: 'dual', title: '혈역학 (MAP / HR)', leftKey: 'map', rightKey: 'hr' },
-  { kind: 'dual', title: '호흡 (SpO₂ / RR)', leftKey: 'spo2', rightKey: 'rr' },
-  { kind: 'single', title: '체온', key: 'temp' },
-];
 
 export const CRE_DANGER_THRESHOLD = 2.0;
 

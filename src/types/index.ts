@@ -235,13 +235,14 @@ export type VitalKey =
   | 'intake_volume';
 
 /**
- * 바이탈 차트 그룹 탭 키 — SOFA + V/S 세트 + I/O + 6개 장기 시스템 + Temp.
- *  - 'vs': 혈역학(MAP+HR) / 호흡(SpO2+RR) / 체온 3-chart 묶음 (피드백 §2-1, §6-2)
+ * 바이탈 차트 그룹 탭 키 — SOFA + I/O + 6개 장기 시스템 + Temp.
  *  - 'io': Intake / Output 2-line (피드백 §4-3)
+ *
+ * V/S 세트(BP/HR/RR/SpO2/Temp 통합 보기)는 별도 탭 대신 비교 모드로 처리한다.
+ * 사용자가 Cardio(MAP+HR), Resp(SpO2+RR), Temp 탭을 compare로 조합해서 본다.
  */
 export type TabKey =
   | 'sofa'
-  | 'vs'
   | 'io'
   | 'cardio'
   | 'resp'
