@@ -5,15 +5,15 @@ import { getStaff } from '../../../api/services/consultationService';
 
 interface DepartmentTreeProps {
   departments: Department[];
-  /** 이미 추가된 staffId 집합 — 트리에서 disabled 처리에 사용 */
-  selectedIds: Set<string>;
-  /** 인물 클릭 시 호출. 부서 표시명도 함께 전달. */
+  /** 현재 선택된 staff_id. 단일 수신자 모델 (피드백 §7-1). */
+  selectedStaffId: string | null;
+  /** 인물 클릭 시 호출. 단일 수신자로 교체된다. 부서 표시명도 함께 전달. */
   onSelect: (staff: StaffMember, deptDisplayName: string) => void;
 }
 
 export default function DepartmentTree({
   departments,
-  selectedIds,
+  selectedStaffId,
   onSelect,
 }: DepartmentTreeProps) {
   const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set());
@@ -73,15 +73,15 @@ export default function DepartmentTree({
             {expanded && (
               <ul className="consult-modal__staff-list">
                 {staffList.map((staff) => {
-                  const added = selectedIds.has(staff.staffId);
+                  const isSelected = selectedStaffId === staff.staffId;
                   const available = staff.status === 'active';
                   return (
                     <li key={staff.staffId}>
                       <button
                         type="button"
-                        className={`consult-modal__staff ${added ? 'is-added' : ''}`}
+                        className={`consult-modal__staff ${isSelected ? 'is-added' : ''}`}
                         onClick={() => onSelect(staff, dept.displayName)}
-                        disabled={added}
+                        aria-pressed={isSelected}
                       >
                         <span
                           className={`consult-modal__staff-dot ${
@@ -94,8 +94,8 @@ export default function DepartmentTree({
                         {!available && (
                           <span className="consult-modal__staff-absent">(부재중)</span>
                         )}
-                        {added && (
-                          <span className="consult-modal__staff-added" aria-label="추가됨">
+                        {isSelected && (
+                          <span className="consult-modal__staff-added" aria-label="선택됨">
                             ✓
                           </span>
                         )}

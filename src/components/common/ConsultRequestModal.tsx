@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { CheckCircle, X } from 'lucide-react';
 import type { ConsultPriority, PatientDetail, StaffMember } from '../../types';
@@ -14,6 +14,10 @@ import RecipientChips, {
   type SelectedRecipient,
 } from './consult/RecipientChips';
 import './ConsultRequestModal.css';
+
+/** §7-2 의뢰서 양식 가이드 — message placeholder. */
+const MESSAGE_TEMPLATE =
+  '상기환자는 OO세 O환자, OO으로 입원함\n(상세 내용 기술)\n고신 선처 부탁드립니다\n감사합니다';
 
 interface ConsultRequestModalProps {
   open: boolean;
@@ -36,17 +40,13 @@ export default function ConsultRequestModal({
   const { data: departmentsData } = useAsync(() => getDepartments(), []);
   const departments = departmentsData ?? [];
 
-  const [recipients, setRecipients] = useState<SelectedRecipient[]>([]);
+  // 단일 수신자 모델 (피드백 §7-1) — 다른 사람을 클릭하면 교체된다.
+  const [recipient, setRecipient] = useState<SelectedRecipient | null>(null);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [priority, setPriority] = useState<ConsultPriority>('routine');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  const recipientIds = useMemo(
-    () => new Set(recipients.map((r) => r.staffId)),
-    [recipients],
-  );
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +62,7 @@ export default function ConsultRequestModal({
   if (prevOpen !== open) {
     setPrevOpen(open);
     if (!open) {
-      setRecipients([]);
+      setRecipient(null);
       setSubject('');
       setMessage('');
       setPriority('routine');
@@ -93,37 +93,27 @@ export default function ConsultRequestModal({
     if (e.target === e.currentTarget) onClose();
   };
 
-  const addRecipient = (staff: StaffMember, deptDisplayName: string) => {
-    if (recipientIds.has(staff.staffId)) return;
-    setRecipients((prev) => [
-      ...prev,
-      {
-        staffId: staff.staffId,
-        departmentCode: staff.primaryDepartmentCode,
-        displayName: staff.displayName,
-        departmentDisplayName: deptDisplayName,
-        role: 'to',
-      },
-    ]);
+  /**
+   * 단일 수신자 모델 — 이미 누군가 선택된 상태에서 다른 staff를 클릭하면 교체된다.
+   * (피드백 §7-1: 의견 분산 방지를 위해 한 명에게만 보냄)
+   */
+  const setRecipientFromStaff = (staff: StaffMember, deptDisplayName: string) => {
+    setRecipient({
+      staffId: staff.staffId,
+      departmentCode: staff.primaryDepartmentCode,
+      displayName: staff.displayName,
+      departmentDisplayName: deptDisplayName,
+      role: 'to',
+    });
   };
 
-  const toggleRecipientRole = (staffId: string) => {
-    setRecipients((prev) =>
-      prev.map((r) =>
-        r.staffId === staffId ? { ...r, role: r.role === 'to' ? 'cc' : 'to' } : r,
-      ),
-    );
-  };
-
-  const removeRecipient = (staffId: string) => {
-    setRecipients((prev) => prev.filter((r) => r.staffId !== staffId));
-  };
+  const clearRecipient = () => setRecipient(null);
 
   const canSubmit =
-    !submitted && !submitting && recipients.length > 0 && subject.trim().length > 0;
+    !submitted && !submitting && recipient != null && subject.trim().length > 0;
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !recipient) return;
     setSubmitting(true);
     try {
       await createConsultation({
@@ -131,11 +121,13 @@ export default function ConsultRequestModal({
         subject: subject.trim(),
         message: message.trim(),
         priority,
-        recipients: recipients.map((r) => ({
-          departmentCode: r.departmentCode,
-          staffId: r.staffId,
-          role: r.role,
-        })),
+        recipients: [
+          {
+            departmentCode: recipient.departmentCode,
+            staffId: recipient.staffId,
+            role: 'to',
+          },
+        ],
       });
       setSubmitted(true);
       autoCloseTimerRef.current = window.setTimeout(() => {
@@ -205,23 +197,14 @@ export default function ConsultRequestModal({
               <h3 className="consult-modal__section-title">부서/담당자 선택</h3>
               <DepartmentTree
                 departments={departments}
-                selectedIds={recipientIds}
-                onSelect={addRecipient}
+                selectedStaffId={recipient?.staffId ?? null}
+                onSelect={setRecipientFromStaff}
               />
             </section>
 
             <section className="consult-modal__section">
-              <h3 className="consult-modal__section-title">
-                수신자
-                <span className="consult-modal__section-count">
-                  {recipients.length}
-                </span>
-              </h3>
-              <RecipientChips
-                recipients={recipients}
-                onToggleRole={toggleRecipientRole}
-                onRemove={removeRecipient}
-              />
+              <h3 className="consult-modal__section-title">수신자</h3>
+              <RecipientChips recipient={recipient} onRemove={clearRecipient} />
             </section>
 
             <section className="consult-modal__section">
@@ -240,10 +223,10 @@ export default function ConsultRequestModal({
               <h3 className="consult-modal__section-title">요청 사유</h3>
               <textarea
                 className="consult-modal__reason"
-                placeholder="협진 요청 사유를 입력하세요 (선택)"
+                placeholder={MESSAGE_TEMPLATE}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                rows={3}
+                rows={5}
                 aria-label="협진 요청 사유"
               />
             </section>
@@ -305,18 +288,18 @@ export default function ConsultRequestModal({
               협진 요청이 전달되었습니다
             </h2>
             <ul className="consult-modal__success-list">
-              {recipients.map((r) => (
-                <li key={r.staffId}>
-                  <span className={`consult-modal__chip consult-modal__chip--${r.role}`}>
+              {recipient && (
+                <li key={recipient.staffId}>
+                  <span className="consult-modal__chip consult-modal__chip--to">
                     <span className="consult-modal__chip-role consult-modal__chip-role--static">
-                      {r.role === 'to' ? '수신' : '참조'}
+                      수신
                     </span>
                     <span className="consult-modal__chip-name">
-                      {r.displayName} ({r.departmentDisplayName})
+                      {recipient.displayName} ({recipient.departmentDisplayName})
                     </span>
                   </span>
                 </li>
-              ))}
+              )}
             </ul>
             <button
               type="button"
