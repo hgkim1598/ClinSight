@@ -68,7 +68,6 @@ erDiagram
   icu_stays ||--o{ alerts : has
   icu_stays ||--o{ consultations : has
   icu_stays ||--o{ patient_reports : has
-  patient_reports ||--o{ consultations : attached_to
   icu_stays ||--o{ ai_interactions : has
 
   staff_users ||--o{ notification_deliveries : receives
@@ -625,7 +624,6 @@ erDiagram
 | `recipients_jsonb` | `JSONB` | N |  | `'[]'` | 수신 부서/의료진 목록 |
 | `notes_jsonb` | `JSONB` | Y |  |  | 간단한 노트 목록 |
 | `status_history_jsonb` | `JSONB` | Y |  |  | 상태 변경 이력 |
-| `attached_report_id` | `UUID` | Y | FK |  | 협진에 첨부된 보고서. `patient_reports.report_id` 참조 |
 | `created_at` | `TIMESTAMPTZ` | N | IDX | `now()` | 생성 시각 |
 | `updated_at` | `TIMESTAMPTZ` | N |  | `now()` | 수정 시각 |
 | `closed_at` | `TIMESTAMPTZ` | Y |  |  | 완료/취소 시각 |

@@ -74,45 +74,48 @@ export const mockMetrics: WireMetric[] = [
   { config_key: 'vasopressor_use',   display_name: 'Vasopressor 사용',  metric_group: 'derived', unit: '',         normal_range_low: null, normal_range_high: null, sort_order: 33 },
 ];
 
+// model_name은 카드 title에 그대로 노출되므로 horizon-포함 긴 라벨 대신
+// 기존 mock에서 쓰던 짧은 이름을 사용한다. (조원 합의 전까지 horizon 라벨은 미노출)
+// horizon 자체는 horizon_hours 필드로 별도 제공되므로 정보 손실 없음.
 export const mockModels: WireModelMeta[] = [
   {
-    model_key: 'mortality_48h', model_version: 'v6.1.0', model_name: '48시간 사망 위험도',
+    model_key: 'mortality_48h', model_version: 'v6.1.0', model_name: '사망 위험',
     model_type: 'xgboost', target_name: 'mortality', horizon_hours: 48,
     endpoint_type: 'cpu', default_threshold: 0.5,
     input_features: ['hr', 'map', 'lactate', 'creatinine', 'platelet', 'bilirubin', 'pao2_fio2', 'gcs', 'urine_output', 'sofa_total'],
   },
   {
-    model_key: 'aki_48h', model_version: 'v3.2.0', model_name: '48시간 AKI 위험도',
+    model_key: 'aki_48h', model_version: 'v3.2.0', model_name: '급성 신손상 (AKI)',
     model_type: 'xgboost', target_name: 'aki', horizon_hours: 48,
     endpoint_type: 'cpu', default_threshold: 0.5,
     input_features: ['creatinine', 'urine_output', 'map', 'lactate'],
   },
   {
-    model_key: 'ards_24h', model_version: 'v2.4.0', model_name: '24시간 ARDS 위험도',
+    model_key: 'ards_24h', model_version: 'v2.4.0', model_name: '급성호흡곤란증후군 (ARDS)',
     model_type: 'xgboost', target_name: 'ards', horizon_hours: 24,
     endpoint_type: 'cpu', default_threshold: 0.5,
     input_features: ['pao2_fio2', 'rr', 'spo2'],
   },
   {
-    model_key: 'sic_24h', model_version: 'v2.0.0', model_name: '24시간 SIC 위험도',
+    model_key: 'sic_24h', model_version: 'v2.0.0', model_name: '패혈증 유발 응고장애 (SIC)',
     model_type: 'xgboost', target_name: 'sic', horizon_hours: 24,
     endpoint_type: 'cpu', default_threshold: 0.5,
     input_features: ['platelet', 'bilirubin', 'sofa_total'],
   },
   {
-    model_key: 'septic_shock_12h', model_version: 'v3.0.0', model_name: '12시간 패혈성 쇼크 위험도',
+    model_key: 'septic_shock_12h', model_version: 'v3.0.0', model_name: '패혈성 쇼크 (Septic Shock)',
     model_type: 'xgboost', target_name: 'shock', horizon_hours: 12,
     endpoint_type: 'cpu', default_threshold: 0.5,
     input_features: ['map', 'lactate', 'hr'],
   },
   {
-    model_key: 'invasive_vent_12h', model_version: 'v1.0.0', model_name: '12시간 침습적 환기 필요',
+    model_key: 'invasive_vent_12h', model_version: 'v1.0.0', model_name: '침습적 기계환기',
     model_type: 'xgboost', target_name: 'invasive_vent', horizon_hours: 12,
     endpoint_type: 'cpu', default_threshold: 0.4,
     input_features: ['pao2_fio2', 'rr', 'spo2'],
   },
   {
-    model_key: 'vasopressor_12h', model_version: 'v1.0.0', model_name: '12시간 승압제 필요',
+    model_key: 'vasopressor_12h', model_version: 'v1.0.0', model_name: '승압제',
     model_type: 'xgboost', target_name: 'vasopressor', horizon_hours: 12,
     endpoint_type: 'cpu', default_threshold: 0.4,
     input_features: ['map', 'hr', 'lactate'],

@@ -93,15 +93,8 @@ function countUniqueStaff(
   return ids.size;
 }
 
-function buildKpis(
-  dashboard: DashboardResponse,
-  staffing: DashboardStaffing | null,
-): KpiData[] {
+function buildKpis(dashboard: DashboardResponse): KpiData[] {
   const { totalPatients, highRiskCount, criticalAlertCount } = dashboard.summary;
-  const physicianCount = countUniqueStaff(staffing, 'physician');
-  const nurseCount = countUniqueStaff(staffing, 'nurse');
-  const myPatients = staffing?.summary.myPatientsCount ?? 0;
-
   return [
     {
       label: '입실 환자',
@@ -121,20 +114,11 @@ function buildKpis(
       sub: '미처리 critical',
       tone: criticalAlertCount > 0 ? 'warn' : 'default',
     },
-    {
-      label: '담당 의사',
-      value: `${physicianCount}명`,
-      sub: myPatients > 0 ? `내 담당 ${myPatients}명` : '근무 중',
-      tone: 'default',
-    },
-    {
-      label: '담당 간호사',
-      value: `${nurseCount}명`,
-      sub: '근무 중',
-      tone: 'default',
-    },
   ];
 }
+
+/** 간호사 1명당 담당 가능한 최대 환자 수 — 운영 임계치 (정책 hardcode). */
+const MAX_PATIENTS_PER_NURSE = 2;
 
 export default function OverviewPage() {
   const navigate = useNavigate();
@@ -151,9 +135,24 @@ export default function OverviewPage() {
   const [page, setPage] = useState(0);
 
   const kpis = useMemo(
-    () => (dashboard ? buildKpis(dashboard, staffing ?? null) : []),
-    [dashboard, staffing],
+    () => (dashboard ? buildKpis(dashboard) : []),
+    [dashboard],
   );
+
+  // Capacity 섹션 — staffing 응답의 assignments에서 unique 인원 + 비율 파생.
+  const physicianCount = countUniqueStaff(staffing ?? null, 'physician');
+  const nurseCount = countUniqueStaff(staffing ?? null, 'nurse');
+  const totalPatients = dashboard?.summary.totalPatients ?? 0;
+  const nurseRatio = nurseCount > 0 ? totalPatients / nurseCount : 0;
+  const nurseRatioLabel =
+    nurseCount > 0
+      ? `1 : ${Number.isInteger(nurseRatio) ? nurseRatio : nurseRatio.toFixed(1)}`
+      : '—';
+  const nurseStatusOk = nurseCount > 0 && nurseRatio <= MAX_PATIENTS_PER_NURSE;
+  const nurseStatusLabel = nurseStatusOk ? '권장 수준' : '주의';
+  const nurseTagClass = nurseStatusOk
+    ? 'capacity-tag capacity-tag--safe'
+    : 'capacity-tag capacity-tag--warn';
 
   const sortedPatients = useMemo(
     () => sortPatients(dashboard?.patients ?? [], sortKey),
@@ -187,8 +186,6 @@ export default function OverviewPage() {
     <Users size={16} />,
     <AlertTriangle size={16} />,
     <Activity size={16} />,
-    <Stethoscope size={16} />,
-    <UserCheck size={16} />,
   ];
 
   return (
@@ -205,6 +202,28 @@ export default function OverviewPage() {
         {kpis.map((kpi, idx) => (
           <KpiCard key={kpi.label} data={kpi} icon={kpiIcons[idx]} />
         ))}
+      </section>
+
+      <section className="overview__capacity" aria-label="Capacity">
+        <div className="capacity-card">
+          <span className="capacity-card__icon">
+            <Stethoscope size={16} />
+          </span>
+          <div className="capacity-card__body">
+            <span className="capacity-card__label">담당 의사 가용</span>
+            <span className="capacity-card__value">{physicianCount}명</span>
+          </div>
+        </div>
+        <div className="capacity-card">
+          <span className="capacity-card__icon">
+            <UserCheck size={16} />
+          </span>
+          <div className="capacity-card__body">
+            <span className="capacity-card__label">간호사 : 환자 비율</span>
+            <span className="capacity-card__value">{nurseRatioLabel}</span>
+            <span className={nurseTagClass}>{nurseStatusLabel}</span>
+          </div>
+        </div>
       </section>
 
       <section className="overview__section">
