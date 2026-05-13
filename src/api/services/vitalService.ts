@@ -75,6 +75,23 @@ const LAB_LABEL_PREFIX: Record<string, string> = {
   bilirubin: 'Bil',
 };
 
+/**
+ * 임상 관행상 항상 정수로 표시하는 metric (피드백 §2-1, §3-1).
+ * modelService / ClinicalDataContext와 동일한 화이트리스트.
+ */
+const INTEGER_METRICS = new Set<string>([
+  'hr', 'rr', 'spo2', 'map', 'nibp_map', 'abp_map', 'gcs',
+  'urine_output', 'intake_volume',
+  'wbc', 'platelet', 'bun', 'fibrinogen',
+  'sofa_total', 'age', 'pao2_fio2',
+]);
+
+function formatMetricValue(metricCode: string, v: number): string {
+  if (INTEGER_METRICS.has(metricCode)) return `${Math.round(v)}`;
+  if (Number.isInteger(v)) return `${v}`;
+  return v.toFixed(2).replace(/\.?0+$/, '');
+}
+
 const EMPTY_VITAL_SERIES = (label: string, unit: string, normal: [number, number]): VitalSeries => ({
   label, unit, data: [], normal, times: [],
 });
@@ -166,7 +183,7 @@ export function observationsToVitalData(
     for (const r of rows) {
       labs.push({
         time: toRelativeLabel(r.observedAt, refIso),
-        label: `${prefix} ${r.numericValue}`,
+        label: `${prefix} ${formatMetricValue(r.metricCode, r.numericValue)}`,
         value: r.numericValue,
         type,
         metricCode: r.metricCode,

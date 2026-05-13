@@ -28,7 +28,19 @@ interface ClinicalDataProviderProps {
   children: ReactNode;
 }
 
-function formatNumber(v: number): string {
+/**
+ * 임상 관행상 항상 정수로 표시하는 metric (피드백 §2-1, §3-1).
+ * modelService와 동일한 화이트리스트를 유지한다.
+ */
+const INTEGER_METRICS = new Set<string>([
+  'hr', 'rr', 'spo2', 'map', 'nibp_map', 'abp_map', 'gcs',
+  'urine_output', 'intake_volume',
+  'wbc', 'platelet', 'bun', 'fibrinogen',
+  'sofa_total', 'age',
+]);
+
+function formatMetricValue(metricCode: string, v: number): string {
+  if (INTEGER_METRICS.has(metricCode)) return `${Math.round(v)}`;
   if (Number.isInteger(v)) return `${v}`;
   return v.toFixed(2).replace(/\.?0+$/, '');
 }
@@ -65,7 +77,7 @@ function buildRaw(
     if (!isModelInput && !metric) continue;
     result.push({
       label: metric?.displayName ?? code,
-      value: formatNumber(obs.numericValue),
+      value: formatMetricValue(code, obs.numericValue),
       unit: obs.unit,
       time: toRelativeLabel(obs.observedAt, referenceNowIso),
       isModelInput,

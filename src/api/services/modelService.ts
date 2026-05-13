@@ -174,11 +174,11 @@ function composeShapDisplay(
       // 이진 feature: 값 대신 상태 표시
       name = factor.value > 0 ? `${displayName}` : `${displayName} 없음`;
     } else {
-      const valueText = formatNumber(factor.value);
+      const valueText = formatMetricValue(factor.feature, factor.value);
       name = unit ? `${displayName} ${valueText} ${unit}` : `${displayName} ${valueText}`;
     }
   } else {
-    name = `${factor.feature} ${formatNumber(factor.value)}`;
+    name = `${factor.feature} ${formatMetricValue(factor.feature, factor.value)}`;
   }
   return {
     name,
@@ -192,6 +192,23 @@ function formatNumber(v: number): string {
   if (Number.isInteger(v)) return `${v}`;
   // 소수 1자리, 끝의 0 제거
   return v.toFixed(2).replace(/\.?0+$/, '');
+}
+
+/**
+ * 임상 관행상 항상 정수로 표시하는 metric 화이트리스트.
+ * (피드백 §2-1, §3-1 — HR/RR/SpO2 등은 소수점 없음)
+ */
+const INTEGER_METRICS = new Set<string>([
+  'hr', 'rr', 'spo2', 'map', 'nibp_map', 'abp_map', 'gcs',
+  'urine_output', 'intake_volume',
+  'wbc', 'platelet', 'bun', 'fibrinogen',
+  'sofa_total', 'age',
+]);
+
+/** metric_code 기반 표시 자릿수 강제. 정수 metric은 Math.round 반올림. */
+function formatMetricValue(metricCode: string, v: number): string {
+  if (INTEGER_METRICS.has(metricCode)) return `${Math.round(v)}`;
+  return formatNumber(v);
 }
 
 // -------- Raw 임상지표 view-model 조립 --------
@@ -209,7 +226,7 @@ function buildRawMetrics(
     const label = metric?.displayName ?? p.metric_code;
     return {
       label,
-      value: formatNumber(p.numeric_value),
+      value: formatMetricValue(p.metric_code, p.numeric_value),
       unit: p.unit,
       time: toRelativeLabel(p.observed_at, referenceNowIso),
       isModelInput: inputFeatures.includes(p.metric_code),
