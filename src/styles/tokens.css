@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
 
 /* ============================================
    ClinSight Design Tokens
@@ -79,7 +79,7 @@
   --text-inverse-muted: #94a3b8;
 
   /* 폰트 */
---sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+--sans: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* 간격 (4px 기반) */
@@ -140,4 +140,13 @@
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   숫자 등폭(tabular) 전역 적용
+   - 한글에는 영향 없음. 라틴 숫자만 폭이 같게 정렬되어
+     테이블/KPI/차트 tooltip의 숫자 비교가 쉬워진다.
+   ============================================ */
+body {
+  font-variant-numeric: tabular-nums;
 }
