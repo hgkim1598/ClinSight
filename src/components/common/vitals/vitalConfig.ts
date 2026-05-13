@@ -11,6 +11,7 @@ export interface TabConfig {
 export const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'sofa', label: 'SOFA' },
   { key: 'vs', label: 'V/S' },
+  { key: 'io', label: 'I/O' },
   { key: 'cardio', label: 'Cardio' },
   { key: 'resp', label: 'Resp' },
   { key: 'renal', label: 'Renal' },
@@ -27,6 +28,8 @@ export const TABS: Array<{ key: TabKey; label: string }> = [
 export const TAB_CONFIG: Record<TabKey, TabConfig | null> = {
   sofa: null,
   vs: null,
+  // I/O — Intake/Output 2-line (피드백 §4-3)
+  io: { lines: ['intake_volume', 'urine_output'], dots: [], yAxisLabel: 'mL/h' },
   cardio: { lines: ['map', 'hr'], dots: ['lac'], yAxisLabel: 'mmHg / bpm' },
   resp: { lines: ['spo2', 'rr'], dots: ['pf_ratio'], yAxisLabel: '% / /min' },
   renal: { lines: ['urine_output'], dots: ['cre'], yAxisLabel: 'mL/h' },

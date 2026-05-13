@@ -55,7 +55,7 @@ function mapClinicalData(w: WireClinicalDataResponse): ClinicalDataResult {
 
 // -------- pivot 변환: flat row → VitalData --------
 
-const VITAL_KEYS: VitalKey[] = ['hr', 'map', 'spo2', 'rr', 'temp', 'gcs', 'urine_output'];
+const VITAL_KEYS: VitalKey[] = ['hr', 'map', 'spo2', 'rr', 'temp', 'gcs', 'urine_output', 'intake_volume'];
 
 /** lab metric_code → 차트 그룹 탭 분류 키 매핑 */
 const LAB_TYPE_BY_METRIC: Record<string, LabDot['type']> = {
@@ -104,6 +104,8 @@ const DEFAULT_NORMAL: Record<VitalKey, [number, number]> = {
   temp: [36.0, 37.5],
   gcs: [15, 15],
   urine_output: [50, 200],
+  // I/O 정상 범위는 환자별 상황에 따라 달라져 임시 동일 범위로 둠.
+  intake_volume: [50, 200],
 };
 
 const DEFAULT_LABEL: Record<VitalKey, { label: string; unit: string }> = {
@@ -114,6 +116,7 @@ const DEFAULT_LABEL: Record<VitalKey, { label: string; unit: string }> = {
   temp: { label: 'Temperature', unit: '°C' },
   gcs: { label: 'GCS', unit: '' },
   urine_output: { label: 'Urine Output', unit: 'mL/h' },
+  intake_volume: { label: 'Intake', unit: 'mL/h' },
 };
 
 /**
@@ -136,6 +139,11 @@ export function observationsToVitalData(
     temp: EMPTY_VITAL_SERIES(DEFAULT_LABEL.temp.label, DEFAULT_LABEL.temp.unit, DEFAULT_NORMAL.temp),
     gcs: EMPTY_VITAL_SERIES(DEFAULT_LABEL.gcs.label, DEFAULT_LABEL.gcs.unit, DEFAULT_NORMAL.gcs),
     urine_output: EMPTY_VITAL_SERIES(DEFAULT_LABEL.urine_output.label, DEFAULT_LABEL.urine_output.unit, DEFAULT_NORMAL.urine_output),
+    intake_volume: EMPTY_VITAL_SERIES(
+      DEFAULT_LABEL.intake_volume.label,
+      DEFAULT_LABEL.intake_volume.unit,
+      DEFAULT_NORMAL.intake_volume,
+    ),
   };
 
   // groupBy metric_code, 오름차순 정렬

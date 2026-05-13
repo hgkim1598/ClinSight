@@ -83,6 +83,13 @@ const PT19482_VITALS: VitalSpec[] = [
     normalLow: 50, normalHigh: 200,
     data: [120, 110, 95, 80, 75, 60, 55, 45, 40, 35, 30, 25, 20],
   },
+  {
+    // 시간당 환자에게 들어간 총량(수액/약물/식이 등). 피드백 §4-3.
+    // 패혈증 환자에서 수액을 많이 넣다 폐부종으로 이어지는 패턴을 보여준다.
+    metricCode: 'intake_volume', metricName: 'Intake', unit: 'mL/h',
+    normalLow: 50, normalHigh: 200,
+    data: [150, 160, 180, 200, 230, 260, 290, 320, 350, 370, 380, 390, 400],
+  },
 ];
 
 const VITAL_HOURS = [-24, -22, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0];

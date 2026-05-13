@@ -223,15 +223,26 @@ export interface ClinicalObservation {
 // ---------- Vital View-Model (컴포넌트가 소비) ----------
 
 /** 바이탈 시리즈 데이터 키 — 연속 측정값 */
-export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp' | 'gcs' | 'urine_output';
+export type VitalKey =
+  | 'hr'
+  | 'map'
+  | 'spo2'
+  | 'rr'
+  | 'temp'
+  | 'gcs'
+  | 'urine_output'
+  /** 시간당 수액/약물/식이 등 환자에게 들어간 총량 (mL/h). 피드백 §4-3 */
+  | 'intake_volume';
 
 /**
- * 바이탈 차트 그룹 탭 키 — SOFA + V/S 세트 + 6개 장기 시스템 + Temp.
+ * 바이탈 차트 그룹 탭 키 — SOFA + V/S 세트 + I/O + 6개 장기 시스템 + Temp.
  *  - 'vs': 혈역학(MAP+HR) / 호흡(SpO2+RR) / 체온 3-chart 묶음 (피드백 §2-1, §6-2)
+ *  - 'io': Intake / Output 2-line (피드백 §4-3)
  */
 export type TabKey =
   | 'sofa'
   | 'vs'
+  | 'io'
   | 'cardio'
   | 'resp'
   | 'renal'
