@@ -225,9 +225,13 @@ export interface ClinicalObservation {
 /** 바이탈 시리즈 데이터 키 — 연속 측정값 */
 export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp' | 'gcs' | 'urine_output';
 
-/** 바이탈 차트 그룹 탭 키 — SOFA + 6개 장기 시스템 + Temp */
+/**
+ * 바이탈 차트 그룹 탭 키 — SOFA + V/S 세트 + 6개 장기 시스템 + Temp.
+ *  - 'vs': 혈역학(MAP+HR) / 호흡(SpO2+RR) / 체온 3-chart 묶음 (피드백 §2-1, §6-2)
+ */
 export type TabKey =
   | 'sofa'
+  | 'vs'
   | 'cardio'
   | 'resp'
   | 'renal'
