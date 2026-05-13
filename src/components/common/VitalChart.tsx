@@ -21,6 +21,13 @@ import {
 } from './vitals/vitalConfig';
 import type { DotType } from './vitals/vitalConfig';
 import { computeAxis, computeDotsOnlyAxis } from './vitals/axisUtils';
+import { useSnackbar } from '../../context/useSnackbar';
+
+/** 비교 모드 지원: line 시리즈가 1개 이상 있는 표준 탭만. (sofa/vs는 별도 렌더라 제외) */
+function isLineTab(key: TabKey): boolean {
+  const cfg = TAB_CONFIG[key];
+  return cfg != null && cfg.lines.length > 0;
+}
 import {
   BilirubinShape,
   CreShape,
@@ -37,18 +44,48 @@ interface VitalChartProps {
 
 export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   const [active, setActive] = useState<TabKey>('sofa');
+  // 비교 모드 — 활성 탭과 다른 탭의 line 시리즈를 한 차트에 겹쳐 본다 (피드백 §6-1).
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareTab, setCompareTab] = useState<TabKey | null>(null);
+  const { show: showSnackbar } = useSnackbar();
+
+  // 활성 탭이 바뀌면 비교 대상도 리셋 (render-time prop sync).
+  const [prevActive, setPrevActive] = useState(active);
+  if (prevActive !== active) {
+    setPrevActive(active);
+    setCompareTab(null);
+    if (!isLineTab(active)) setCompareMode(false);
+  }
+
+  const compareSupported = isLineTab(active);
+
+  const handleTabClick = (key: TabKey) => {
+    if (compareMode && key !== active) {
+      if (!isLineTab(key)) {
+        showSnackbar({
+          message: '이 탭은 비교 모드를 지원하지 않습니다.',
+          type: 'info',
+        });
+        return;
+      }
+      setCompareTab(key);
+      return;
+    }
+    setActive(key);
+  };
 
   const renderTabs = () => (
     <div className="vital-chart__tabs" role="tablist">
       {TABS.map((t) => {
         const isOn = active === t.key;
+        const isCompare = compareTab === t.key;
         return (
           <button
             key={t.key}
             role="tab"
             aria-selected={isOn}
-            className={`vital-chart__tab ${isOn ? 'is-active' : ''}`}
-            onClick={() => setActive(t.key)}
+            className={`vital-chart__tab ${isOn ? 'is-active' : ''} ${isCompare ? 'is-compare' : ''}`}
+            onClick={() => handleTabClick(t.key)}
           >
             {t.label}
           </button>
@@ -60,14 +97,72 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   const renderCompareBtn = () => (
     <button
       type="button"
-      className="vital-chart__compare-btn"
-      disabled
-      aria-label="비교 모드 (준비 중)"
-      title="비교 모드 (준비 중)"
+      className={`vital-chart__compare-btn ${compareMode ? 'is-active' : ''}`}
+      disabled={!compareSupported}
+      aria-pressed={compareMode}
+      aria-label={compareMode ? '비교 모드 종료' : '비교 모드 시작'}
+      title={
+        !compareSupported
+          ? '이 탭은 비교 모드를 지원하지 않습니다'
+          : compareMode
+            ? '비교 모드 종료'
+            : '두 탭을 겹쳐서 비교'
+      }
+      onClick={() => {
+        if (!compareSupported) return;
+        setCompareMode((v) => !v);
+        setCompareTab(null);
+      }}
     >
       <Layers size={18} />
     </button>
   );
+
+  // 비교 모드: 활성 탭(라인 1개) + 비교 탭(라인 1개)을 dual-axis로 겹쳐 표시.
+  if (compareMode && compareTab && compareSupported) {
+    const primaryCfg = TAB_CONFIG[active]!;
+    const compareCfg = TAB_CONFIG[compareTab]!;
+    const primary = vitals.series[primaryCfg.lines[0]];
+    const secondary = vitals.series[compareCfg.lines[0]];
+    return (
+      <section className="vital-chart">
+        <header className="vital-chart__head">
+          {renderTabs()}
+          {renderCompareBtn()}
+          <div className="vital-chart__meta">
+            <span className="vital-chart__compare-hint">
+              겹쳐보기: <b>{primary.label}</b> ↔ <b>{secondary.label}</b>
+            </span>
+          </div>
+        </header>
+        <div className="vital-chart__canvas">
+          <CompareChart primary={primary} secondary={secondary} />
+        </div>
+      </section>
+    );
+  }
+
+  // 비교 모드 켜진 상태인데 아직 비교 대상 미선택 — 안내 노출.
+  if (compareMode && !compareTab && compareSupported) {
+    const primaryCfg = TAB_CONFIG[active]!;
+    const primary = vitals.series[primaryCfg.lines[0]];
+    return (
+      <section className="vital-chart">
+        <header className="vital-chart__head">
+          {renderTabs()}
+          {renderCompareBtn()}
+          <div className="vital-chart__meta">
+            <span className="vital-chart__compare-hint">
+              비교할 탭을 선택하세요 (현재: <b>{primary.label}</b>)
+            </span>
+          </div>
+        </header>
+        <div className="vital-chart__empty">
+          탭 바에서 겹쳐볼 다른 탭을 클릭하세요.
+        </div>
+      </section>
+    );
+  }
 
   if (active === 'sofa') {
     return (
@@ -648,5 +743,98 @@ function VsSinglePanel({ title, series }: VsSinglePanelProps) {
         </ResponsiveContainer>
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// 비교 모드 — 두 line 시리즈를 한 차트에 겹쳐 표시
+// (피드백 §6-1: 여러 항목을 한 번에 비교)
+//   - Dual Y-axis: 왼쪽 primary, 오른쪽 secondary
+//   - secondary는 점선(strokeDasharray)으로 시각 구분
+//   - Y축은 각 시리즈의 정상범위+데이터로 자동 계산 (computeAxis)
+// ============================================================
+
+interface CompareChartProps {
+  primary: VitalSeries;
+  secondary: VitalSeries;
+}
+
+function CompareChart({ primary, secondary }: CompareChartProps) {
+  const leftAxis = computeAxis(primary, false);
+  const rightAxis = computeAxis(secondary, false);
+  const times = primary.times.length > 0 ? primary.times : secondary.times;
+  const data = times.map((t, i) => ({
+    t,
+    p: primary.data[i] ?? null,
+    s: secondary.data[i] ?? null,
+  }));
+
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <ComposedChart data={data} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
+        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+        <XAxis
+          dataKey="t"
+          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+          stroke="var(--border)"
+        />
+        <YAxis
+          yAxisId="left"
+          orientation="left"
+          domain={[leftAxis.yMin, leftAxis.yMax]}
+          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+          stroke="var(--border)"
+          width={40}
+        />
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          domain={[rightAxis.yMin, rightAxis.yMax]}
+          tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+          stroke="var(--border)"
+          width={40}
+        />
+        <Tooltip
+          contentStyle={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            fontSize: 12,
+            color: 'var(--text)',
+          }}
+          labelStyle={{ color: 'var(--text-secondary)' }}
+          formatter={(value, name) => {
+            if (name === 'p')
+              return [`${value ?? '—'} ${primary.unit}`, primary.label];
+            if (name === 's')
+              return [`${value ?? '—'} ${secondary.unit}`, secondary.label];
+            return [String(value ?? ''), String(name)];
+          }}
+        />
+        <Line
+          yAxisId="left"
+          type="monotone"
+          dataKey="p"
+          stroke="var(--chart-line-1)"
+          strokeWidth={2}
+          dot={{ r: 3, fill: 'var(--chart-line-1)' }}
+          activeDot={{ r: 5 }}
+          isAnimationActive={false}
+          connectNulls={false}
+        />
+        <Line
+          yAxisId="right"
+          type="monotone"
+          dataKey="s"
+          stroke="var(--chart-line-2)"
+          strokeWidth={2}
+          strokeDasharray="5 4"
+          dot={{ r: 3, fill: 'var(--chart-line-2)' }}
+          activeDot={{ r: 5 }}
+          isAnimationActive={false}
+          connectNulls={false}
+        />
+      </ComposedChart>
+    </ResponsiveContainer>
   );
 }

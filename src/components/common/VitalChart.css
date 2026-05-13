@@ -48,6 +48,22 @@
   color: #ffffff;
 }
 
+/* 비교 모드에서 선택된 두 번째 탭 (활성 탭과 시각적으로 구분) */
+.vital-chart__tab.is-compare {
+  background: transparent;
+  color: var(--chart-line-2);
+  border: 1px dashed var(--chart-line-2);
+}
+
+.vital-chart__compare-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.vital-chart__compare-hint b {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .vital-chart__compare-btn {
   display: flex;
   align-items: center;
