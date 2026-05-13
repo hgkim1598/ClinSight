@@ -4,6 +4,7 @@ import {
   Area,
   CartesianGrid,
   ComposedChart,
+  Legend,
   Line,
   ResponsiveContainer,
   Scatter,
@@ -113,12 +114,13 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
     </button>
   );
 
-  // 비교 모드: 활성 탭(라인 1개) + 비교 탭(라인 1개)을 dual-axis로 겹쳐 표시.
+  // 비교 모드: 활성 탭의 모든 line 시리즈(왼쪽 Y축) + 비교 탭의 모든 line 시리즈(오른쪽 Y축)를
+  // 한 차트에 겹쳐 표시. active=실선, compare=점선.
   if (compareMode && compareTab && compareSupported) {
     const primaryCfg = TAB_CONFIG[active]!;
     const compareCfg = TAB_CONFIG[compareTab]!;
-    const primary = vitals.series[primaryCfg.lines[0]];
-    const secondary = vitals.series[compareCfg.lines[0]];
+    const primarySeries = primaryCfg.lines.map((k) => vitals.series[k]);
+    const secondarySeries = compareCfg.lines.map((k) => vitals.series[k]);
     return (
       <section className="vital-chart">
         <header className="vital-chart__head">
@@ -126,12 +128,17 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
           {renderCompareBtn()}
           <div className="vital-chart__meta">
             <span className="vital-chart__compare-hint">
-              겹쳐보기: <b>{primary.label}</b> ↔ <b>{secondary.label}</b>
+              겹쳐보기: <b>{primarySeries.map((s) => s.label).join(' + ')}</b>
+              {' ↔ '}
+              <b>{secondarySeries.map((s) => s.label).join(' + ')}</b>
             </span>
           </div>
         </header>
         <div className="vital-chart__canvas">
-          <CompareChart primary={primary} secondary={secondary} />
+          <CompareChart
+            primary={primarySeries}
+            secondary={secondarySeries}
+          />
         </div>
       </section>
     );
@@ -140,7 +147,9 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
   // 비교 모드 켜진 상태인데 아직 비교 대상 미선택 — 안내 노출.
   if (compareMode && !compareTab && compareSupported) {
     const primaryCfg = TAB_CONFIG[active]!;
-    const primary = vitals.series[primaryCfg.lines[0]];
+    const primaryLabels = primaryCfg.lines
+      .map((k) => vitals.series[k].label)
+      .join(' + ');
     return (
       <section className="vital-chart">
         <header className="vital-chart__head">
@@ -148,7 +157,7 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
           {renderCompareBtn()}
           <div className="vital-chart__meta">
             <span className="vital-chart__compare-hint">
-              비교할 탭을 선택하세요 (현재: <b>{primary.label}</b>)
+              비교할 탭을 선택하세요 (현재: <b>{primaryLabels}</b>)
             </span>
           </div>
         </header>
@@ -539,30 +548,81 @@ export default function VitalChart({ vitals, patientId }: VitalChartProps) {
 }
 
 // ============================================================
-// 비교 모드 — 두 line 시리즈를 한 차트에 겹쳐 표시
+// 비교 모드 — 두 탭의 모든 line 시리즈를 한 차트에 겹쳐 표시
 // (피드백 §6-1: 여러 항목을 한 번에 비교)
-//   - Dual Y-axis: 왼쪽 primary, 오른쪽 secondary
-//   - secondary는 점선(strokeDasharray)으로 시각 구분
-//   - Y축은 각 시리즈의 정상범위+데이터로 자동 계산 (computeAxis)
+//
+//   - 왼쪽 Y축: active 탭의 모든 line (스케일 공유) — 실선
+//   - 오른쪽 Y축: compare 탭의 모든 line (스케일 공유) — 점선
+//   - 최대 4라인 (2+2). 색상: line-1/3 = active, line-2/4 = compare
+//   - 범례에 모든 metric 표시
 // ============================================================
 
 interface CompareChartProps {
-  primary: VitalSeries;
-  secondary: VitalSeries;
+  primary: VitalSeries[];
+  secondary: VitalSeries[];
+}
+
+const ACTIVE_COLORS = ['var(--chart-line-1)', 'var(--chart-line-3)'];
+const COMPARE_COLORS = ['var(--chart-line-2)', 'var(--chart-line-4)'];
+
+/** 여러 시리즈를 묶어 공유 y축 도메인을 계산. 정상 범위와 실측값 모두 반영. */
+function combinedDomain(seriesList: VitalSeries[]): [number, number] {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const s of seriesList) {
+    const [normalLow, normalHigh] = s.normal;
+    if (Number.isFinite(normalLow)) min = Math.min(min, normalLow);
+    if (Number.isFinite(normalHigh)) max = Math.max(max, normalHigh);
+    for (const v of s.data) {
+      if (v == null || !Number.isFinite(v)) continue;
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [0, 1];
+  const range = Math.max(max - min, 1);
+  return [Math.max(0, min - range * 0.1), max + range * 0.1];
+}
+
+/** 시리즈가 가진 가장 긴 times 배열을 X축 기준으로 사용. */
+function pickBaseTimes(seriesGroups: VitalSeries[][]): string[] {
+  let best: string[] = [];
+  for (const group of seriesGroups) {
+    for (const s of group) {
+      if (s.times.length > best.length) best = s.times;
+    }
+  }
+  return best;
 }
 
 function CompareChart({ primary, secondary }: CompareChartProps) {
-  const leftAxis = computeAxis(primary, false);
-  const rightAxis = computeAxis(secondary, false);
-  const times = primary.times.length > 0 ? primary.times : secondary.times;
-  const data = times.map((t, i) => ({
-    t,
-    p: primary.data[i] ?? null,
-    s: secondary.data[i] ?? null,
-  }));
+  const leftDomain = combinedDomain(primary);
+  const rightDomain = combinedDomain(secondary);
+  const times = pickBaseTimes([primary, secondary]);
+
+  // 각 시리즈를 데이터 키로 매핑. key 형식: 'p0'/'p1'/'s0'/'s1'.
+  const data = times.map((t, i) => {
+    const row: Record<string, string | number | null> = { t };
+    primary.forEach((s, idx) => {
+      row[`p${idx}`] = s.data[i] ?? null;
+    });
+    secondary.forEach((s, idx) => {
+      row[`s${idx}`] = s.data[i] ?? null;
+    });
+    return row;
+  });
+
+  // tooltip name → 라벨/단위 매핑.
+  const seriesByKey: Record<string, VitalSeries> = {};
+  primary.forEach((s, idx) => {
+    seriesByKey[`p${idx}`] = s;
+  });
+  secondary.forEach((s, idx) => {
+    seriesByKey[`s${idx}`] = s;
+  });
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height={300}>
       <ComposedChart data={data} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
         <XAxis
@@ -573,7 +633,7 @@ function CompareChart({ primary, secondary }: CompareChartProps) {
         <YAxis
           yAxisId="left"
           orientation="left"
-          domain={[leftAxis.yMin, leftAxis.yMax]}
+          domain={leftDomain}
           tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
           stroke="var(--border)"
           width={40}
@@ -581,7 +641,7 @@ function CompareChart({ primary, secondary }: CompareChartProps) {
         <YAxis
           yAxisId="right"
           orientation="right"
-          domain={[rightAxis.yMin, rightAxis.yMax]}
+          domain={rightDomain}
           tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
           stroke="var(--border)"
           width={40}
@@ -596,36 +656,52 @@ function CompareChart({ primary, secondary }: CompareChartProps) {
           }}
           labelStyle={{ color: 'var(--text-secondary)' }}
           formatter={(value, name) => {
-            if (name === 'p')
-              return [`${value ?? '—'} ${primary.unit}`, primary.label];
-            if (name === 's')
-              return [`${value ?? '—'} ${secondary.unit}`, secondary.label];
+            const s = seriesByKey[String(name)];
+            if (s) return [`${value ?? '—'} ${s.unit}`, s.label];
             return [String(value ?? ''), String(name)];
           }}
         />
-        <Line
-          yAxisId="left"
-          type="monotone"
-          dataKey="p"
-          stroke="var(--chart-line-1)"
-          strokeWidth={2}
-          dot={{ r: 3, fill: 'var(--chart-line-1)' }}
-          activeDot={{ r: 5 }}
-          isAnimationActive={false}
-          connectNulls={false}
+        <Legend
+          verticalAlign="top"
+          height={28}
+          iconType="plainline"
+          wrapperStyle={{ fontSize: 12, color: 'var(--text-secondary)' }}
+          formatter={(value) => {
+            const s = seriesByKey[String(value)];
+            return s ? `${s.label} (${s.unit})` : String(value);
+          }}
         />
-        <Line
-          yAxisId="right"
-          type="monotone"
-          dataKey="s"
-          stroke="var(--chart-line-2)"
-          strokeWidth={2}
-          strokeDasharray="5 4"
-          dot={{ r: 3, fill: 'var(--chart-line-2)' }}
-          activeDot={{ r: 5 }}
-          isAnimationActive={false}
-          connectNulls={false}
-        />
+        {primary.map((_s, idx) => (
+          <Line
+            key={`p${idx}`}
+            yAxisId="left"
+            type="monotone"
+            dataKey={`p${idx}`}
+            name={`p${idx}`}
+            stroke={ACTIVE_COLORS[idx % ACTIVE_COLORS.length]}
+            strokeWidth={2}
+            dot={{ r: 2, fill: ACTIVE_COLORS[idx % ACTIVE_COLORS.length] }}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
+            connectNulls={false}
+          />
+        ))}
+        {secondary.map((_s, idx) => (
+          <Line
+            key={`s${idx}`}
+            yAxisId="right"
+            type="monotone"
+            dataKey={`s${idx}`}
+            name={`s${idx}`}
+            stroke={COMPARE_COLORS[idx % COMPARE_COLORS.length]}
+            strokeWidth={2}
+            strokeDasharray="5 4"
+            dot={{ r: 2, fill: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
+            activeDot={{ r: 4 }}
+            isAnimationActive={false}
+            connectNulls={false}
+          />
+        ))}
       </ComposedChart>
     </ResponsiveContainer>
   );
