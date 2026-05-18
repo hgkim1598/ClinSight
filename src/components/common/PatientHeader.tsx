@@ -1,6 +1,6 @@
 import { FileText } from 'lucide-react';
 import type { PatientDetail } from '../../types';
-import { formatPatientName } from '../../utils/formatPatientName';
+import { patientLocalData } from '../../data/patientLocalData';
 import { formatDateTime } from '../../utils/time';
 import './PatientHeader.css';
 
@@ -18,13 +18,17 @@ function hoursSinceIso(iso: string | null | undefined): number | null {
 }
 
 export default function PatientHeader({ patient, onSummaryClick }: PatientHeaderProps) {
-  const displayName = formatPatientName(patient.patientToken);
+  // 로컬 매핑(PHI 분리 정책상 이름/실연령/체중·신장·BMI는 프론트 보관).
+  // 없으면 백엔드가 보낸 값으로 폴백, 그것도 없으면 "—".
+  const local = patientLocalData[patient.patientToken];
+  const displayName = local?.name ?? patient.patientToken;
+  const ageDisplay = local?.age ?? patient.ageGroup ?? '—';
   const hours = hoursSinceIso(patient.icuInAt);
-  const avatarLetter = displayName.charAt(0) || patient.patientToken.charAt(0);
+  const avatarLetter = displayName.charAt(0) || '?';
 
   const fields: Array<{ label: string; value: string }> = [
     { label: '환자', value: patient.patientToken },
-    { label: '나이/성별', value: `${patient.ageGroup} / ${patient.sex}` },
+    { label: '나이/성별', value: `${String(ageDisplay)} / ${patient.sex}` },
     { label: '병상', value: patient.currentBedLabel },
     { label: '입실시간', value: formatDateTime(patient.icuInAt) },
     { label: '주진단', value: patient.primaryDiagnosisText },
@@ -36,6 +40,9 @@ export default function PatientHeader({ patient, onSummaryClick }: PatientHeader
       label: 'SEPSIS ONSET',
       value: patient.sepsisOnsetAt ? formatDateTime(patient.sepsisOnsetAt) : '—',
     },
+    { label: '체중', value: local?.weightKg != null ? `${local.weightKg} kg` : '—' },
+    { label: '신장', value: local?.heightCm != null ? `${local.heightCm} cm` : '—' },
+    { label: 'BMI', value: local?.bmi != null ? `${local.bmi}` : '—' },
   ];
 
   return (
