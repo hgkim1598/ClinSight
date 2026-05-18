@@ -13,7 +13,9 @@ import {
   ChevronsRight,
   Sun,
   Moon,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '../../context/useAuth';
 import './Sidebar.css';
 
 const THEME_STORAGE_KEY = 'clinsight-theme';
@@ -83,6 +85,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   const handleThemeToggle = () => {
@@ -162,6 +165,17 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
           </div>
         ))}
       </nav>
+
+      <button
+        type="button"
+        className="sidebar__toggle"
+        onClick={logout}
+        aria-label="로그아웃"
+        title={collapsed ? '로그아웃' : undefined}
+      >
+        <LogOut size={18} />
+        {!collapsed && <span>로그아웃</span>}
+      </button>
 
       <button
         type="button"
