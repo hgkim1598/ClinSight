@@ -23,3 +23,8 @@
   color: var(--safe);
   background: var(--safe-bg);
 }
+
+.badge-unknown {
+  color: var(--text-muted);
+  background: var(--border);
+}
