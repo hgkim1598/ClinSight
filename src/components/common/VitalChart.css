@@ -121,6 +121,39 @@
   min-height: 260px;
 }
 
+/* 차트 row — [좌 Y축 고정] [스크롤 영역] [우 Y축 고정 (multi 탭)] */
+.vital-chart__chart-row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 가로 스크롤 컨테이너 — 데이터가 24h 초과면 inner 폭이 컨테이너를 넘어 가로 스크롤 */
+.vital-chart__scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.vital-chart__scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.vital-chart__scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vital-chart__scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.vital-chart__scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
 .vital-chart__empty {
   height: 260px;
   display: flex;
@@ -128,6 +161,53 @@
   justify-content: center;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+/* 커스텀 툴팁 — datetime 헤더 + 측정값 행 */
+.vital-chart__tooltip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  padding: var(--space-sm) var(--space-md);
+  min-width: 180px;
+  font-size: 12px;
+}
+
+.vital-chart__tooltip-time {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 13px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.vital-chart__tooltip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vital-chart__tooltip-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.vital-chart__tooltip-label {
+  color: var(--text-secondary);
+}
+
+.vital-chart__tooltip-value {
+  color: var(--text);
+  font-feature-settings: 'tnum';
+  font-weight: 500;
 }
 
 .vital-chart__labs {

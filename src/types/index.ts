@@ -232,7 +232,10 @@ export interface VitalSeries {
   unit: string;
   data: number[];
   normal: [number, number];
+  /** 표시용 라벨 ("-6h" / "현재" 등). times[i] ↔ data[i] 대응. */
   times: string[];
+  /** 원본 ISO 시각. 가로 스크롤 폭 계산 + datetime 툴팁용. times와 동일 길이. */
+  isoTimes: string[];
 }
 
 /**
@@ -246,6 +249,8 @@ export interface LabDot {
   type: 'lac' | 'cre' | 'pf_ratio' | 'platelet' | 'bilirubin';
   /** API metric_code. 풀네임 (lactate, creatinine, pao2_fio2, platelet, bilirubin). */
   metricCode?: string;
+  /** 원본 ISO 시각. datetime 툴팁용. */
+  isoTime?: string;
 }
 
 export interface VitalData {
@@ -277,6 +282,8 @@ export interface SofaTrendRow {
 /** view-model: 시간축과 organ별 시계열 (컴포넌트가 소비) */
 export interface SofaTrend {
   times: string[];
+  /** 원본 ISO 시각. 가로 스크롤 폭 계산 + datetime 툴팁용. times와 동일 길이. */
+  isoTimes: string[];
   scores: Record<OrganKey, Array<number | null>>;
   totals?: number[];
 }

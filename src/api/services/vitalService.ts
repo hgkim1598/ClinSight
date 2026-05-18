@@ -57,6 +57,22 @@ function mapClinicalData(w: WireClinicalDataResponse): ClinicalDataResult {
 
 const VITAL_KEYS: VitalKey[] = ['hr', 'map', 'spo2', 'rr', 'temp', 'gcs', 'urine_output'];
 
+/**
+ * 백엔드 metric_code 와 프론트 차트 시리즈 키 사이의 별칭 매핑.
+ * 같은 metric 을 백엔드가 다른 이름으로 보내도 차트가 인식하도록 정규화.
+ * 원본 metric_code 는 ClinicalObservation.metricCode 에 그대로 보존되고,
+ * 그룹핑 키만 canonical 로 변환된다.
+ */
+const METRIC_CODE_ALIAS: Record<string, string> = {
+  resp_rate: 'rr',
+  temperature: 'temp',
+  bilirubin_total: 'bilirubin',
+};
+
+function canonicalMetricCode(code: string): string {
+  return METRIC_CODE_ALIAS[code] ?? code;
+}
+
 /** lab metric_code → 차트 그룹 탭 분류 키 매핑 */
 const LAB_TYPE_BY_METRIC: Record<string, LabDot['type']> = {
   lactate: 'lac',
@@ -76,7 +92,7 @@ const LAB_LABEL_PREFIX: Record<string, string> = {
 };
 
 const EMPTY_VITAL_SERIES = (label: string, unit: string, normal: [number, number]): VitalSeries => ({
-  label, unit, data: [], normal, times: [],
+  label, unit, data: [], normal, times: [], isoTimes: [],
 });
 
 const DEFAULT_NORMAL: Record<VitalKey, [number, number]> = {
@@ -121,14 +137,15 @@ export function observationsToVitalData(
     urine_output: EMPTY_VITAL_SERIES(DEFAULT_LABEL.urine_output.label, DEFAULT_LABEL.urine_output.unit, DEFAULT_NORMAL.urine_output),
   };
 
-  // groupBy metric_code, 오름차순 정렬
+  // groupBy canonical metric_code (별칭 매핑 적용), 오름차순 정렬
   const byCode = new Map<string, ClinicalObservation[]>();
   for (const o of observations) {
-    if (!byCode.has(o.metricCode)) byCode.set(o.metricCode, []);
-    byCode.get(o.metricCode)!.push(o);
+    const key = canonicalMetricCode(o.metricCode);
+    if (!byCode.has(key)) byCode.set(key, []);
+    byCode.get(key)!.push(o);
   }
   for (const arr of byCode.values()) {
-    arr.sort((a, b) => a.observedAt.localeCompare(b.observedAt));
+    arr.sort((a, b) => (a.observedAt ?? '').localeCompare(b.observedAt ?? ''));
   }
 
   // reference (가장 최근 관측 시각)
@@ -150,6 +167,7 @@ export function observationsToVitalData(
       unit: head.unit || DEFAULT_LABEL[key].unit,
       data: rows.map((r) => r.numericValue),
       times: rows.map((r) => toRelativeLabel(r.observedAt, refIso)),
+      isoTimes: rows.map((r) => r.observedAt),
       normal: [
         head.normalRangeLow ?? DEFAULT_NORMAL[key][0],
         head.normalRangeHigh ?? DEFAULT_NORMAL[key][1],
@@ -166,10 +184,12 @@ export function observationsToVitalData(
     for (const r of rows) {
       labs.push({
         time: toRelativeLabel(r.observedAt, refIso),
-        label: `${prefix} ${r.numericValue}`,
+        // 표시 라벨은 정수 반올림. raw value 는 r.numericValue 로 별도 보존 (임계 비교용).
+        label: `${prefix} ${Math.round(r.numericValue)}`,
         value: r.numericValue,
         type,
         metricCode: r.metricCode,
+        isoTime: r.observedAt,
       });
     }
   }
