@@ -318,6 +318,42 @@
   background: var(--canvas);
 }
 
+/* 빈 상태 — 환자 목록 영역에만 표시 (KPI/Capacity/헤더는 그대로) */
+.overview__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-xl) var(--space-md);
+  text-align: center;
+}
+
+.overview__empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary-bg);
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+.overview__empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.overview__empty-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 .overview__page-btn {
   display: inline-flex;
   align-items: center;

@@ -20,7 +20,7 @@ import type {
 import { getDashboardPatients } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { CURRENT_ICU_ID } from '../utils/constants';
-import { formatPatientName } from '../utils/formatPatientName';
+import { patientLocalData } from '../data/patientLocalData';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
 import AlertBell from '../components/common/AlertBell';
@@ -254,74 +254,89 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        <div className="overview__table-wrap">
-          <table className="patient-table">
-            <thead>
-              <tr>
-                <th>병상</th>
-                <th>환자</th>
-                <th>나이/성별</th>
-                <th>최근 관측</th>
-                <th>알림</th>
-                <th>SOFA</th>
-                <th>패혈증 위험도</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedPatients.map((p) => (
-                <tr
-                  key={p.stayToken}
-                  className={p.latestMortalityRiskLabel === 'high' ? 'is-high' : ''}
-                  onClick={() => navigate(`/patient/${p.stayToken}`)}
-                >
-                  <td className="cell-bed">{p.currentBedLabel}</td>
-                  <td className="cell-id">
-                    {formatPatientName(p.patientToken)}
-                    <span className="cell-id__token"> · {p.patientToken}</span>
-                  </td>
-                  <td>
-                    {p.ageGroup}/{p.sex}
-                  </td>
-                  <td className="cell-admit">
-                    {new Date(p.lastObservationAt).toLocaleTimeString('ko-KR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </td>
-                  <td className="cell-sofa">{p.activeAlertCount}</td>
-                  <td className="cell-sofa">{p.latestSofaTotal}</td>
-                  <td>
-                    <Badge level={p.latestMortalityRiskLabel} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {sortedPatients.length === 0 ? (
+          <div className="overview__empty" role="status">
+            <span className="overview__empty-icon" aria-hidden="true">
+              <Users size={24} />
+            </span>
+            <p className="overview__empty-title">현재 입실 환자가 없습니다</p>
+            <p className="overview__empty-sub">신규 입실이 등록되면 자동으로 표시됩니다.</p>
+          </div>
+        ) : (
+          <>
+            <div className="overview__table-wrap">
+              <table className="patient-table">
+                <thead>
+                  <tr>
+                    <th>병상</th>
+                    <th>환자</th>
+                    <th>나이/성별</th>
+                    <th>최근 관측</th>
+                    <th>알림</th>
+                    <th>SOFA</th>
+                    <th>패혈증 위험도</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedPatients.map((p, idx) => {
+                    const local = patientLocalData[p.patientToken];
+                    return (
+                    <tr
+                      key={p.stayId ?? p.stayToken ?? p.patientToken ?? `row-${idx}`}
+                      className={p.latestMortalityRiskLabel === 'high' ? 'is-high' : ''}
+                      onClick={() => navigate(`/patient/${p.stayId}`)}
+                    >
+                      <td className="cell-bed">{p.currentBedLabel}</td>
+                      <td className="cell-id">
+                        {local?.name ?? p.patientToken}
+                        {local && <span className="cell-id__token"> · {p.patientToken}</span>}
+                      </td>
+                      <td>
+                        {local?.age ?? p.ageGroup}/{p.sex}
+                      </td>
+                      <td className="cell-admit">
+                        {new Date(p.lastObservationAt).toLocaleTimeString('ko-KR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="cell-sofa">{p.activeAlertCount}</td>
+                      <td className="cell-sofa">{p.latestSofaTotal}</td>
+                      <td>
+                        <Badge level={p.latestMortalityRiskLabel} />
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-        <div className="overview__pagination">
-          <button
-            type="button"
-            className="overview__page-btn"
-            disabled={safePage === 0}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            aria-label="이전 페이지"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <span className="overview__page-info">
-            {safePage + 1} / {totalPages} 페이지
-          </span>
-          <button
-            type="button"
-            className="overview__page-btn"
-            disabled={safePage >= totalPages - 1}
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            aria-label="다음 페이지"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
+            <div className="overview__pagination">
+              <button
+                type="button"
+                className="overview__page-btn"
+                disabled={safePage === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                aria-label="이전 페이지"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="overview__page-info">
+                {safePage + 1} / {totalPages} 페이지
+              </span>
+              <button
+                type="button"
+                className="overview__page-btn"
+                disabled={safePage >= totalPages - 1}
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                aria-label="다음 페이지"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );

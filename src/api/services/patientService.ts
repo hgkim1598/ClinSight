@@ -40,7 +40,45 @@ function mapDashboardPatient(w: WireDashboardPatient): DashboardPatient {
   };
 }
 
-function mapDashboardResponse(w: WireDashboardResponse): DashboardResponse {
+/**
+ * spec 준수 검증.
+ *
+ * 정책: 백엔드가 V4 spec(`{ icu_unit, patients, summary }`)을 어기면 mapper 는 절대
+ * 추측해서 채우지 않는다 (예: `icu_status` → `summary` 같은 브릿지 매핑 금지).
+ * spec 외 응답은 콘솔에 경고만 남기고 빈 응답으로 처리해 UI 가 빈 상태(empty state)를
+ * 보여주도록 한다. 백엔드는 별도로 spec 에 맞춰 수정 배포된다는 전제.
+ */
+function isValidDashboardResponse(w: unknown): w is WireDashboardResponse {
+  if (!w || typeof w !== 'object') return false;
+  const o = w as Record<string, unknown>;
+  return (
+    !!o.icu_unit &&
+    typeof o.icu_unit === 'object' &&
+    Array.isArray(o.patients) &&
+    !!o.summary &&
+    typeof o.summary === 'object'
+  );
+}
+
+function emptyDashboardResponse(icuId: string): DashboardResponse {
+  return {
+    icuUnit: { unitCode: icuId, displayName: icuId },
+    patients: [],
+    summary: { totalPatients: 0, highRiskCount: 0, criticalAlertCount: 0 },
+  };
+}
+
+function mapDashboardResponse(w: WireDashboardResponse, icuId: string): DashboardResponse {
+  if (!isValidDashboardResponse(w)) {
+    const receivedKeys =
+      w && typeof w === 'object' ? Object.keys(w as Record<string, unknown>) : null;
+    console.warn(
+      `[patientService] /dashboard/icu/${icuId} 응답이 V4 spec 과 일치하지 않습니다. ` +
+        '빈 상태로 렌더링합니다. (필수 키: icu_unit, patients, summary)',
+      { receivedKeys },
+    );
+    return emptyDashboardResponse(icuId);
+  }
   return {
     icuUnit: {
       unitCode: w.icu_unit.unit_code,
@@ -83,12 +121,12 @@ export async function getDashboardPatients(
   icuId: string,
 ): Promise<DashboardResponse> {
   if (MOCK_MODE) {
-    return mapDashboardResponse(mockDashboardPayload);
+    return mapDashboardResponse(mockDashboardPayload, icuId);
   }
   const wire = await request<WireDashboardResponse>(
     `/dashboard/icu/${encodeURIComponent(icuId)}`,
   );
-  return mapDashboardResponse(wire);
+  return mapDashboardResponse(wire, icuId);
 }
 
 /** GET /icu-stays/{stayId} */
