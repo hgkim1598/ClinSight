@@ -147,7 +147,9 @@ export default function ReportContent({ report }: ReportContentProps) {
             {predictions.map((p) => (
               <tr key={p.key}>
                 <td>{p.title}</td>
-                <td className="report-table__num">{p.probability}%</td>
+                <td className="report-table__num">
+                  {p.probability != null ? `${p.probability}%` : '—'}
+                </td>
                 <td>
                   <span
                     className={`report-pill report-pill--risk report-pill--risk-${p.risk}`}

@@ -444,8 +444,8 @@ export interface ReportLabRow {
 export interface ReportPrediction {
   key: TargetName;
   title: string;
-  /** 0~100 (%) */
-  probability: number;
+  /** 0~100 (%). null이면 예측 데이터 없음 (화면에서 "—"로 표시) */
+  probability: number | null;
   risk: RiskLevel;
 }
 

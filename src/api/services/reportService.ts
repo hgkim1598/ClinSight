@@ -13,7 +13,6 @@ import type {
   ReportLabRow,
   ReportPrediction,
   ReportVitalRow,
-  RiskTone,
   SavedReport,
   VitalKey,
   VitalStatusLevel,
@@ -48,12 +47,6 @@ const TARGET_LABS: Array<{
   { label: 'Platelet', source: 'sic', metric: 'Platelet', normalRange: '150–400 x10³/µL' },
   { label: 'PaO2/FiO2', source: 'ards', metric: 'PaO2/FiO2', normalRange: '> 400' },
 ];
-
-function toneFallbackPct(tone: RiskTone): number {
-  if (tone === 'danger') return 72;
-  if (tone === 'warn') return 45;
-  return 18;
-}
 
 /**
  * 환자 상태 요약 보고서 데이터를 조합한다 (프론트 BFF 방식).
@@ -114,7 +107,8 @@ export async function getPatientReport(stayId: string): Promise<PatientReport | 
   const predictions: ReportPrediction[] = MODEL_ORDER.map((key) => {
     const pred = predictionsData[key];
     const trendLast = pred.trend[pred.trend.length - 1];
-    const probability = trendLast ? trendLast.pct : toneFallbackPct(pred.tone);
+    // riskScorePct(서비스 매핑) 우선, 없으면 trend 마지막 값, 둘 다 없으면 null.
+    const probability = pred.riskScorePct ?? trendLast?.pct ?? null;
     return {
       key,
       title: pred.title,

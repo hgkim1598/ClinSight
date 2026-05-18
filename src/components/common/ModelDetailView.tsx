@@ -5,10 +5,8 @@ import type {
   ModelKey,
   ModelPrediction,
   RawMetric,
-  RiskTone,
 } from '../../types';
 import { getAiInsight } from '../../api/services/aiInsightService';
-import { toneToRisk } from '../../utils/constants';
 import { useAsync } from '../../hooks/useAsync';
 import { useClinicalData } from '../../context/useClinicalData';
 import { useMeta } from '../../context/useMeta';
@@ -51,12 +49,6 @@ function currentProbability(p: ModelPrediction): number | null {
   return p.trend[p.trend.length - 1].pct;
 }
 
-function toneFallbackPct(tone: RiskTone): number {
-  if (tone === 'danger') return 72;
-  if (tone === 'warn') return 45;
-  return 18;
-}
-
 function buildDeltaText(p: ModelPrediction): string {
   const delta = p.trendWarn.delta?.trim();
   if (!delta) return '추세 데이터 부족';
@@ -79,8 +71,9 @@ export default function ModelDetailView({
   );
 
   const prediction = predictions[selectedModel];
-  const prob = currentProbability(prediction) ?? toneFallbackPct(prediction.tone);
-  const risk = toneToRisk(prediction.tone);
+  // riskScorePct(서비스 매핑) 우선, 없으면 trend 마지막 값, 둘 다 없으면 null → "—"
+  const prob = prediction.riskScorePct ?? currentProbability(prediction);
+  const risk = prediction.riskLabel ?? null;
   const otherModels = MODEL_ORDER.filter((k) => k !== selectedModel);
 
   // Raw 임상지표: PatientPage가 캐싱한 ClinicalDataProvider에서 가져와 모델별로 가공.
@@ -128,15 +121,15 @@ export default function ModelDetailView({
           <span className="model-detail__selected-title">{prediction.title}</span>
           <div className="model-detail__selected-value">
             <span className={`model-detail__selected-pct model-detail__selected-pct--${prediction.tone}`}>
-              {prob}
-              <span className="model-detail__selected-unit">%</span>
+              {prob != null ? prob : '—'}
+              {prob != null && <span className="model-detail__selected-unit">%</span>}
             </span>
             <Badge level={risk} />
           </div>
           <div className="model-detail__gauge" aria-hidden="true">
             <div
               className={`model-detail__gauge-fill model-detail__gauge-fill--${prediction.tone}`}
-              style={{ width: `${Math.min(100, prob)}%` }}
+              style={{ width: `${Math.min(100, prob ?? 0)}%` }}
             />
           </div>
         </div>
@@ -148,7 +141,7 @@ export default function ModelDetailView({
           <ul>
             {otherModels.map((key) => {
               const other = predictions[key];
-              const otherPct = currentProbability(other) ?? toneFallbackPct(other.tone);
+              const otherPct = other.riskScorePct ?? currentProbability(other);
               return (
                 <li key={key}>
                   <button
@@ -161,7 +154,9 @@ export default function ModelDetailView({
                       aria-hidden="true"
                     />
                     <span className="model-detail__mini-title">{other.title}</span>
-                    <span className="model-detail__mini-pct">{otherPct}%</span>
+                    <span className="model-detail__mini-pct">
+                      {otherPct != null ? `${otherPct}%` : '—'}
+                    </span>
                   </button>
                 </li>
               );
@@ -182,7 +177,7 @@ export default function ModelDetailView({
           </div>
           <div className="model-detail__header-value">
             <span className={`model-detail__header-pct model-detail__header-pct--${prediction.tone}`}>
-              {prob}%
+              {prob != null ? `${prob}%` : '—'}
             </span>
             <Badge level={risk} />
           </div>

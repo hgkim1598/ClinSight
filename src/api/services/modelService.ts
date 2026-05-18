@@ -62,6 +62,26 @@ function mapShapFactor(w: WireShapFactor): ShapFactor {
   };
 }
 
+/**
+ * top_factors_jsonb 를 정규화 — 백엔드가 다음 중 하나로 보낼 수 있음:
+ *  1. WireShapFactor[] (spec)
+ *  2. JSON 문자열 ("[{...}]") — DB jsonb 컬럼이 직렬화된 채로 통과한 경우
+ *  3. null/undefined — SHAP 미생성 prediction
+ *  4. 그 외 (단일 객체 등) — 모두 빈 배열로 처리
+ */
+function normalizeTopFactors(raw: unknown): WireShapFactor[] {
+  if (Array.isArray(raw)) return raw as WireShapFactor[];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as WireShapFactor[]) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function mapLatest(w: WireLatestPrediction): LatestPrediction {
   return {
     predictionId: w.prediction_id,
@@ -75,7 +95,8 @@ function mapLatest(w: WireLatestPrediction): LatestPrediction {
     predictedAt: w.predicted_at,
     featureWindowStart: w.feature_window_start,
     featureWindowEnd: w.feature_window_end,
-    topFactors: w.top_factors_jsonb.map(mapShapFactor),
+    // top_factors_jsonb 는 array / JSON 문자열 / null 등 다양하게 올 수 있음.
+    topFactors: normalizeTopFactors(w.top_factors_jsonb).map(mapShapFactor),
     status: w.status,
   };
 }
@@ -92,6 +113,15 @@ function mapHistoryPoint(w: WireHistoryPoint): PredictionHistoryPoint {
 
 // -------- wire API --------
 
+/** Spec 준수 검증. predictions 가 배열이어야 함. */
+function isValidPredictionsResponse(
+  w: unknown,
+): w is { stay_token: string; predictions: WireLatestPrediction[] } {
+  if (!w || typeof w !== 'object') return false;
+  const o = w as Record<string, unknown>;
+  return Array.isArray(o.predictions);
+}
+
 export async function getLatestPredictions(stayId: string): Promise<LatestPrediction[]> {
   if (MOCK_MODE) {
     return (mockLatestByStay[stayId] ?? []).map(mapLatest);
@@ -99,6 +129,17 @@ export async function getLatestPredictions(stayId: string): Promise<LatestPredic
   const w = await request<{ stay_token: string; predictions: WireLatestPrediction[] }>(
     `/icu-stays/${encodeURIComponent(stayId)}/predictions`,
   );
+  if (!isValidPredictionsResponse(w)) {
+    const receivedKeys =
+      w && typeof w === 'object' ? Object.keys(w as Record<string, unknown>) : null;
+    // TODO: 프로덕션 정리 시 일괄 제거.
+    console.warn(
+      `[modelService] /icu-stays/${stayId}/predictions 응답이 V4 spec 과 일치하지 않습니다. ` +
+        '빈 배열로 처리합니다. (필수 키: predictions)',
+      { receivedKeys },
+    );
+    return [];
+  }
   return w.predictions.map(mapLatest);
 }
 
@@ -116,6 +157,15 @@ export async function getLatestPrediction(
   return mapLatest(w);
 }
 
+/** Spec 준수 검증. history 가 배열이어야 함. */
+function isValidHistoryResponse(
+  w: unknown,
+): w is { stay_token: string; model_key: ApiModelKey; history: WireHistoryPoint[] } {
+  if (!w || typeof w !== 'object') return false;
+  const o = w as Record<string, unknown>;
+  return Array.isArray(o.history);
+}
+
 export async function getPredictionHistory(
   stayId: string,
   modelKey: ApiModelKey,
@@ -129,6 +179,17 @@ export async function getPredictionHistory(
     model_key: ApiModelKey;
     history: WireHistoryPoint[];
   }>(`/icu-stays/${encodeURIComponent(stayId)}/predictions/${encodeURIComponent(modelKey)}/history`);
+  if (!isValidHistoryResponse(w)) {
+    const receivedKeys =
+      w && typeof w === 'object' ? Object.keys(w as Record<string, unknown>) : null;
+    // TODO: 프로덕션 정리 시 일괄 제거.
+    console.warn(
+      `[modelService] /icu-stays/${stayId}/predictions/${modelKey}/history 응답이 V4 spec 과 일치하지 않습니다. ` +
+        '빈 history 로 처리합니다. (필수 키: history)',
+      { receivedKeys },
+    );
+    return { stayToken: stayId, modelKey, history: [] };
+  }
   return {
     stayToken: w.stay_token,
     modelKey: w.model_key,
@@ -332,11 +393,12 @@ export function latestToView(input: LatestToViewInput): Record<TargetName, Model
     const title = model?.modelName ?? FALLBACK_TITLE[target];
 
     if (!pred) {
+      // 예측 데이터 없음. riskLabel/riskScorePct 는 fake 'low'/0 으로 채우지 않고
+      // undefined 로 두어 컴포넌트가 Badge "N/A" + "—" 로 표시하도록 한다.
+      // tone 은 카드 styling 분기에 필수라 'safe' 유지 (별도 'neutral' 톤 도입은 추후 디자인 작업).
       result[target] = {
         title,
         tone: 'safe',
-        riskLabel: 'low',
-        riskScorePct: 0,
         trend: [],
         trendWarn: { delta: '', note: '' },
         shap: [],
