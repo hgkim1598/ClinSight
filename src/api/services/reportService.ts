@@ -20,7 +20,6 @@ import type {
 import { getPatientDetail } from './patientService';
 import { getVitals } from './vitalService';
 import { getModelPredictions } from './modelService';
-import { toneToRisk } from '../../utils/constants';
 import { MOCK_MODE, request } from '../client';
 
 /** 활력징후 상태 등급 산정 (mock heuristic — 백엔드 value_status로 대체될 자리). */
@@ -113,7 +112,7 @@ export async function getPatientReport(stayId: string): Promise<PatientReport | 
       key,
       title: pred.title,
       probability,
-      risk: pred.riskLabel ?? toneToRisk(pred.tone),
+      risk: pred.riskLabel ?? null,
     };
   });
 

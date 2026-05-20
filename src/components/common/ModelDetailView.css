@@ -64,6 +64,10 @@
   color: var(--safe);
 }
 
+.model-detail__selected-pct--unknown {
+  color: var(--text-muted);
+}
+
 .model-detail__selected-unit {
   font-size: 17px;
   font-weight: 600;
@@ -95,6 +99,10 @@
 
 .model-detail__gauge-fill--safe {
   background: var(--safe);
+}
+
+.model-detail__gauge-fill--unknown {
+  background: var(--border);
 }
 
 .model-detail__divider {
@@ -162,6 +170,10 @@
 
 .model-detail__mini-dot--safe {
   background: var(--safe);
+}
+
+.model-detail__mini-dot--unknown {
+  background: var(--border);
 }
 
 .model-detail__mini-title {
@@ -261,6 +273,10 @@
 
 .model-detail__header-pct--safe {
   color: var(--safe);
+}
+
+.model-detail__header-pct--unknown {
+  color: var(--text-muted);
 }
 
 .model-detail__section {

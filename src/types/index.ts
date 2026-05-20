@@ -15,7 +15,7 @@
 // ---------- 공통 ----------
 
 /** 위험도 라벨 — API와 통일된 값 (medium, med 아님) */
-export type RiskLevel = 'high' | 'medium' | 'low';
+export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 
 /** 모델 카드 UI 색상 톤. RiskLevel에서 컴포넌트 단에서 매핑한다. */
 export type RiskTone = 'danger' | 'warn' | 'safe';
@@ -118,9 +118,9 @@ export interface DashboardPatient {
   currentBedLabel: string;
   ageGroup: string;
   sex: 'M' | 'F';
-  latestMortalityRiskScore: number;
-  latestMortalityRiskLabel: RiskLevel;
-  latestComplicationRiskScore: number;
+  latestMortalityRiskScore: number | null;
+  latestMortalityRiskLabel: RiskLevel | null;
+  latestComplicationRiskScore: number | null;
   latestSofaTotal: number;
   activeAlertCount: number;
   lastPredictionAt: string;
@@ -305,8 +305,8 @@ export interface LatestPrediction {
   modelVersion: string;
   targetName: TargetName | EscalationTarget;
   horizonHours: number;
-  riskScore: number;
-  riskLabel: RiskLevel;
+  riskScore: number | null;
+  riskLabel: RiskLevel | null;
   threshold: number;
   predictedAt: string;
   featureWindowStart: string;
@@ -318,8 +318,8 @@ export interface LatestPrediction {
 /** /predictions/{modelKey}/history 응답의 history[i] */
 export interface PredictionHistoryPoint {
   predictionId: string;
-  riskScore: number;
-  riskLabel: RiskLevel;
+  riskScore: number | null;
+  riskLabel: RiskLevel | null;
   predictedAt: string;
   status: string;
 }
@@ -391,8 +391,8 @@ export type EscalationNeed = 'lowNeed' | 'highNeed';
 export interface EscalationPrediction {
   title: string;
   shortLabel: string;
-  /** 0~100 (%) */
-  probability: number;
+  /** 0~100 (%). 예측 실패 시 null. */
+  probability: number | null;
   /** 모델 예측 기반 필요 가능성. EscalationNeed 참조. */
   need: EscalationNeed;
   shap: ShapFeature[];
@@ -453,7 +453,7 @@ export interface ReportPrediction {
   title: string;
   /** 0~100 (%). null이면 예측 데이터 없음 (화면에서 "—"로 표시) */
   probability: number | null;
-  risk: RiskLevel;
+  risk: RiskLevel | null;
 }
 
 /** 환자 상태 요약 보고서 view-model (프론트 조합) */

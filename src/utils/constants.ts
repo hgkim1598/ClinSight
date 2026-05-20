@@ -14,14 +14,15 @@ export const RISK_THRESHOLDS = {
 
 /** 위험도 라벨 (UI 표시용) */
 export const RISK_LABELS: Record<RiskLevel, string> = {
-  high: 'HIGH',
-  medium: 'MED',
-  low: 'LOW',
+  critical: '위험',
+  high: '높음',
+  medium: '보통',
+  low: '낮음',
 };
 
 /** RiskLevel → UI 색상 톤 매핑. */
 export function riskLabelToTone(risk: RiskLevel): RiskTone {
-  if (risk === 'high') return 'danger';
+  if (risk === 'critical' || risk === 'high') return 'danger';
   if (risk === 'medium') return 'warn';
   return 'safe';
 }

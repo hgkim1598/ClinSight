@@ -55,7 +55,9 @@ export default function ManualYAxis({
   const plotHeight = Math.max(0, plotBottom - plotTop);
   const range = yMax - yMin;
 
-  const tickValues = ticks ?? defaultTicks(yMin, yMax);
+  // 데이터가 비정상(NaN/Infinity)이면 축 선만 그리고 ticks 는 생략.
+  const domainValid = Number.isFinite(yMin) && Number.isFinite(yMax);
+  const tickValues = domainValid ? (ticks ?? defaultTicks(yMin, yMax)) : [];
 
   const isLeft = orientation === 'left';
   // 좌측 축: axis line 이 width 의 오른쪽 끝. 라벨은 왼쪽 정렬.

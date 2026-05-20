@@ -7,12 +7,13 @@ interface BadgeProps {
 }
 
 const config: Record<string, { label: string; className: string }> = {
-  high: { label: 'HIGH', className: 'badge-danger' },
-  medium: { label: 'MED', className: 'badge-warn' },
-  low: { label: 'LOW', className: 'badge-safe' },
+  critical: { label: '위험', className: 'badge-critical' },
+  high: { label: '높음', className: 'badge-danger' },
+  medium: { label: '보통', className: 'badge-warn' },
+  low: { label: '낮음', className: 'badge-safe' },
 };
 
-const unknownConfig = { label: 'N/A', className: 'badge-unknown' };
+const unknownConfig = { label: '-', className: 'badge-unknown' };
 
 export default function Badge({ level }: BadgeProps) {
   const entry = (level ? config[level] : undefined) ?? unknownConfig;

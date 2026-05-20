@@ -57,11 +57,13 @@ export default function LoginPage() {
     (location.state as LocationStateFrom | null)?.from?.pathname ?? '/';
 
   // 이미 로그인된 상태로 /login 진입 시 원래 가려던 곳으로.
+  // splash 단계에서는 finishAndNavigate 의 setTimeout 이 이동을 책임지므로 건너뜀
+  // (그러지 않으면 로그인 직후 status 전환을 잡아 즉시 navigate → splash 가 렌더 기회 없음).
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && stage !== 'splash') {
       navigate(from, { replace: true });
     }
-  }, [status, navigate, from]);
+  }, [status, stage, navigate, from]);
 
   // 챌린지로 전환되면 새 비번 필드에 포커스.
   useEffect(() => {

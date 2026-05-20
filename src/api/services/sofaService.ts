@@ -26,9 +26,16 @@ const ORGANS: OrganKey[] = [
 
 function mapRow(w: WireSofaTrendRow): SofaTrendRow {
   return {
-    observedAt: w.observed_at,
-    sofaTotal: w.sofa_total,
-    components: { ...w.components },
+    observedAt: w.timestamp,
+    sofaTotal: w.total_sofa,
+    components: {
+      cardiovascular: w.cardiovascular,
+      respiration: w.respiration,
+      cns: w.cns,
+      liver: w.liver,
+      renal: w.renal,
+      coagulation: w.coagulation,
+    },
   };
 }
 
@@ -53,7 +60,7 @@ export function sofaResponseToTrend(w: WireSofaResponse): SofaTrend {
     return emptySofaTrend();
   }
 
-  const rows = w.sofa_trend.map(mapRow);
+  const rows = w.sofa_trend.map(mapRow).filter((r) => typeof r.observedAt === 'string' && r.observedAt.length > 0);
   const sorted = rows.slice().sort((a, b) => a.observedAt.localeCompare(b.observedAt));
   const refIso = sorted.length > 0 ? sorted[sorted.length - 1].observedAt : new Date().toISOString();
   const times = sorted.map((r) => toRelativeLabel(r.observedAt, refIso));

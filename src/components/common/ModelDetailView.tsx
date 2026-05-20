@@ -74,6 +74,8 @@ export default function ModelDetailView({
   // riskScorePct(서비스 매핑) 우선, 없으면 trend 마지막 값, 둘 다 없으면 null → "—"
   const prob = prediction.riskScorePct ?? currentProbability(prediction);
   const risk = prediction.riskLabel ?? null;
+  // 예측 실패(riskLabel=null)면 tone과 무관하게 회색 표시.
+  const displayTone = risk ? prediction.tone : 'unknown';
   const otherModels = MODEL_ORDER.filter((k) => k !== selectedModel);
 
   // Raw 임상지표: PatientPage가 캐싱한 ClinicalDataProvider에서 가져와 모델별로 가공.
@@ -120,7 +122,7 @@ export default function ModelDetailView({
           <span className="model-detail__selected-label">선택 모델</span>
           <span className="model-detail__selected-title">{prediction.title}</span>
           <div className="model-detail__selected-value">
-            <span className={`model-detail__selected-pct model-detail__selected-pct--${prediction.tone}`}>
+            <span className={`model-detail__selected-pct model-detail__selected-pct--${displayTone}`}>
               {prob != null ? prob : '—'}
               {prob != null && <span className="model-detail__selected-unit">%</span>}
             </span>
@@ -128,7 +130,7 @@ export default function ModelDetailView({
           </div>
           <div className="model-detail__gauge" aria-hidden="true">
             <div
-              className={`model-detail__gauge-fill model-detail__gauge-fill--${prediction.tone}`}
+              className={`model-detail__gauge-fill model-detail__gauge-fill--${displayTone}`}
               style={{ width: `${Math.min(100, prob ?? 0)}%` }}
             />
           </div>
@@ -142,6 +144,7 @@ export default function ModelDetailView({
             {otherModels.map((key) => {
               const other = predictions[key];
               const otherPct = other.riskScorePct ?? currentProbability(other);
+              const otherDisplayTone = other.riskLabel ? other.tone : 'unknown';
               return (
                 <li key={key}>
                   <button
@@ -150,7 +153,7 @@ export default function ModelDetailView({
                     onClick={() => onChangeModel(key)}
                   >
                     <span
-                      className={`model-detail__mini-dot model-detail__mini-dot--${other.tone}`}
+                      className={`model-detail__mini-dot model-detail__mini-dot--${otherDisplayTone}`}
                       aria-hidden="true"
                     />
                     <span className="model-detail__mini-title">{other.title}</span>
@@ -176,7 +179,7 @@ export default function ModelDetailView({
             <span className="model-detail__time">데이터 기준: {REFERENCE_TIME}</span>
           </div>
           <div className="model-detail__header-value">
-            <span className={`model-detail__header-pct model-detail__header-pct--${prediction.tone}`}>
+            <span className={`model-detail__header-pct model-detail__header-pct--${displayTone}`}>
               {prob != null ? `${prob}%` : '—'}
             </span>
             <Badge level={risk} />

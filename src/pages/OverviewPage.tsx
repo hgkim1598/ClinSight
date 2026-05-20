@@ -49,20 +49,19 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'alert-desc', label: '알림 많은순' },
 ];
 
-const RISK_RANK: Record<RiskLevel, number> = { high: 3, medium: 2, low: 1 };
+const RISK_RANK: Record<RiskLevel, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+const rankOf = (lvl: RiskLevel | null) => (lvl ? RISK_RANK[lvl] : 0);
 
 function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[] {
   const arr = [...list];
   switch (key) {
     case 'risk-desc':
       return arr.sort(
-        (a, b) =>
-          RISK_RANK[b.latestMortalityRiskLabel] - RISK_RANK[a.latestMortalityRiskLabel],
+        (a, b) => rankOf(b.latestMortalityRiskLabel) - rankOf(a.latestMortalityRiskLabel),
       );
     case 'risk-asc':
       return arr.sort(
-        (a, b) =>
-          RISK_RANK[a.latestMortalityRiskLabel] - RISK_RANK[b.latestMortalityRiskLabel],
+        (a, b) => rankOf(a.latestMortalityRiskLabel) - rankOf(b.latestMortalityRiskLabel),
       );
     case 'recent-desc':
       return arr.sort((a, b) => b.lastObservationAt.localeCompare(a.lastObservationAt));

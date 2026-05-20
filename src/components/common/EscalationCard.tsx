@@ -6,7 +6,8 @@ interface EscalationCardProps {
   escalation: EscalationPrediction;
 }
 
-function probabilityToRisk(pct: number): RiskLevel {
+function probabilityToRisk(pct: number | null): RiskLevel | null {
+  if (pct == null) return null;
   if (pct >= 60) return 'high';
   if (pct >= 30) return 'medium';
   return 'low';
@@ -30,8 +31,14 @@ export default function EscalationCard({ escalation }: EscalationCardProps) {
 
       <div className="escalation__top">
         <div className="escalation__prob">
-          <span className="escalation__prob-value">{escalation.probability}</span>
-          <span className="escalation__prob-unit">%</span>
+          {escalation.probability != null ? (
+            <>
+              <span className="escalation__prob-value">{escalation.probability}</span>
+              <span className="escalation__prob-unit">%</span>
+            </>
+          ) : (
+            <span className="escalation__prob-value">—</span>
+          )}
         </div>
         <Badge level={risk} />
         <div

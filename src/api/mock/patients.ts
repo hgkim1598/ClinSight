@@ -18,9 +18,9 @@ export interface WireDashboardPatient {
   current_bed_label: string;
   age_group: string;
   sex: 'M' | 'F';
-  latest_mortality_risk_score: number;
-  latest_mortality_risk_label: 'high' | 'medium' | 'low';
-  latest_complication_risk_score: number;
+  latest_mortality_risk_score: number | null;
+  latest_mortality_risk_label: 'high' | 'medium' | 'low' | null;
+  latest_complication_risk_score: number | null;
   latest_sofa_total: number;
   active_alert_count: number;
   last_prediction_at: string;

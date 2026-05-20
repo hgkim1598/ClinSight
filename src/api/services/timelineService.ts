@@ -40,9 +40,15 @@ function mapSeverity(s: string): TimelineEventSeverity {
   return 'info';
 }
 
-function mapTimelineItem(w: WireTimelineItem): TimelineEvent {
+function mapTimelineItem(w: WireTimelineItem, index: number): TimelineEvent {
+  // 실제 API가 식별자 필드를 다르게 보낼 수 있어 폴백 체인 구성.
+  const fallbackKey = `tl-${index}-${
+    w.timeline_time ?? (w as { observed_at?: string; timestamp?: string }).observed_at ?? (w as { timestamp?: string }).timestamp ?? ''
+  }`;
+  const id =
+    w.item_id ?? (w as { id?: string }).id ?? fallbackKey;
   return {
-    id: w.item_id,
+    id,
     time: formatTime(w.timeline_time),
     title: w.title,
     description: w.summary,
@@ -52,9 +58,12 @@ function mapTimelineItem(w: WireTimelineItem): TimelineEvent {
   };
 }
 
-function mapScheduledEvent(w: WireScheduledEvent): ScheduledEvent {
+function mapScheduledEvent(w: WireScheduledEvent, index: number): ScheduledEvent {
+  const fallbackKey = `sch-${index}-${w.event_time ?? ''}`;
+  const id =
+    w.event_id ?? (w as { id?: string }).id ?? fallbackKey;
   return {
-    id: w.event_id,
+    id,
     time: formatTime(w.event_time),
     title: w.event_title,
     description: w.event_description,

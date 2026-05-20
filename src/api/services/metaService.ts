@@ -16,6 +16,7 @@ import {
   type WireMetric,
   type WireModelMeta,
 } from '../mock/meta';
+import { displayNameFor } from '../../utils/modelDisplayNames';
 
 function mapMe(w: WireMe): Me {
   return {
@@ -46,7 +47,8 @@ function mapModel(w: WireModelMeta): ModelMeta {
   return {
     modelKey: w.model_key,
     modelVersion: w.model_version,
-    modelName: w.model_name,
+    // 진입 시점에 sanitize — model_key 매핑 또는 백엔드명에서 trailing 괄호 제거.
+    modelName: displayNameFor(w.model_key, w.model_name),
     modelType: w.model_type,
     targetName: w.target_name,
     horizonHours: w.horizon_hours,

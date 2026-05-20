@@ -151,11 +151,17 @@ export default function ReportContent({ report }: ReportContentProps) {
                   {p.probability != null ? `${p.probability}%` : '—'}
                 </td>
                 <td>
-                  <span
-                    className={`report-pill report-pill--risk report-pill--risk-${p.risk}`}
-                  >
-                    {RISK_LABELS[p.risk]}
-                  </span>
+                  {p.risk ? (
+                    <span
+                      className={`report-pill report-pill--risk report-pill--risk-${p.risk}`}
+                    >
+                      {RISK_LABELS[p.risk]}
+                    </span>
+                  ) : (
+                    <span className="report-pill report-pill--risk report-pill--risk-unknown">
+                      -
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

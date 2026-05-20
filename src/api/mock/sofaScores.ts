@@ -6,19 +6,18 @@
  * 프론트 view-model(SofaTrend)은 service 레이어에서 organ별 column으로 pivot 변환.
  */
 
-export interface WireSofaComponents {
-  respiration: number | null;
-  coagulation: number | null;
-  liver: number | null;
-  cardiovascular: number | null;
-  cns: number | null;
-  renal: number | null;
-}
-
+/**
+ * 실제 API row는 flat 구조 — 각 organ 점수가 최상위 필드.
+ */
 export interface WireSofaTrendRow {
-  observed_at: string;
-  sofa_total: number;
-  components: WireSofaComponents;
+  timestamp: string;
+  total_sofa: number;
+  cardiovascular: number | null;
+  respiration: number | null;
+  cns: number | null;
+  liver: number | null;
+  renal: number | null;
+  coagulation: number | null;
 }
 
 export interface WireSofaResponse {
@@ -46,22 +45,28 @@ interface OrganSeries {
 
 function buildResponse(stayToken: string, s: OrganSeries): WireSofaResponse {
   const rows: WireSofaTrendRow[] = HOURS.map((h, i) => {
-    const components: WireSofaComponents = {
-      cardiovascular: s.cardiovascular[i],
-      respiration: s.respiration[i],
-      cns: s.cns[i],
-      liver: s.liver[i],
-      renal: s.renal[i],
-      coagulation: s.coagulation[i],
-    };
-    const total = Object.values(components).reduce<number>(
-      (sum, v) => sum + (v ?? 0),
-      0,
-    );
+    const cardiovascular = s.cardiovascular[i];
+    const respiration = s.respiration[i];
+    const cns = s.cns[i];
+    const liver = s.liver[i];
+    const renal = s.renal[i];
+    const coagulation = s.coagulation[i];
+    const total =
+      (cardiovascular ?? 0) +
+      (respiration ?? 0) +
+      (cns ?? 0) +
+      (liver ?? 0) +
+      (renal ?? 0) +
+      (coagulation ?? 0);
     return {
-      observed_at: isoOffsetHours(h),
-      sofa_total: total,
-      components,
+      timestamp: isoOffsetHours(h),
+      total_sofa: total,
+      cardiovascular,
+      respiration,
+      cns,
+      liver,
+      renal,
+      coagulation,
     };
   });
   return { stay_token: stayToken, sofa_trend: rows };

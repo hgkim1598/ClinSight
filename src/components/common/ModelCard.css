@@ -75,6 +75,10 @@
   color: var(--safe);
 }
 
+.model-card--unknown .model-card__pct {
+  color: var(--text-muted);
+}
+
 .model-card__unit {
   font-size: 15px;
   font-weight: 600;

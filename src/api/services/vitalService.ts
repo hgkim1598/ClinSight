@@ -17,26 +17,38 @@ import {
   emptyClinicalData,
   mockClinicalDataByStay,
   type WireClinicalDataResponse,
-  type WireObservation,
+  type WireObservationGroup,
 } from '../mock/vitals';
 import { toRelativeLabel } from '../../utils/time';
 
 // -------- 매핑 (wire → ClinicalObservation) --------
+//
+// 실제 API는 metric_code 별로 묶인 nested 구조:
+//   observations: [{ metric_code, label, unit, normal_min, normal_max, category,
+//                    data_points: [{ observed_at, value }, ...] }]
+// 프론트 view-model 은 flat row (한 데이터 포인트 = 한 ClinicalObservation).
+// mapClinicalData 가 group → flat 변환을 담당.
 
-function mapObservation(w: WireObservation): ClinicalObservation {
-  return {
-    observationId: w.observation_id,
-    metricGroup: w.metric_group,
-    metricCode: w.metric_code,
-    metricName: w.metric_name,
-    numericValue: w.numeric_value,
-    unit: w.unit,
-    valueStatus: w.value_status,
-    normalRangeLow: w.normal_range_low,
-    normalRangeHigh: w.normal_range_high,
-    observedAt: w.observed_at,
-    qualityFlag: w.quality_flag,
-  };
+const VALID_GROUPS = new Set<'vital' | 'lab' | 'derived'>(['vital', 'lab', 'derived']);
+
+function groupToObservations(g: WireObservationGroup): ClinicalObservation[] {
+  const metricGroup: 'vital' | 'lab' | 'derived' =
+    VALID_GROUPS.has(g.category) ? g.category : 'vital';
+  const metricName = g.label_ko ?? g.label ?? g.metric_code;
+  const points = g.data_points ?? [];
+  return points.map((p, i) => ({
+    observationId: `${g.metric_code}-${i}-${p.observed_at}`,
+    metricGroup,
+    metricCode: g.metric_code,
+    metricName,
+    numericValue: p.value,
+    unit: g.unit ?? '',
+    valueStatus: 'normal',
+    normalRangeLow: g.normal_min,
+    normalRangeHigh: g.normal_max,
+    observedAt: p.observed_at,
+    qualityFlag: 'valid',
+  }));
 }
 
 interface ClinicalDataResult {
@@ -46,10 +58,14 @@ interface ClinicalDataResult {
 }
 
 function mapClinicalData(w: WireClinicalDataResponse): ClinicalDataResult {
+  const observations: ClinicalObservation[] = [];
+  for (const g of w.observations ?? []) {
+    observations.push(...groupToObservations(g));
+  }
   return {
     stayToken: w.stay_token,
     period: { ...w.period },
-    observations: w.observations.map(mapObservation),
+    observations,
   };
 }
 
@@ -137,9 +153,11 @@ export function observationsToVitalData(
     urine_output: EMPTY_VITAL_SERIES(DEFAULT_LABEL.urine_output.label, DEFAULT_LABEL.urine_output.unit, DEFAULT_NORMAL.urine_output),
   };
 
-  // groupBy canonical metric_code (별칭 매핑 적용), 오름차순 정렬
+  // groupBy canonical metric_code (별칭 매핑 적용), 오름차순 정렬.
+  // numericValue 가 null/undefined/NaN 인 행은 차트 축 계산을 망가뜨리므로 사전에 제거.
   const byCode = new Map<string, ClinicalObservation[]>();
   for (const o of observations) {
+    if (o.numericValue == null || Number.isNaN(o.numericValue)) continue;
     const key = canonicalMetricCode(o.metricCode);
     if (!byCode.has(key)) byCode.set(key, []);
     byCode.get(key)!.push(o);
