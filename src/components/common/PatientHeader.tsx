@@ -1,12 +1,7 @@
 import { FileText } from 'lucide-react';
 import type { PatientDetail } from '../../types';
-import { formatPatientName } from '../../utils/formatPatientName';
-import {
-  formatDateTime,
-  hospitalDay,
-  onsetDay,
-  postOpDay,
-} from '../../utils/time';
+import { patientLocalData } from '../../data/patientLocalData';
+import { formatDateTime } from '../../utils/time';
 import './PatientHeader.css';
 
 interface PatientHeaderProps {
@@ -14,32 +9,40 @@ interface PatientHeaderProps {
   onSummaryClick?: () => void;
 }
 
+function hoursSinceIso(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const diffMs = Date.now() - d.getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+}
+
 export default function PatientHeader({ patient, onSummaryClick }: PatientHeaderProps) {
-  const displayName = formatPatientName(patient.patientToken);
-  const avatarLetter = displayName.charAt(0) || patient.patientToken.charAt(0);
-
-  // 재원 일수 — HOD에 수술 환자는 POD 인라인 부기 (피드백 §1-2)
-  const hodLabel = (() => {
-    const hod = hospitalDay(patient.hospitalAdmitAt);
-    if (patient.surgeryAt) {
-      return `HOD ${hod}일째 (POD ${postOpDay(patient.surgeryAt)})`;
-    }
-    return `HOD ${hod}일째`;
-  })();
-
-  // Sepsis Onset 일수 — 발병일 표시 (피드백 §6-3)
-  const onsetLabel = patient.sepsisOnsetAt
-    ? `${formatDateTime(patient.sepsisOnsetAt)} · Onset ${onsetDay(patient.sepsisOnsetAt)}일째`
-    : '—';
+  // 로컬 매핑(PHI 분리 정책상 이름/실연령/체중·신장·BMI는 프론트 보관).
+  // 없으면 백엔드가 보낸 값으로 폴백, 그것도 없으면 "—".
+  const local = patientLocalData[patient.patientToken];
+  const displayName = local?.name ?? patient.patientToken;
+  const ageDisplay = local?.age ?? patient.ageGroup ?? '—';
+  const hours = hoursSinceIso(patient.icuInAt);
+  const avatarLetter = displayName.charAt(0) || '?';
 
   const fields: Array<{ label: string; value: string }> = [
     { label: '환자', value: patient.patientToken },
-    { label: '나이/성별', value: `${patient.ageGroup} / ${patient.sex}` },
+    { label: '나이/성별', value: `${String(ageDisplay)} / ${patient.sex}` },
     { label: '병상', value: patient.currentBedLabel },
     { label: '입실시간', value: formatDateTime(patient.icuInAt) },
     { label: '주진단', value: patient.primaryDiagnosisText },
-    { label: '재원', value: hodLabel },
-    { label: 'SEPSIS ONSET', value: onsetLabel },
+    {
+      label: '재실',
+      value: hours != null ? `${hours}h` : '—',
+    },
+    {
+      label: 'SEPSIS ONSET',
+      value: patient.sepsisOnsetAt ? formatDateTime(patient.sepsisOnsetAt) : '—',
+    },
+    { label: '체중', value: local?.weightKg != null ? `${local.weightKg} kg` : '—' },
+    { label: '신장', value: local?.heightCm != null ? `${local.heightCm} cm` : '—' },
+    { label: 'BMI', value: local?.bmi != null ? `${local.bmi}` : '—' },
   ];
 
   return (

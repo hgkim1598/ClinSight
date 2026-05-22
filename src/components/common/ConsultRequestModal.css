@@ -20,8 +20,10 @@
   box-shadow: var(--shadow-md);
   width: 100%;
   max-width: 560px;
-  max-height: 80vh;
-  overflow-y: auto;
+  /* 모달 전체는 스크롤하지 않고(헤더/제목/사유/우선순위/footer 항상 표시),
+     남는 공간은 부서 트리만 스크롤한다 (.consult-modal__section--tree). */
+  max-height: 90vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -131,9 +133,16 @@
   color: var(--text-muted);
 }
 
+/* 부서 트리 섹션만 남는 세로 공간을 흡수해 내부 스크롤 */
+.consult-modal__section--tree {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 /* ---------- 트리 (부서/인물) ---------- */
 .consult-modal__tree {
-  max-height: 240px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -216,12 +225,16 @@
   flex-shrink: 0;
 }
 
-.consult-modal__staff-dot.is-available {
+.consult-modal__staff-dot--available {
   background: var(--safe);
 }
 
-.consult-modal__staff-dot.is-unavailable {
-  background: var(--text-muted);
+.consult-modal__staff-dot--delayed {
+  background: var(--warn);
+}
+
+.consult-modal__staff-dot--unavailable {
+  background: var(--danger);
 }
 
 .consult-modal__staff-name {
@@ -233,10 +246,31 @@
   font-size: 12px;
 }
 
-.consult-modal__staff-absent {
+.consult-modal__staff-duty {
   margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 10px;
   font-size: 11px;
-  color: var(--text-muted);
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.consult-modal__staff-duty--available {
+  color: var(--safe);
+  background: var(--safe-bg);
+  border-color: var(--safe-border);
+}
+
+.consult-modal__staff-duty--delayed {
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+.consult-modal__staff-duty--unavailable {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
 }
 
 .consult-modal__staff-added {
@@ -433,6 +467,9 @@
   align-items: center;
   gap: 16px;
   text-align: center;
+  /* 모달이 overflow:hidden 이므로 수신자 많을 때 성공 화면 자체가 스크롤되도록. */
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .consult-modal__success-icon {

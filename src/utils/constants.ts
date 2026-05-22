@@ -1,8 +1,5 @@
 import type { RiskLevel, RiskTone } from '../types';
 
-/** 현재 사용자 표시명 — Cognito 연동 전 placeholder. /me 연결 시 useMe()로 교체. */
-export const CURRENT_USER = '담당 의료진';
-
 /** ICU 식별자 — MVP 단계 단일 ICU. 추후 라우팅/설정에서 주입. */
 export const CURRENT_ICU_ID = 'ICU_A';
 
@@ -14,14 +11,15 @@ export const RISK_THRESHOLDS = {
 
 /** 위험도 라벨 (UI 표시용) */
 export const RISK_LABELS: Record<RiskLevel, string> = {
-  high: 'HIGH',
-  medium: 'MED',
-  low: 'LOW',
+  critical: '위험',
+  high: '높음',
+  medium: '보통',
+  low: '낮음',
 };
 
 /** RiskLevel → UI 색상 톤 매핑. */
 export function riskLabelToTone(risk: RiskLevel): RiskTone {
-  if (risk === 'high') return 'danger';
+  if (risk === 'critical' || risk === 'high') return 'danger';
   if (risk === 'medium') return 'warn';
   return 'safe';
 }

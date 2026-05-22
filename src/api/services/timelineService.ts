@@ -40,21 +40,38 @@ function mapSeverity(s: string): TimelineEventSeverity {
   return 'info';
 }
 
-function mapTimelineItem(w: WireTimelineItem): TimelineEvent {
+function mapTimelineItem(w: WireTimelineItem, index: number): TimelineEvent {
+  // 백엔드가 아직 v_clinical_timeline 뷰가 아닌 원본 clinical_events(event_*)를 내려준다.
+  // 뷰 기준 필드가 오면 그걸 쓰고, 없으면 원본 필드로 폴백 → 뷰 전환 후에도 안 깨짐.
+  // TODO: 백엔드 뷰 전환 완료 후 폴백 필드(event_time/event_type/body/source) 제거
+  const timelineTime = w.timeline_time ?? w.event_time;
+  const itemType = w.item_type ?? w.event_type;
+  const summary = w.summary ?? w.body;
+  const detailCategory = w.detail_category ?? w.source;
+
+  // 실제 API가 식별자 필드를 다르게 보낼 수 있어 폴백 체인 구성.
+  const fallbackKey = `tl-${index}-${
+    timelineTime ?? (w as { observed_at?: string; timestamp?: string }).observed_at ?? (w as { timestamp?: string }).timestamp ?? ''
+  }`;
+  const id =
+    w.item_id ?? (w as { id?: string }).id ?? fallbackKey;
   return {
-    id: w.item_id,
-    time: formatTime(w.timeline_time),
-    title: w.title,
-    description: w.summary,
-    category: mapCategory(w.detail_category),
-    severity: mapSeverity(w.severity),
-    itemType: w.item_type as TimelineItemType,
+    id,
+    time: formatTime(timelineTime ?? ''),
+    title: w.title ?? '',
+    description: summary ?? '',
+    category: mapCategory(detailCategory ?? ''),
+    severity: mapSeverity(w.severity ?? ''),
+    itemType: itemType as TimelineItemType,
   };
 }
 
-function mapScheduledEvent(w: WireScheduledEvent): ScheduledEvent {
+function mapScheduledEvent(w: WireScheduledEvent, index: number): ScheduledEvent {
+  const fallbackKey = `sch-${index}-${w.event_time ?? ''}`;
+  const id =
+    w.event_id ?? (w as { id?: string }).id ?? fallbackKey;
   return {
-    id: w.event_id,
+    id,
     time: formatTime(w.event_time),
     title: w.event_title,
     description: w.event_description,

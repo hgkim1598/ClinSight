@@ -41,6 +41,10 @@ export function useAsync<T>(
       const data = await asyncFnRef.current();
       setState({ data, loading: false, error: null });
     } catch (e) {
+      // TODO: 프로덕션 정리 시 console.error 제거.
+      // 화면의 ErrorState 메시지는 하드코딩이라 실제 원인이 안 보이므로
+      // 개발 디버깅용으로 콘솔에 stack trace 와 함께 남긴다.
+      console.error('[useAsync] 비동기 함수 실패:', e);
       setState({
         data: null,
         loading: false,

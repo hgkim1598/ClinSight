@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import type { Alert, AlertAction } from '../../types';
+import type { Alert, AlertAction, DashboardPatient } from '../../types';
 import { markAlertRead } from '../../api/services/alertService';
 import { useSnackbar } from '../../context/useSnackbar';
-import { formatPatientName } from '../../utils/formatPatientName';
+import { patientLocalData } from '../../data/patientLocalData';
 import { formatTime } from '../../utils/time';
 import './AlertCard.css';
 
 interface AlertCardProps {
   alert: Alert;
+  /** AlertsPage 캐시에서 stay_id 로 매칭된 환자 (이름/병실 표시용). 없으면 8자리 폴백. */
+  patient?: DashboardPatient;
   onAcknowledge: (id: string) => Promise<void> | void;
   onResolve: (id: string) => Promise<void> | void;
   /** 카드 클릭 시 read 처리 후 호출. 보통 목록 refetch. */
@@ -51,6 +53,7 @@ function buildActions(alert: Alert): AlertAction[] {
 
 export default function AlertCard({
   alert,
+  patient,
   onAcknowledge,
   onResolve,
   onRead,
@@ -122,7 +125,11 @@ export default function AlertCard({
       ? 'alert-card--critical'
       : 'alert-card--warning';
 
-  const displayName = formatPatientName(alert.stayToken.replace(/^ST-/, 'PT-'));
+  // 캐시에 매칭된 환자가 있으면 이름(+병실), 없으면 stay_id 앞 8자리만 (UUID 전체 노출 방지).
+  const localName = patient ? patientLocalData[patient.patientToken]?.name : undefined;
+  const shortId = alert.stayToken ? `${alert.stayToken.slice(0, 8)}…` : '';
+  const displayName = localName ?? shortId;
+  const bedLabel = localName ? patient?.currentBedLabel : undefined;
   const timeLabel = formatTime(alert.createdAt);
 
   return (
@@ -146,7 +153,8 @@ export default function AlertCard({
           )}
         </div>
         <span className="alert-card__patient-meta">
-          {timeLabel} · {displayName} · {alert.stayToken}
+          {timeLabel} · {displayName}
+          {bedLabel ? ` · ${bedLabel}` : ''}
         </span>
       </div>
 

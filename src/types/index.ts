@@ -15,7 +15,7 @@
 // ---------- 공통 ----------
 
 /** 위험도 라벨 — API와 통일된 값 (medium, med 아님) */
-export type RiskLevel = 'high' | 'medium' | 'low';
+export type RiskLevel = 'critical' | 'high' | 'medium' | 'low';
 
 /** 모델 카드 UI 색상 톤. RiskLevel에서 컴포넌트 단에서 매핑한다. */
 export type RiskTone = 'danger' | 'warn' | 'safe';
@@ -118,17 +118,9 @@ export interface DashboardPatient {
   currentBedLabel: string;
   ageGroup: string;
   sex: 'M' | 'F';
-  /** 환자 소속 진료과 코드 (config_items.config_key). 피드백 §1-1 */
-  departmentCode: string;
-  /** 담당 의사 staff_id. 피드백 §1-1 */
-  attendingStaffId: string;
-  /** 입원 시각 ISO. HOD 계산에 사용. 피드백 §1-2 */
-  hospitalAdmitAt: string;
-  /** 수술 시각 ISO. 수술 환자만 채워짐. POD 계산에 사용. 피드백 §1-2 */
-  surgeryAt: string | null;
-  latestMortalityRiskScore: number;
-  latestMortalityRiskLabel: RiskLevel;
-  latestComplicationRiskScore: number;
+  latestMortalityRiskScore: number | null;
+  latestMortalityRiskLabel: RiskLevel | null;
+  latestComplicationRiskScore: number | null;
   latestSofaTotal: number;
   activeAlertCount: number;
   lastPredictionAt: string;
@@ -173,8 +165,6 @@ export interface PatientDetail {
   currentBedLabel: string;
   status: string;
   sepsisOnsetAt: string | null;
-  /** 수술 시각 ISO. 수술 환자만 채워짐. POD 계산에 사용. 피드백 §1-2 */
-  surgeryAt: string | null;
 }
 
 // ---------- /dashboard staffing (Phase 3 — 현재 미사용) ----------
@@ -192,14 +182,22 @@ export interface PatientAssignment {
   assignedStaff: AssignedStaff[];
 }
 
+/** 역할별 인원 수 (실제 staffing API: { total, available }). */
+export interface StaffingRoleCount {
+  total: number;
+  available: number;
+}
+
+/**
+ * 대시보드 staffing view-model.
+ * 실제 API는 역할별 카운트({ physician/nurse/admin: { total, available } })를 내려준다.
+ * (구 spec 의 assignments[] 구조는 서비스 매핑에서 폴백으로만 처리.)
+ */
 export interface DashboardStaffing {
-  icuUnitCode: string;
-  assignments: PatientAssignment[];
-  summary: {
-    totalPatients: number;
-    myPatientsCount: number;
-    unassignedCount: number;
-  };
+  icuId: string;
+  physician: StaffingRoleCount;
+  nurse: StaffingRoleCount;
+  admin: StaffingRoleCount;
 }
 
 // ---------- Clinical Observations (wire) ----------
@@ -223,27 +221,11 @@ export interface ClinicalObservation {
 // ---------- Vital View-Model (컴포넌트가 소비) ----------
 
 /** 바이탈 시리즈 데이터 키 — 연속 측정값 */
-export type VitalKey =
-  | 'hr'
-  | 'map'
-  | 'spo2'
-  | 'rr'
-  | 'temp'
-  | 'gcs'
-  | 'urine_output'
-  /** 시간당 수액/약물/식이 등 환자에게 들어간 총량 (mL/h). 피드백 §4-3 */
-  | 'intake_volume';
+export type VitalKey = 'hr' | 'map' | 'spo2' | 'rr' | 'temp' | 'gcs' | 'urine_output';
 
-/**
- * 바이탈 차트 그룹 탭 키 — SOFA + I/O + 6개 장기 시스템 + Temp.
- *  - 'io': Intake / Output 2-line (피드백 §4-3)
- *
- * V/S 세트(BP/HR/RR/SpO2/Temp 통합 보기)는 별도 탭 대신 비교 모드로 처리한다.
- * 사용자가 Cardio(MAP+HR), Resp(SpO2+RR), Temp 탭을 compare로 조합해서 본다.
- */
+/** 바이탈 차트 그룹 탭 키 — SOFA + 6개 장기 시스템 + Temp */
 export type TabKey =
   | 'sofa'
-  | 'io'
   | 'cardio'
   | 'resp'
   | 'renal'
@@ -258,7 +240,10 @@ export interface VitalSeries {
   unit: string;
   data: number[];
   normal: [number, number];
+  /** 표시용 라벨 ("-6h" / "현재" 등). times[i] ↔ data[i] 대응. */
   times: string[];
+  /** 원본 ISO 시각. 가로 스크롤 폭 계산 + datetime 툴팁용. times와 동일 길이. */
+  isoTimes: string[];
 }
 
 /**
@@ -272,6 +257,8 @@ export interface LabDot {
   type: 'lac' | 'cre' | 'pf_ratio' | 'platelet' | 'bilirubin';
   /** API metric_code. 풀네임 (lactate, creatinine, pao2_fio2, platelet, bilirubin). */
   metricCode?: string;
+  /** 원본 ISO 시각. datetime 툴팁용. */
+  isoTime?: string;
 }
 
 export interface VitalData {
@@ -303,6 +290,8 @@ export interface SofaTrendRow {
 /** view-model: 시간축과 organ별 시계열 (컴포넌트가 소비) */
 export interface SofaTrend {
   times: string[];
+  /** 원본 ISO 시각. 가로 스크롤 폭 계산 + datetime 툴팁용. times와 동일 길이. */
+  isoTimes: string[];
   scores: Record<OrganKey, Array<number | null>>;
   totals?: number[];
 }
@@ -324,8 +313,8 @@ export interface LatestPrediction {
   modelVersion: string;
   targetName: TargetName | EscalationTarget;
   horizonHours: number;
-  riskScore: number;
-  riskLabel: RiskLevel;
+  riskScore: number | null;
+  riskLabel: RiskLevel | null;
   threshold: number;
   predictedAt: string;
   featureWindowStart: string;
@@ -337,8 +326,8 @@ export interface LatestPrediction {
 /** /predictions/{modelKey}/history 응답의 history[i] */
 export interface PredictionHistoryPoint {
   predictionId: string;
-  riskScore: number;
-  riskLabel: RiskLevel;
+  riskScore: number | null;
+  riskLabel: RiskLevel | null;
   predictedAt: string;
   status: string;
 }
@@ -410,8 +399,8 @@ export type EscalationNeed = 'lowNeed' | 'highNeed';
 export interface EscalationPrediction {
   title: string;
   shortLabel: string;
-  /** 0~100 (%) */
-  probability: number;
+  /** 0~100 (%). 예측 실패 시 null. */
+  probability: number | null;
   /** 모델 예측 기반 필요 가능성. EscalationNeed 참조. */
   need: EscalationNeed;
   shap: ShapFeature[];
@@ -470,9 +459,9 @@ export interface ReportLabRow {
 export interface ReportPrediction {
   key: TargetName;
   title: string;
-  /** 0~100 (%) */
-  probability: number;
-  risk: RiskLevel;
+  /** 0~100 (%). null이면 예측 데이터 없음 (화면에서 "—"로 표시) */
+  probability: number | null;
+  risk: RiskLevel | null;
 }
 
 /** 환자 상태 요약 보고서 view-model (프론트 조합) */
@@ -546,7 +535,8 @@ export interface StaffMember {
   displayName: string;
   role: string;
   primaryDepartmentCode: string;
-  status: string;
+  /** 근무 상태(on_duty/on_call/out/away/off/leave 등). 표시·정렬에 사용. */
+  dutyStatus: string;
 }
 
 // ---------- 임상 타임라인 ----------

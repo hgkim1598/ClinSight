@@ -4,7 +4,7 @@ import type {
   VitalStatusLevel,
 } from '../../../types';
 import { RISK_LABELS } from '../../../utils/constants';
-import { formatPatientName } from '../../../utils/formatPatientName';
+import { patientLocalData } from '../../../data/patientLocalData';
 import { formatDateTime } from '../../../utils/time';
 
 interface ReportContentProps {
@@ -38,11 +38,11 @@ export default function ReportContent({ report }: ReportContentProps) {
               <th>환자 토큰</th>
               <td>{patient.patientToken}</td>
               <th>이름</th>
-              <td>{formatPatientName(patient.patientToken)}</td>
+              <td>{patientLocalData[patient.patientToken]?.name ?? patient.patientToken}</td>
             </tr>
             <tr>
               <th>나이/성별</th>
-              <td>{`${patient.ageGroup} / ${patient.sex}`}</td>
+              <td>{`${patient.ageYears ?? patient.ageGroup ?? '—'} / ${patient.sex}`}</td>
               <th>병상</th>
               <td>{patient.currentBedLabel}</td>
             </tr>
@@ -147,13 +147,21 @@ export default function ReportContent({ report }: ReportContentProps) {
             {predictions.map((p) => (
               <tr key={p.key}>
                 <td>{p.title}</td>
-                <td className="report-table__num">{p.probability}%</td>
+                <td className="report-table__num">
+                  {p.probability != null ? `${p.probability}%` : '—'}
+                </td>
                 <td>
-                  <span
-                    className={`report-pill report-pill--risk report-pill--risk-${p.risk}`}
-                  >
-                    {RISK_LABELS[p.risk]}
-                  </span>
+                  {p.risk ? (
+                    <span
+                      className={`report-pill report-pill--risk report-pill--risk-${p.risk}`}
+                    >
+                      {RISK_LABELS[p.risk]}
+                    </span>
+                  ) : (
+                    <span className="report-pill report-pill--risk report-pill--risk-unknown">
+                      -
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

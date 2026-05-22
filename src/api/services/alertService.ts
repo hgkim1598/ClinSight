@@ -14,22 +14,26 @@ import { MOCK_MODE, request } from '../client';
 import { mockAlertsWire, type WireAlert } from '../mock/alerts';
 
 function mapAlert(w: WireAlert): Alert {
+  // 백엔드가 아직 v_alerts 뷰가 아닌 원본 alerts(flat)를 내려준다 — delivery 객체 없이
+  // read_at/acknowledged_at 가 최상위로, stay_id/trigger_rule_key 등 다른 이름으로 옴.
+  // 뷰 기준 필드가 오면 그걸 쓰고, 없으면 원본 필드로 폴백 → 뷰 전환 후에도 안 깨짐.
+  // TODO: 백엔드 뷰 전환 완료 후 폴백 필드(stay_id/trigger_rule_key/read_at/acknowledged_at) 제거
   return {
     alertId: w.alert_id,
-    stayToken: w.stay_token,
-    alertType: w.alert_type,
-    alertSource: w.alert_source,
+    stayToken: w.stay_token ?? w.stay_id ?? '',
+    alertType: w.alert_type ?? '',
+    alertSource: w.alert_source ?? w.trigger_rule_key ?? '',
     severity: w.severity,
     status: w.status,
     title: w.title,
     message: w.message,
-    tags: w.tags_jsonb,
-    confidence: w.confidence,
+    tags: w.tags_jsonb ?? [],
+    confidence: w.confidence ?? null,
     createdAt: w.created_at,
     delivery: {
-      deliveryId: w.delivery.delivery_id,
-      readAt: w.delivery.read_at,
-      acknowledgedAt: w.delivery.acknowledged_at,
+      deliveryId: w.delivery?.delivery_id ?? '',
+      readAt: w.delivery?.read_at ?? w.read_at ?? null,
+      acknowledgedAt: w.delivery?.acknowledged_at ?? w.acknowledged_at ?? null,
     },
   };
 }
@@ -42,8 +46,24 @@ export async function getAlerts(): Promise<Alert[]> {
   if (MOCK_MODE) {
     return mockAlertsWire.map(mapAlert);
   }
+  // request()는 HTTP 4xx/5xx·네트워크 에러 시 ApiError throw → 에러 화면으로 전파(의도).
   const wire = await request<{ alerts: WireAlert[] }>('/alerts');
-  return wire.alerts.map(mapAlert);
+  // 200 OK 이후의 파싱 실패는 에러 화면이 아니라 빈 목록(→ 빈 상태 UI)으로 처리.
+  if (!Array.isArray(wire?.alerts)) {
+    // TODO: 프로덕션 정리 시 console.warn 제거.
+    console.warn('[alertService] /alerts 응답에 alerts 배열이 없습니다. 빈 목록 처리:', wire);
+    return [];
+  }
+  const mapped: Alert[] = [];
+  for (const w of wire.alerts) {
+    try {
+      mapped.push(mapAlert(w));
+    } catch (e) {
+      // TODO: 프로덕션 정리 시 console.warn 제거. 파싱 실패 항목은 건너뛰고 경고만 남긴다.
+      console.warn('[alertService] alert 항목 매핑 실패 — 건너뜀:', e, w);
+    }
+  }
+  return mapped;
 }
 
 export async function getAlertCount(): Promise<AlertCount> {

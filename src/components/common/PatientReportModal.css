@@ -290,13 +290,19 @@
   border-color: #fecaca;
 }
 
+.report-pill--risk-critical {
+  background: #fecaca;
+  color: #7f1d1d;
+  border-color: #f87171;
+}
+
 .report-pill--risk-high {
   background: #fee2e2;
   color: #991b1b;
   border-color: #fecaca;
 }
 
-.report-pill--risk-med {
+.report-pill--risk-medium {
   background: #fed7aa;
   color: #9a3412;
   border-color: #fdba74;
@@ -306,6 +312,11 @@
   background: #dcfce7;
   color: #166534;
   border-color: #bbf7d0;
+}
+
+.report-pill--risk-unknown {
+  color: var(--text-muted);
+  background: var(--border);
 }
 
 /* 협진 메모 */

@@ -259,6 +259,26 @@
   color: var(--text-muted);
 }
 
+/* 에러 메시지 (인라인) */
+.login__error {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--danger-bg, rgba(220, 38, 38, 0.08));
+  border: 1px solid var(--danger, #dc2626);
+  border-radius: var(--radius-md);
+  color: var(--danger, #dc2626);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* 비활성 상태 */
+.login__btn:disabled,
+.login__input:disabled,
+.login__link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* ============ 웰컴 스플래시 ============ */
 .login__splash {
   position: relative;

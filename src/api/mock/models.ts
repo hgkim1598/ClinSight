@@ -16,13 +16,19 @@
 
 import type { ApiModelKey, EscalationTarget, RiskLevel, TargetName } from '../../types';
 
+/**
+ * SHAP 기여도 항목. 백엔드는 두 가지 스키마 중 하나로 보낼 수 있어 모든 필드 optional:
+ *   - 구 스키마: { feature, value, direction, contribution }
+ *   - 신 스키마: { feature, shap_value, feature_value }  (실제 API)
+ * mapShapFactor 가 둘 다 정규화한다.
+ */
 export interface WireShapFactor {
   feature: string;
-  /** 실제 feature value (계측값). 표시용 합성 문자열에 들어간다. */
-  value: number;
-  direction: 'increase' | 'decrease';
-  /** SHAP 기여도 (0~1 범위). UI bar 크기 산정에 사용. */
-  contribution: number;
+  value?: number;
+  direction?: 'increase' | 'decrease';
+  contribution?: number;
+  shap_value?: number;
+  feature_value?: number;
 }
 
 export interface WireLatestPrediction {
@@ -31,20 +37,33 @@ export interface WireLatestPrediction {
   model_version: string;
   target_name: TargetName | EscalationTarget;
   horizon_hours: number;
-  risk_score: number;
-  risk_label: RiskLevel;
+  risk_score: number | null;
+  risk_label: RiskLevel | null;
   threshold: number;
   predicted_at: string;
   feature_window_start: string;
   feature_window_end: string;
-  top_factors_jsonb: WireShapFactor[];
+  /**
+   * SHAP 원본. 실제 API는 두 필드를 모두 보낸다:
+   *  - shap_summary_jsonb: { base_value, top_features:[{feature, shap_value, feature_value}] }
+   *    → 실데이터(우선해서 읽음).
+   *  - top_factors_jsonb: spec/레거시 필드. 항목에 feature 키가 없어 라벨이 undefined 로
+   *    찍히던 원인. shap_summary_jsonb 가 없을 때만 fallback 으로 사용.
+   * 둘 다 배열 / { base_value, top_features } 객체 / JSON 문자열 / null 형태로 올 수 있다.
+   */
+  shap_summary_jsonb?:
+    | WireShapFactor[]
+    | { base_value?: number; top_features: WireShapFactor[] }
+    | string
+    | null;
+  top_factors_jsonb: WireShapFactor[] | { base_value?: number; top_features: WireShapFactor[] } | string | null;
   status: string;
 }
 
 export interface WireHistoryPoint {
   prediction_id: string;
-  risk_score: number;
-  risk_label: RiskLevel;
+  risk_score: number | null;
+  risk_label: RiskLevel | null;
   predicted_at: string;
   status: string;
 }

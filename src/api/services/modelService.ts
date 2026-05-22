@@ -28,7 +28,6 @@ import type {
   PredictionHistory,
   PredictionHistoryPoint,
   RawMetric,
-  RiskLevel,
   RiskTone,
   ShapFactor,
   ShapFeature,
@@ -36,6 +35,24 @@ import type {
   TrendPoint,
   TrendWarning,
 } from '../../types';
+
+/**
+ * 백엔드 model_key → 프론트 target 매핑.
+ * - API 응답에 target_name이 없을 때 model_key로부터 파생.
+ * - septic_shock_48h는 프론트 TARGETS의 'shock'으로, mech_vent는 EscalationTarget의
+ *   'invasive_vent'로 alias (UI 카드 키와 정합성 유지).
+ * - sepsis_deep / sepsis_light / oxygen 등은 5개 메인 카드에 매핑되지 않아 무시됨.
+ */
+const MODEL_KEY_TO_TARGET: Record<string, TargetName | EscalationTarget> = {
+  mortality_48h: 'mortality',
+  aki_24h: 'aki',
+  ards_72h: 'ards',
+  sic_48h: 'sic',
+  septic_shock_48h: 'shock',
+  mech_vent: 'invasive_vent',
+  vasopressor: 'vasopressor',
+};
+
 import { MOCK_MODE, request } from '../client';
 import {
   mockClinicalForModelByStay,
@@ -50,24 +67,78 @@ import {
 import { getMetrics, getModels } from './metaService';
 import { riskLabelToTone } from '../../utils/constants';
 import { toRelativeLabel } from '../../utils/time';
+import {
+  MODEL_KEY_DISPLAY_NAME,
+  displayNameFor,
+} from '../../utils/modelDisplayNames';
+
+// 외부에서 재사용할 수 있도록 re-export (ModelCard 등이 이 경로로 import 함).
+export { MODEL_KEY_DISPLAY_NAME };
 
 // -------- wire 매핑 (snake → camel) --------
 
 function mapShapFactor(w: WireShapFactor): ShapFactor {
+  // 신 API: shap_value 부호로 방향, 절댓값으로 기여도. feature_value 가 표시용 계측값.
+  // 구 스키마: value(계측값) + contribution(기여도) + direction.
+  const shapValue = w.shap_value;
+  const featureValue = w.feature_value;
+  const contribution =
+    shapValue != null && !Number.isNaN(shapValue)
+      ? Math.abs(shapValue)
+      : (w.contribution ?? 0);
+  let direction: 'increase' | 'decrease';
+  if (shapValue != null && !Number.isNaN(shapValue)) {
+    direction = shapValue >= 0 ? 'increase' : 'decrease';
+  } else {
+    direction = w.direction === 'decrease' ? 'decrease' : 'increase';
+  }
+  const value = featureValue ?? w.value ?? 0;
   return {
     feature: w.feature,
-    value: w.value,
-    direction: w.direction === 'decrease' ? 'decrease' : 'increase',
-    contribution: w.contribution,
+    value,
+    direction,
+    contribution,
   };
 }
 
+/**
+ * SHAP 원본(shap_summary_jsonb / top_factors_jsonb)을 정규화 — 백엔드가 다음 중 하나로 보낼 수 있음:
+ *  1. WireShapFactor[] (spec)
+ *  2. JSON 문자열 ("[{...}]") — DB jsonb 컬럼이 직렬화된 채로 통과한 경우
+ *  3. { base_value, top_features: [...] } — 실제 API 응답 (top_features 배열만 추출)
+ *  4. null/undefined — SHAP 미생성 prediction
+ *  5. 그 외 (단일 객체 등) — 모두 빈 배열로 처리
+ */
+function normalizeTopFactors(raw: unknown): WireShapFactor[] {
+  if (Array.isArray(raw)) return raw as WireShapFactor[];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed as WireShapFactor[];
+      if (parsed && typeof parsed === 'object' && Array.isArray((parsed as { top_features?: unknown }).top_features)) {
+        return (parsed as { top_features: WireShapFactor[] }).top_features;
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }
+  if (raw && typeof raw === 'object' && Array.isArray((raw as { top_features?: unknown }).top_features)) {
+    return (raw as { top_features: WireShapFactor[] }).top_features;
+  }
+  return [];
+}
+
 function mapLatest(w: WireLatestPrediction): LatestPrediction {
+  // 실제 API는 target_name을 보내지 않을 수 있어 model_key에서 파생.
+  const targetName = (w.target_name ?? MODEL_KEY_TO_TARGET[w.model_key]) as
+    | TargetName
+    | EscalationTarget;
   return {
     predictionId: w.prediction_id,
     modelKey: w.model_key,
     modelVersion: w.model_version,
-    targetName: w.target_name,
+    targetName,
     horizonHours: w.horizon_hours,
     riskScore: w.risk_score,
     riskLabel: w.risk_label,
@@ -75,7 +146,11 @@ function mapLatest(w: WireLatestPrediction): LatestPrediction {
     predictedAt: w.predicted_at,
     featureWindowStart: w.feature_window_start,
     featureWindowEnd: w.feature_window_end,
-    topFactors: w.top_factors_jsonb.map(mapShapFactor),
+    // SHAP: 실제 API는 shap_summary_jsonb({ base_value, top_features })에
+    // { feature, shap_value, feature_value } 형태로 담아 보낸다. top_factors_jsonb(spec/레거시)는
+    // 항목에 feature 키가 없어 라벨이 undefined 로 찍히던 원인 → shap_summary_jsonb 를 우선 읽고
+    // 없을 때만 top_factors_jsonb 로 fallback. (둘 다 array / { top_features } / JSON 문자열 / null 가능)
+    topFactors: normalizeTopFactors(w.shap_summary_jsonb ?? w.top_factors_jsonb).map(mapShapFactor),
     status: w.status,
   };
 }
@@ -92,6 +167,15 @@ function mapHistoryPoint(w: WireHistoryPoint): PredictionHistoryPoint {
 
 // -------- wire API --------
 
+/** Spec 준수 검증. predictions 가 배열이어야 함. */
+function isValidPredictionsResponse(
+  w: unknown,
+): w is { stay_token: string; predictions: WireLatestPrediction[] } {
+  if (!w || typeof w !== 'object') return false;
+  const o = w as Record<string, unknown>;
+  return Array.isArray(o.predictions);
+}
+
 export async function getLatestPredictions(stayId: string): Promise<LatestPrediction[]> {
   if (MOCK_MODE) {
     return (mockLatestByStay[stayId] ?? []).map(mapLatest);
@@ -99,6 +183,17 @@ export async function getLatestPredictions(stayId: string): Promise<LatestPredic
   const w = await request<{ stay_token: string; predictions: WireLatestPrediction[] }>(
     `/icu-stays/${encodeURIComponent(stayId)}/predictions`,
   );
+  if (!isValidPredictionsResponse(w)) {
+    const receivedKeys =
+      w && typeof w === 'object' ? Object.keys(w as Record<string, unknown>) : null;
+    // TODO: 프로덕션 정리 시 일괄 제거.
+    console.warn(
+      `[modelService] /icu-stays/${stayId}/predictions 응답이 V4 spec 과 일치하지 않습니다. ` +
+        '빈 배열로 처리합니다. (필수 키: predictions)',
+      { receivedKeys },
+    );
+    return [];
+  }
   return w.predictions.map(mapLatest);
 }
 
@@ -116,6 +211,15 @@ export async function getLatestPrediction(
   return mapLatest(w);
 }
 
+/** Spec 준수 검증. history 가 배열이어야 함. */
+function isValidHistoryResponse(
+  w: unknown,
+): w is { stay_token: string; model_key: ApiModelKey; history: WireHistoryPoint[] } {
+  if (!w || typeof w !== 'object') return false;
+  const o = w as Record<string, unknown>;
+  return Array.isArray(o.history);
+}
+
 export async function getPredictionHistory(
   stayId: string,
   modelKey: ApiModelKey,
@@ -129,6 +233,17 @@ export async function getPredictionHistory(
     model_key: ApiModelKey;
     history: WireHistoryPoint[];
   }>(`/icu-stays/${encodeURIComponent(stayId)}/predictions/${encodeURIComponent(modelKey)}/history`);
+  if (!isValidHistoryResponse(w)) {
+    const receivedKeys =
+      w && typeof w === 'object' ? Object.keys(w as Record<string, unknown>) : null;
+    // TODO: 프로덕션 정리 시 일괄 제거.
+    console.warn(
+      `[modelService] /icu-stays/${stayId}/predictions/${modelKey}/history 응답이 V4 spec 과 일치하지 않습니다. ` +
+        '빈 history 로 처리합니다. (필수 키: history)',
+      { receivedKeys },
+    );
+    return { stayToken: stayId, modelKey, history: [] };
+  }
   return {
     stayToken: w.stay_token,
     modelKey: w.model_key,
@@ -143,10 +258,12 @@ export async function getPredictionHistory(
  * (API에 포함하지 않음 — 프론트 파생 결정)
  */
 export function computeTrendWarning(history: PredictionHistoryPoint[]): TrendWarning {
-  if (history.length < 2) return { delta: '', note: '' };
-  const sorted = [...history].sort((a, b) => a.predictedAt.localeCompare(b.predictedAt));
-  const first = sorted[0].riskScore;
-  const last = sorted[sorted.length - 1].riskScore;
+  const sorted = [...history]
+    .filter((h) => h.riskScore != null)
+    .sort((a, b) => a.predictedAt.localeCompare(b.predictedAt));
+  if (sorted.length < 2) return { delta: '', note: '' };
+  const first = sorted[0].riskScore as number;
+  const last = sorted[sorted.length - 1].riskScore as number;
   const deltaPct = Math.round((last - first) * 100);
   const sign = deltaPct >= 0 ? '+' : '';
   const delta = `${sign}${deltaPct}%p`;
@@ -188,7 +305,8 @@ function composeShapDisplay(
   };
 }
 
-function formatNumber(v: number): string {
+function formatNumber(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return '—';
   if (Number.isInteger(v)) return `${v}`;
   // 소수 1자리, 끝의 0 제거
   return v.toFixed(2).replace(/\.?0+$/, '');
@@ -257,7 +375,7 @@ function buildEscalation(
   return {
     title: meta.title,
     shortLabel: meta.shortLabel,
-    probability: Math.round(pred.riskScore * 100),
+    probability: pred.riskScore != null ? Math.round(pred.riskScore * 100) : null,
     need,
     shap: pred.topFactors.map((f) => composeShapDisplay(f, metricByCode)),
   };
@@ -268,11 +386,11 @@ function buildEscalation(
 const TARGETS: TargetName[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
 
 const FALLBACK_TITLE: Record<TargetName, string> = {
-  mortality: '사망 위험',
-  aki: '급성 신손상 (AKI)',
-  ards: '급성호흡곤란증후군 (ARDS)',
-  sic: '패혈증 유발 응고장애 (SIC)',
-  shock: '패혈성 쇼크 (Septic Shock)',
+  mortality: MODEL_KEY_DISPLAY_NAME.mortality_48h,
+  aki: MODEL_KEY_DISPLAY_NAME.aki_24h,
+  ards: MODEL_KEY_DISPLAY_NAME.ards_72h,
+  sic: MODEL_KEY_DISPLAY_NAME.sic_48h,
+  shock: MODEL_KEY_DISPLAY_NAME.septic_shock_48h,
 };
 
 interface LatestToViewInput {
@@ -346,14 +464,20 @@ export function latestToView(input: LatestToViewInput): Record<TargetName, Model
     const pred = byTarget[target];
     const model = modelByTarget[target];
     const inputFeatures = model?.inputFeatures ?? [];
-    const title = model?.modelName ?? FALLBACK_TITLE[target];
+    // 표시명: model_key 기반 매핑 > 백엔드 model_name(괄호 제거) > FALLBACK_TITLE.
+    // displayNameFor 가 단일 진입점에서 결정 — API model_name 의 아키텍처 표기를
+    // 의료진 UI 에 노출하지 않는다.
+    const title = pred
+      ? displayNameFor(pred.modelKey, model?.modelName)
+      : FALLBACK_TITLE[target];
 
     if (!pred) {
+      // 예측 데이터 없음. riskLabel/riskScorePct 는 fake 'low'/0 으로 채우지 않고
+      // undefined 로 두어 컴포넌트가 Badge "N/A" + "—" 로 표시하도록 한다.
+      // tone 은 카드 styling 분기에 필수라 'safe' 유지 (별도 'neutral' 톤 도입은 추후 디자인 작업).
       result[target] = {
         title,
         tone: 'safe',
-        riskLabel: 'low',
-        riskScorePct: 0,
         trend: [],
         trendWarn: { delta: '', note: '' },
         shap: [],
@@ -373,15 +497,19 @@ export function latestToView(input: LatestToViewInput): Record<TargetName, Model
       h.predictionId === pred.predictionId || h.predictedAt === pred.predictedAt;
 
     // trend: history 시점을 ref 기준 상대시간 + pct(0~100)로 변환.
-    const sorted = history.slice().sort((a, b) => a.predictedAt.localeCompare(b.predictedAt));
+    // 예측 실패한 시점(risk_score=null)은 차트에 점을 찍지 않도록 제외.
+    const sorted = history
+      .slice()
+      .filter((h) => h.riskScore != null)
+      .sort((a, b) => a.predictedAt.localeCompare(b.predictedAt));
     const includesLatest = sorted.some(isSameAsLatest);
     const trend: TrendPoint[] = sorted.map((h) => ({
       t: toRelativeLabel(h.predictedAt, referenceNowIso),
-      pct: Math.round(h.riskScore * 100),
+      pct: Math.round((h.riskScore as number) * 100),
       // 가장 최신 history point에만 SHAP 동봉 (API는 history에 SHAP 미제공 결정).
       shap: isSameAsLatest(h) ? shap : undefined,
     }));
-    if (!includesLatest) {
+    if (!includesLatest && pred.riskScore != null) {
       trend.push({
         t: toRelativeLabel(pred.predictedAt, referenceNowIso),
         pct: Math.round(pred.riskScore * 100),
@@ -389,14 +517,14 @@ export function latestToView(input: LatestToViewInput): Record<TargetName, Model
       });
     }
 
-    const riskLabel: RiskLevel = pred.riskLabel;
-    const tone: RiskTone = riskLabelToTone(riskLabel);
+    const riskLabel = pred.riskLabel;
+    const tone: RiskTone = riskLabel ? riskLabelToTone(riskLabel) : 'safe';
 
     const card: ModelPrediction = {
       title,
       tone,
-      riskLabel,
-      riskScorePct: Math.round(pred.riskScore * 100),
+      riskLabel: riskLabel ?? undefined,
+      riskScorePct: pred.riskScore != null ? Math.round(pred.riskScore * 100) : undefined,
       trend,
       trendWarn: computeTrendWarning(history),
       shap,

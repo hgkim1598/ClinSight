@@ -12,6 +12,7 @@ import AlertCard from '../components/alerts/AlertCard';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
 import { useAsync } from '../hooks/useAsync';
+import { usePatients } from '../context/usePatients';
 import './AlertsPage.css';
 
 type FilterKey = 'all' | AlertSeverity;
@@ -44,6 +45,8 @@ export default function AlertsPage() {
     () => getAlerts(),
     [],
   );
+  // 이미 캐시된 환자 목록으로 stay_id → 환자(이름/병실) 매칭 (추가 API 호출 없음).
+  const { patientByStayId } = usePatients();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [showResolved, setShowResolved] = useState(false);
 
@@ -152,6 +155,7 @@ export default function AlertsPage() {
                     <AlertCard
                       key={a.alertId}
                       alert={a}
+                      patient={patientByStayId.get(a.stayToken)}
                       onAcknowledge={handleAcknowledge}
                       onResolve={handleResolve}
                       onRead={handleRead}
@@ -172,6 +176,7 @@ export default function AlertsPage() {
                     <AlertCard
                       key={a.alertId}
                       alert={a}
+                      patient={patientByStayId.get(a.stayToken)}
                       onAcknowledge={handleAcknowledge}
                       onResolve={handleResolve}
                       onRead={handleRead}
@@ -199,6 +204,7 @@ export default function AlertsPage() {
                       <AlertCard
                       key={a.alertId}
                       alert={a}
+                      patient={patientByStayId.get(a.stayToken)}
                       onAcknowledge={handleAcknowledge}
                       onResolve={handleResolve}
                       onRead={handleRead}

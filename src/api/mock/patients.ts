@@ -18,17 +18,9 @@ export interface WireDashboardPatient {
   current_bed_label: string;
   age_group: string;
   sex: 'M' | 'F';
-  /** 진료과 코드 (config_items.config_key) — 피드백 §1-1 */
-  department_code: string;
-  /** 담당의 staff_id — 피드백 §1-1 */
-  attending_staff_id: string;
-  /** 입원 시각 — HOD 계산용. 피드백 §1-2 */
-  hospital_admit_at: string;
-  /** 수술 시각 — 수술 환자만. POD 계산용. 피드백 §1-2 */
-  surgery_at: string | null;
-  latest_mortality_risk_score: number;
-  latest_mortality_risk_label: 'high' | 'medium' | 'low';
-  latest_complication_risk_score: number;
+  latest_mortality_risk_score: number | null;
+  latest_mortality_risk_label: 'high' | 'medium' | 'low' | null;
+  latest_complication_risk_score: number | null;
   latest_sofa_total: number;
   active_alert_count: number;
   last_prediction_at: string;
@@ -50,20 +42,23 @@ export interface WirePatientDetail {
   stay_token: string;
   patient_token: string;
   age_years: number;
-  age_group: string;
   sex: 'M' | 'F';
-  admission_type: string;
-  primary_diagnosis_code: string;
   primary_diagnosis_text: string;
-  hospital_admit_at: string;
   icu_in_at: string;
   icu_out_at: string | null;
   current_unit_code: string;
   current_bed_label: string;
   status: string;
   sepsis_onset_at: string | null;
-  /** 수술 시각 — 수술 환자만. POD 계산용. 피드백 §1-2 */
-  surgery_at: string | null;
+  // 실제 API 미제공 — optional 처리 후 mapPatientDetail 에서 폴백.
+  // TODO: 백엔드 필드 추가 후 optional 제거.
+  age_group?: string;
+  admission_type?: string;
+  primary_diagnosis_code?: string;
+  hospital_admit_at?: string;
+  // 실제 API가 환자 상세에 함께 내려주는 필드 (현재 미사용 — predictions 는 별도 API로 조회).
+  predictions?: Record<string, { risk_score: number | null; risk_label: string | null }>;
+  active_alert_count?: number;
 }
 
 const dashboardPatients: WireDashboardPatient[] = [
@@ -74,10 +69,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-01',
     age_group: '70s',
     sex: 'M',
-    department_code: 'pulmonology',
-    attending_staff_id: 'staff-004',
-    hospital_admit_at: '2026-04-21T08:14:00+09:00',
-    surgery_at: null,
     latest_mortality_risk_score: 0.74,
     latest_mortality_risk_label: 'high',
     latest_complication_risk_score: 0.68,
@@ -93,10 +84,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-02',
     age_group: '60s',
     sex: 'F',
-    department_code: 'surgery',
-    attending_staff_id: 'staff-013',
-    hospital_admit_at: '2026-04-22T17:02:00+09:00',
-    surgery_at: null,
     latest_mortality_risk_score: 0.66,
     latest_mortality_risk_label: 'high',
     latest_complication_risk_score: 0.54,
@@ -112,10 +99,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-03',
     age_group: '50s',
     sex: 'M',
-    department_code: 'surgery',
-    attending_staff_id: 'staff-013',
-    hospital_admit_at: '2026-04-22T21:38:00+09:00',
-    surgery_at: null,
     latest_mortality_risk_score: 0.45,
     latest_mortality_risk_label: 'medium',
     latest_complication_risk_score: 0.42,
@@ -131,10 +114,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-04',
     age_group: '60s',
     sex: 'F',
-    department_code: 'cardiology',
-    attending_staff_id: 'staff-008',
-    hospital_admit_at: '2026-04-23T06:11:00+09:00',
-    surgery_at: null,
     latest_mortality_risk_score: 0.41,
     latest_mortality_risk_label: 'medium',
     latest_complication_risk_score: 0.38,
@@ -150,10 +129,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-05',
     age_group: '50s',
     sex: 'M',
-    department_code: 'surgery',
-    attending_staff_id: 'staff-013',
-    hospital_admit_at: '2026-04-21T08:00:00+09:00',
-    surgery_at: '2026-04-23T08:30:00+09:00',
     latest_mortality_risk_score: 0.36,
     latest_mortality_risk_label: 'medium',
     latest_complication_risk_score: 0.32,
@@ -169,10 +144,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-06',
     age_group: '40s',
     sex: 'F',
-    department_code: 'icu',
-    attending_staff_id: 'staff-010',
-    hospital_admit_at: '2026-04-23T19:22:00+09:00',
-    surgery_at: null,
     latest_mortality_risk_score: 0.18,
     latest_mortality_risk_label: 'low',
     latest_complication_risk_score: 0.15,
@@ -188,10 +159,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-07',
     age_group: '60s',
     sex: 'M',
-    department_code: 'pulmonology',
-    attending_staff_id: 'staff-004',
-    hospital_admit_at: '2026-04-24T02:05:00+09:00',
-    surgery_at: null,
     latest_mortality_risk_score: 0.15,
     latest_mortality_risk_label: 'low',
     latest_complication_risk_score: 0.13,
@@ -207,10 +174,6 @@ const dashboardPatients: WireDashboardPatient[] = [
     current_bed_label: 'A-08',
     age_group: '30s',
     sex: 'F',
-    department_code: 'surgery',
-    attending_staff_id: 'staff-013',
-    hospital_admit_at: '2026-04-23T12:00:00+09:00',
-    surgery_at: '2026-04-24T09:00:00+09:00',
     latest_mortality_risk_score: 0.11,
     latest_mortality_risk_label: 'low',
     latest_complication_risk_score: 0.10,
@@ -250,7 +213,6 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     current_bed_label: 'A-01',
     status: 'active',
     sepsis_onset_at: '2026-04-23T11:40:00+09:00',
-    surgery_at: null,
   },
   'ST-20314': {
     stay_id: 'stay-20314',
@@ -269,7 +231,6 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     current_bed_label: 'A-02',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: null,
   },
   'ST-20781': {
     stay_id: 'stay-20781',
@@ -288,7 +249,6 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     current_bed_label: 'A-03',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: null,
   },
   'ST-21005': {
     stay_id: 'stay-21005',
@@ -307,7 +267,6 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     current_bed_label: 'A-04',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: null,
   },
   'ST-21219': {
     stay_id: 'stay-21219',
@@ -319,14 +278,13 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     admission_type: 'post_op',
     primary_diagnosis_code: 'K65.9',
     primary_diagnosis_text: '복강 내 감염 수술 후 관찰',
-    hospital_admit_at: '2026-04-21T08:00:00+09:00',
+    hospital_admit_at: '2026-04-23T12:47:00+09:00',
     icu_in_at: '2026-04-23T15:00:00+09:00',
     icu_out_at: null,
     current_unit_code: 'ICU_A',
     current_bed_label: 'A-05',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: '2026-04-23T08:30:00+09:00',
   },
   'ST-21442': {
     stay_id: 'stay-21442',
@@ -345,7 +303,6 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     current_bed_label: 'A-06',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: null,
   },
   'ST-21508': {
     stay_id: 'stay-21508',
@@ -364,7 +321,6 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     current_bed_label: 'A-07',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: null,
   },
   'ST-21603': {
     stay_id: 'stay-21603',
@@ -376,13 +332,12 @@ export const mockPatientDetailByStay: Record<string, WirePatientDetail> = {
     admission_type: 'post_op',
     primary_diagnosis_code: 'K80.0',
     primary_diagnosis_text: '복강경 담낭 절제 후 관찰',
-    hospital_admit_at: '2026-04-23T12:00:00+09:00',
+    hospital_admit_at: '2026-04-24T09:18:00+09:00',
     icu_in_at: '2026-04-24T11:30:00+09:00',
     icu_out_at: null,
     current_unit_code: 'ICU_A',
     current_bed_label: 'A-08',
     status: 'active',
     sepsis_onset_at: null,
-    surgery_at: '2026-04-24T09:00:00+09:00',
   },
 };

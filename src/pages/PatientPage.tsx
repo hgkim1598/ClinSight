@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import type { ModelKey } from '../types';
+import type { ModelKey, ModelPrediction } from '../types';
 import { getPatientDetail } from '../api/services/patientService';
 import { observationsToVitalData } from '../api/services/vitalService';
 import { getModelPredictions } from '../api/services/modelService';
@@ -18,6 +18,7 @@ import ModelDetailView from '../components/common/ModelDetailView';
 import ClinicalTimeline from '../components/common/ClinicalTimeline';
 import FloatingChatButton from '../components/common/FloatingChatButton';
 import PatientReportModal from '../components/common/PatientReportModal';
+import ReportLoadingOverlay from '../components/common/report/ReportLoadingOverlay';
 import Clock from '../components/common/Clock';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
@@ -50,16 +51,13 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
   // /clinical-data는 ClinicalDataProvider가 소유. 본 컴포넌트는 소비만.
   const clinical = useClinicalData();
 
-  // 그 외 환자 상세 묶음은 한 번에 fetch.
-  const { data: bundle, loading, error, refetch } = useAsync(async () => {
-    const [patient, predictions, timeline, schedule] = await Promise.all([
-      getPatientDetail(stayId),
-      getModelPredictions(stayId),
-      getTimeline(stayId),
-      getSchedule(stayId),
-    ]);
-    return { patient, predictions, timeline, schedule };
-  }, [stayId]);
+  // 각 API 호출을 독립적으로. 하나가 실패해도 다른 섹션은 정상 렌더.
+  // patient + clinical 만 critical — 페이지-레벨 loading/error 분기.
+  // predictions/timeline/schedule 는 optional — 섹션별 처리.
+  const patientQ = useAsync(() => getPatientDetail(stayId), [stayId]);
+  const predictionsQ = useAsync(() => getModelPredictions(stayId), [stayId]);
+  const timelineQ = useAsync(() => getTimeline(stayId), [stayId]);
+  const scheduleQ = useAsync(() => getSchedule(stayId), [stayId]);
 
   // VitalChart용 view-model은 observations에서 즉시 파생.
   const vitals = useMemo(
@@ -70,23 +68,32 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
 
-  const { data: report } = useAsync(
+  const {
+    data: report,
+    error: reportError,
+    refetch: refetchReport,
+  } = useAsync(
     async () => (reportOpen ? await getPatientReport(stayId) : null),
     [stayId, reportOpen],
   );
 
-  // clinical 데이터와 bundle 모두 준비된 후 렌더.
-  if (loading || clinical.loading) {
+  const retryTimelineAndSchedule = useCallback(() => {
+    timelineQ.refetch();
+    scheduleQ.refetch();
+  }, [timelineQ, scheduleQ]);
+
+  // patient + clinical 만 페이지 전체 차단. 나머지는 섹션별로 처리.
+  if (patientQ.loading || clinical.loading) {
     return (
       <div className="patient-page">
         <LoadingState />
       </div>
     );
   }
-  if (error) {
+  if (patientQ.error) {
     return (
       <div className="patient-page">
-        <ErrorState onRetry={refetch} />
+        <ErrorState onRetry={patientQ.refetch} />
       </div>
     );
   }
@@ -97,10 +104,8 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
       </div>
     );
   }
-  if (!bundle) return null;
 
-  const { patient, predictions, timeline, schedule } = bundle;
-
+  const patient = patientQ.data;
   if (!patient) {
     return (
       <div className="patient-page">
@@ -128,6 +133,11 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
       </div>
     );
   }
+
+  const predictions = predictionsQ.data ?? null;
+  const timeline = timelineQ.data ?? [];
+  const schedule = scheduleQ.data ?? [];
+  const timelineSectionError = !!(timelineQ.error || scheduleQ.error);
 
   const displayName = formatPatientName(patient.patientToken);
   const isDetail = selectedModel != null;
@@ -157,12 +167,30 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
       <PatientHeader patient={patient} onSummaryClick={() => setReportOpen(true)} />
 
       {isDetail ? (
-        <ModelDetailView
-          selectedModel={selectedModel}
-          predictions={predictions}
-          onBack={() => setSelectedModel(null)}
-          onChangeModel={(k) => setSelectedModel(k)}
-        />
+        predictionsQ.error ? (
+          <section className="patient-page__section-error">
+            <ErrorState
+              message="예측 데이터를 불러올 수 없습니다"
+              onRetry={predictionsQ.refetch}
+            />
+          </section>
+        ) : predictionsQ.loading ? (
+          <LoadingState />
+        ) : predictions ? (
+          <ModelDetailView
+            selectedModel={selectedModel}
+            predictions={predictions}
+            onBack={() => setSelectedModel(null)}
+            onChangeModel={(k) => setSelectedModel(k)}
+          />
+        ) : (
+          <section className="patient-page__section-error">
+            <ErrorState
+              message="예측 데이터가 없습니다"
+              onRetry={predictionsQ.refetch}
+            />
+          </section>
+        )
       ) : (
         <>
           <VitalChart vitals={vitals} patientId={stayId} />
@@ -174,29 +202,62 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
                 클릭하여 모델 상세 분석 · 마지막 갱신 {LAST_UPDATED_MIN}분 전
               </span>
             </header>
-            <div className="patient-page__models-grid">
-              {MODEL_ORDER.map((key) => (
-                <ModelCard
-                  key={key}
-                  modelKey={key}
-                  prediction={predictions[key]}
-                  onSelect={(k) => setSelectedModel(k)}
-                />
-              ))}
-            </div>
+            {predictionsQ.error ? (
+              <ErrorState
+                message="예측 데이터를 불러올 수 없습니다"
+                onRetry={predictionsQ.refetch}
+              />
+            ) : predictionsQ.loading ? (
+              <LoadingState />
+            ) : (
+              <div className="patient-page__models-grid">
+                {MODEL_ORDER.map((key) => {
+                  const pred: ModelPrediction | null = predictions?.[key] ?? null;
+                  return (
+                    <ModelCard
+                      key={key}
+                      modelKey={key}
+                      prediction={pred}
+                      onSelect={(k) => setSelectedModel(k)}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </section>
 
-          <ClinicalTimeline events={timeline} schedule={schedule} />
+          {timelineSectionError ? (
+            <section className="patient-page__section-error">
+              <ErrorState
+                message="타임라인을 불러올 수 없습니다"
+                onRetry={retryTimelineAndSchedule}
+              />
+            </section>
+          ) : timelineQ.loading || scheduleQ.loading ? (
+            <LoadingState />
+          ) : (
+            <ClinicalTimeline events={timeline} schedule={schedule} />
+          )}
         </>
       )}
 
       <FloatingChatButton stayToken={patient.stayToken} />
 
-      {report && (
+      {reportOpen && report && (
         <PatientReportModal
           open={reportOpen}
           onClose={() => setReportOpen(false)}
           report={report}
+        />
+      )}
+      {reportOpen && !report && !reportError && (
+        <ReportLoadingOverlay onClose={() => setReportOpen(false)} />
+      )}
+      {reportOpen && !report && reportError && (
+        <ReportLoadingOverlay
+          error
+          onClose={() => setReportOpen(false)}
+          onRetry={refetchReport}
         />
       )}
     </div>

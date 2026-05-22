@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Printer, X } from 'lucide-react';
 import type { PatientReport } from '../../types';
-import { CURRENT_USER } from '../../utils/constants';
+import { useMe } from '../../context/useMeta';
 import ConsultRequestModal from './ConsultRequestModal';
 import ReportContent from './report/ReportContent';
 import ConsultationNotes from './report/ConsultationNotes';
@@ -33,6 +33,7 @@ export default function PatientReportModal({
 }: PatientReportModalProps) {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const [consultOpen, setConsultOpen] = useState(false);
+  const me = useMe();
 
   useEffect(() => {
     if (!open) return;
@@ -112,12 +113,12 @@ export default function PatientReportModal({
 
         <ReportContent report={report} />
 
-        <ConsultationNotes />
+        <ConsultationNotes mode={hideConsultButton ? 'read' : 'write'} />
 
         <footer className="report-paper__footer">
           <p>본 보고서는 ClinSight CDSS에 의해 자동 생성되었습니다.</p>
           <p>
-            생성자: {CURRENT_USER} | 생성일시: {generatedAtText}
+            생성자: {me?.displayName ?? '담당 의료진'} | 생성일시: {generatedAtText}
           </p>
           <p>
             AI 예측 결과는 참고 자료이며, 최종 임상 판단은 담당 의료진에게

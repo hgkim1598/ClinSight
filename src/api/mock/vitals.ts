@@ -1,32 +1,37 @@
 /**
  * GET /icu-stays/{stayId}/clinical-data 응답을 모사한 mock.
  *
- * V4 API는 flat row 구조(`observations: [{ metric_code, numeric_value, observed_at, ... }]`).
- * 프론트 view-model(VitalData)은 service 레이어에서 pivot 변환되어 컴포넌트에 전달된다.
+ * 실제 API는 metric_code별로 묶인 nested 구조:
+ *   observations: [
+ *     { metric_code, label, unit, normal_min, normal_max, category,
+ *       data_points: [{ observed_at, value }, ...] },
+ *     ...
+ *   ]
  *
- * 본 파일은 service 변환 로직을 같은 입력으로 테스트할 수 있도록
- * wire 응답 모양 그대로(snake_case JSON 키) 작성한다.
+ * 프론트 view-model(VitalData)은 service 레이어에서 flatten + pivot 변환되어
+ * 컴포넌트에 전달된다.
  */
 
-export interface WireObservation {
-  observation_id: string;
-  metric_group: 'vital' | 'lab' | 'derived';
-  /** API metric_code 풀네임 (lactate, creatinine, pao2_fio2 등) */
-  metric_code: string;
-  metric_name: string;
-  numeric_value: number;
-  unit: string;
-  value_status: 'normal' | 'low' | 'high' | 'abnormal' | string;
-  normal_range_low: number | null;
-  normal_range_high: number | null;
+export interface WireDataPoint {
   observed_at: string;
-  quality_flag: string;
+  value: number;
+}
+
+export interface WireObservationGroup {
+  metric_code: string;
+  label: string;
+  label_ko?: string;
+  unit: string;
+  normal_min: number | null;
+  normal_max: number | null;
+  category: 'vital' | 'lab' | 'derived';
+  data_points: WireDataPoint[];
 }
 
 export interface WireClinicalDataResponse {
   stay_token: string;
   period: { from: string; to: string };
-  observations: WireObservation[];
+  observations: WireObservationGroup[];
 }
 
 const REFERENCE_NOW = '2026-05-11T08:45:00+09:00';
@@ -94,34 +99,20 @@ const PT19482_VITALS: VitalSpec[] = [
 
 const VITAL_HOURS = [-24, -22, -20, -18, -16, -14, -12, -10, -8, -6, -4, -2, 0];
 
-function buildVitalObservations(stayToken: string): WireObservation[] {
-  const out: WireObservation[] = [];
-  let i = 0;
-  for (const v of PT19482_VITALS) {
-    for (let h = 0; h < VITAL_HOURS.length; h++) {
-      out.push({
-        observation_id: `obs-${stayToken}-${v.metricCode}-${h}`,
-        metric_group: 'vital',
-        metric_code: v.metricCode,
-        metric_name: v.metricName,
-        numeric_value: v.data[h],
-        unit: v.unit,
-        value_status:
-          v.data[h] >= v.normalLow && v.data[h] <= v.normalHigh
-            ? 'normal'
-            : v.data[h] < v.normalLow
-              ? 'low'
-              : 'high',
-        normal_range_low: v.normalLow,
-        normal_range_high: v.normalHigh,
-        observed_at: isoOffsetHours(-VITAL_HOURS[h]),
-        quality_flag: 'valid',
-      });
-      i++;
-    }
-  }
-  void i;
-  return out;
+function vitalSpecToGroup(v: VitalSpec): WireObservationGroup {
+  return {
+    metric_code: v.metricCode,
+    label: v.metricName,
+    label_ko: v.metricName,
+    unit: v.unit,
+    normal_min: v.normalLow,
+    normal_max: v.normalHigh,
+    category: 'vital',
+    data_points: VITAL_HOURS.map((h, i) => ({
+      observed_at: isoOffsetHours(-h),
+      value: v.data[i],
+    })),
+  };
 }
 
 // labs — drop point 시계열 (annotation용)
@@ -163,35 +154,25 @@ const PT19482_LABS: LabSpec[] = [
   },
 ];
 
-function buildLabObservations(stayToken: string): WireObservation[] {
-  const out: WireObservation[] = [];
-  for (const lab of PT19482_LABS) {
-    for (let i = 0; i < lab.points.length; i++) {
-      const [hoursAgo, val] = lab.points[i];
-      out.push({
-        observation_id: `obs-${stayToken}-${lab.metricCode}-${i}`,
-        metric_group: 'lab',
-        metric_code: lab.metricCode,
-        metric_name: lab.metricName,
-        numeric_value: val,
-        unit: lab.unit,
-        value_status:
-          val >= lab.normalLow && val <= lab.normalHigh
-            ? 'normal'
-            : val < lab.normalLow ? 'low' : 'high',
-        normal_range_low: lab.normalLow,
-        normal_range_high: lab.normalHigh,
-        observed_at: isoOffsetHours(hoursAgo),
-        quality_flag: 'valid',
-      });
-    }
-  }
-  return out;
+function labSpecToGroup(lab: LabSpec): WireObservationGroup {
+  return {
+    metric_code: lab.metricCode,
+    label: lab.metricName,
+    label_ko: lab.metricName,
+    unit: lab.unit,
+    normal_min: lab.normalLow,
+    normal_max: lab.normalHigh,
+    category: 'lab',
+    data_points: lab.points.map(([hoursAgo, val]) => ({
+      observed_at: isoOffsetHours(hoursAgo),
+      value: val,
+    })),
+  };
 }
 
-const pt19482Observations: WireObservation[] = [
-  ...buildVitalObservations('ST-19482'),
-  ...buildLabObservations('ST-19482'),
+const pt19482Groups: WireObservationGroup[] = [
+  ...PT19482_VITALS.map(vitalSpecToGroup),
+  ...PT19482_LABS.map(labSpecToGroup),
 ];
 
 /** stay_token 키. /clinical-data 응답 모음. */
@@ -199,7 +180,7 @@ export const mockClinicalDataByStay: Record<string, WireClinicalDataResponse> = 
   'ST-19482': {
     stay_token: 'ST-19482',
     period: { from: isoOffsetHours(24), to: REFERENCE_NOW },
-    observations: pt19482Observations,
+    observations: pt19482Groups,
   },
 };
 
