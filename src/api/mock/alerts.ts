@@ -30,6 +30,15 @@ export interface WireAlert {
   confidence: number | null;
   created_at: string;
   delivery: WireAlertDelivery;
+  // 폴백용 — 현재 백엔드가 내려주는 원본 alerts(flat) 필드. delivery 객체 없이 평탄하게 옴.
+  // TODO: 백엔드 뷰 전환 완료 후 폴백 필드 제거
+  stay_id?: string;
+  trigger_rule_key?: string;
+  read_at?: string | null;
+  acknowledged_at?: string | null;
+  is_read?: boolean;
+  is_acknowledged?: boolean;
+  resolved_at?: string | null;
 }
 
 export interface WireAlertsResponse {

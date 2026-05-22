@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { AiModeProvider } from './context/AiModeContext';
 import { MetaProvider } from './context/MetaContext';
 import { SnackbarProvider } from './context/SnackbarContext';
+import { PatientsProvider } from './context/PatientsContext';
 import RequireAuth from './components/auth/RequireAuth';
 import Layout from './components/layout/Layout';
 import OverviewPage from './pages/OverviewPage';
@@ -19,6 +20,7 @@ export default function App() {
         <MetaProvider>
           <SnackbarProvider>
             <AiModeProvider>
+              <PatientsProvider>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route element={<RequireAuth />}>
@@ -34,6 +36,7 @@ export default function App() {
                   </Route>
                 </Route>
               </Routes>
+              </PatientsProvider>
             </AiModeProvider>
           </SnackbarProvider>
         </MetaProvider>

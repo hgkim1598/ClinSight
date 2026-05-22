@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -20,6 +20,7 @@ import type {
 import { getDashboardPatients } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { CURRENT_ICU_ID } from '../utils/constants';
+import { usePatients } from '../context/usePatients';
 import { patientLocalData } from '../data/patientLocalData';
 import Badge from '../components/common/Badge';
 import KpiCard from '../components/common/KpiCard';
@@ -129,6 +130,12 @@ export default function OverviewPage() {
   } = useAsync(() => getDashboardPatients(CURRENT_ICU_ID), []);
 
   const { data: staffing } = useAsync(() => getStaffing(CURRENT_ICU_ID), []);
+
+  // 받아온 환자 목록을 캐시에 저장(write-through) → AlertsPage 등이 추가 호출 없이 재사용.
+  const { setPatients } = usePatients();
+  useEffect(() => {
+    if (dashboard?.patients) setPatients(dashboard.patients);
+  }, [dashboard, setPatients]);
 
   const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
   const [page, setPage] = useState(0);
