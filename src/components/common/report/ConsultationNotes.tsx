@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CURRENT_USER } from '../../../utils/constants';
+import { useMe } from '../../../context/useMeta';
 
 interface ConsultationNote {
   id: string;
@@ -27,6 +27,7 @@ function formatDateTime(d: Date): string {
  * 백엔드 연결 시 추가 저장 endpoint로 교체될 자리.
  */
 export default function ConsultationNotes() {
+  const me = useMe();
   const [notes, setNotes] = useState<ConsultationNote[]>([]);
   const [noteInput, setNoteInput] = useState('');
 
@@ -38,7 +39,7 @@ export default function ConsultationNotes() {
       {
         id: makeNoteId(),
         text,
-        author: CURRENT_USER,
+        author: me?.displayName ?? '담당 의료진',
         time: new Date(),
       },
     ]);

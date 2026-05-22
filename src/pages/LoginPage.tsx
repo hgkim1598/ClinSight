@@ -3,6 +3,7 @@ import type { SubmitEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Activity, CreditCard } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
+import { useMe } from '../context/useMeta';
 import './LoginPage.css';
 
 type Stage = 'form' | 'newPassword' | 'splash';
@@ -40,6 +41,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { status, login, completeNewPassword } = useAuth();
+  const me = useMe();
 
   const [stage, setStage] = useState<Stage>('form');
   // TODO: 프로덕션 전 제거 — 개발/시연 편의용 기본값.
@@ -135,7 +137,7 @@ export default function LoginPage() {
     }
   };
 
-  const welcomeName = email.trim() || '사용자';
+  const welcomeName = me?.displayName ?? (email.trim() || '사용자');
 
   return (
     <div className="login">

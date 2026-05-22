@@ -1,8 +1,5 @@
 import type { RiskLevel, RiskTone } from '../types';
 
-/** 현재 사용자 표시명 — Cognito 연동 전 placeholder. /me 연결 시 useMe()로 교체. */
-export const CURRENT_USER = '담당 의료진';
-
 /** ICU 식별자 — MVP 단계 단일 ICU. 추후 라우팅/설정에서 주입. */
 export const CURRENT_ICU_ID = 'ICU_A';
 
