@@ -22,6 +22,29 @@ export function departmentLabel(code: string): string {
   return DEPARTMENT_LABELS[code] ?? code;
 }
 
+/** 근무 상태 표시 등급. available(응답 가능) → delayed(지연 가능) → unavailable(응답 불가). */
+export type DutyLevel = 'available' | 'delayed' | 'unavailable';
+
+const DUTY_STATUS: Record<string, { label: string; level: DutyLevel }> = {
+  on_duty: { label: '재실', level: 'available' },
+  on_call: { label: '당직', level: 'available' },
+  out: { label: '외출', level: 'delayed' },
+  away: { label: '교육·학회', level: 'delayed' },
+  off: { label: '휴진', level: 'unavailable' },
+  leave: { label: '휴가', level: 'unavailable' },
+};
+
+/** duty_status → 표시 라벨 + 등급. 미지값은 원문 + 응답 불가(안전측)로 처리. */
+export function dutyStatusInfo(dutyStatus: string): { label: string; level: DutyLevel } {
+  return DUTY_STATUS[dutyStatus] ?? { label: dutyStatus || '미상', level: 'unavailable' };
+}
+
+const DUTY_LEVEL_ORDER: Record<DutyLevel, number> = {
+  available: 0,
+  delayed: 1,
+  unavailable: 2,
+};
+
 /** 부서별 의료진 그룹 (DepartmentTree 렌더 단위). */
 export interface DeptGroup {
   code: string;
@@ -42,7 +65,12 @@ export function groupStaffByDepartment(staff: StaffMember[]): DeptGroup[] {
     .map(([code, members]) => ({
       code,
       displayName: departmentLabel(code),
-      staff: members,
+      // 같은 부서 내: 응답 가능 → 지연 가능 → 응답 불가 순.
+      staff: [...members].sort(
+        (a, b) =>
+          DUTY_LEVEL_ORDER[dutyStatusInfo(a.dutyStatus).level] -
+          DUTY_LEVEL_ORDER[dutyStatusInfo(b.dutyStatus).level],
+      ),
     }))
     .sort((a, b) => a.displayName.localeCompare(b.displayName, 'ko'));
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { StaffMember } from '../../../types';
-import type { DeptGroup } from '../../../utils/departments';
+import { dutyStatusInfo, type DeptGroup } from '../../../utils/departments';
 
 interface DepartmentTreeProps {
   /** 부서별로 그루핑된 의료진 (부모가 /staff 1회 조회 후 그루핑해서 전달). */
@@ -58,7 +58,7 @@ export default function DepartmentTree({
               <ul className="consult-modal__staff-list">
                 {staffList.map((staff) => {
                   const added = selectedIds.has(staff.staffId);
-                  const available = staff.status === 'active';
+                  const duty = dutyStatusInfo(staff.dutyStatus);
                   return (
                     <li key={staff.staffId}>
                       <button
@@ -68,16 +68,16 @@ export default function DepartmentTree({
                         disabled={added}
                       >
                         <span
-                          className={`consult-modal__staff-dot ${
-                            available ? 'is-available' : 'is-unavailable'
-                          }`}
+                          className={`consult-modal__staff-dot consult-modal__staff-dot--${duty.level}`}
                           aria-hidden="true"
                         />
                         <span className="consult-modal__staff-name">{staff.displayName}</span>
                         <span className="consult-modal__staff-role">· {staff.role}</span>
-                        {!available && (
-                          <span className="consult-modal__staff-absent">(부재중)</span>
-                        )}
+                        <span
+                          className={`consult-modal__staff-duty consult-modal__staff-duty--${duty.level}`}
+                        >
+                          {duty.label}
+                        </span>
                         {added && (
                           <span className="consult-modal__staff-added" aria-label="추가됨">
                             ✓

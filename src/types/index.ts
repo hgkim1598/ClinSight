@@ -535,7 +535,8 @@ export interface StaffMember {
   displayName: string;
   role: string;
   primaryDepartmentCode: string;
-  status: string;
+  /** 근무 상태(on_duty/on_call/out/away/off/leave 등). 표시·정렬에 사용. */
+  dutyStatus: string;
 }
 
 // ---------- 임상 타임라인 ----------

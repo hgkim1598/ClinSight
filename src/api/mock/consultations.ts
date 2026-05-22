@@ -16,17 +16,21 @@ export interface WireRecipient {
 
 export interface WireConsultation {
   consultation_id: string;
-  stay_token: string;
   subject: string;
-  message: string;
-  priority: 'urgent' | 'routine';
+  // 실제 API는 priority 를 'normal' 등 enum 밖 값으로도 보냄 → 매퍼에서 정규화.
+  priority: string;
   status: 'requested' | 'in_progress' | 'completed';
-  requester_staff_id: string;
-  requester_department_code: string;
-  recipients_jsonb: WireRecipient[];
-  attached_report_id: string | null;
   created_at: string;
-  updated_at: string;
+  // 실제 API 응답에서 누락 가능 — 매퍼에서 폴백. stay_token 대신 stay_id 로 옴.
+  // TODO: 백엔드 필드 통일 후 폴백 제거.
+  stay_token?: string;
+  stay_id?: string;
+  message?: string;
+  requester_staff_id?: string;
+  requester_department_code?: string;
+  recipients_jsonb?: WireRecipient[];
+  attached_report_id?: string | null;
+  updated_at?: string;
 }
 
 export const mockConsultations: WireConsultation[] = [

@@ -7,8 +7,12 @@ export interface WireStaff {
   staff_id: string;
   display_name: string;
   role: string;
-  primary_department_code: string;
-  status: string;
+  primary_department_code?: string;
+  status?: string;
+  // 실제 API 필드 — primary_department_code 대신 department_code, status 대신 duty_status.
+  // TODO: 백엔드 필드 통일 후 폴백 제거.
+  department_code?: string;
+  duty_status?: string;
 }
 
 export const mockStaff: WireStaff[] = [

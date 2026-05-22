@@ -152,7 +152,8 @@ export default function ConsultRequestModal({
         onSubmitted();
       }, AUTO_CLOSE_MS);
     } catch (e) {
-      void e;
+      // TODO: 프로덕션 정리 시 console.warn 제거.
+      console.warn('[ConsultRequestModal] 협진 요청 실패:', e);
       showToast({
         message: '협진 요청 전송에 실패했습니다',
         type: 'error',

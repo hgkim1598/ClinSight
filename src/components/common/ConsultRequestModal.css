@@ -225,12 +225,16 @@
   flex-shrink: 0;
 }
 
-.consult-modal__staff-dot.is-available {
+.consult-modal__staff-dot--available {
   background: var(--safe);
 }
 
-.consult-modal__staff-dot.is-unavailable {
-  background: var(--text-muted);
+.consult-modal__staff-dot--delayed {
+  background: var(--warn);
+}
+
+.consult-modal__staff-dot--unavailable {
+  background: var(--danger);
 }
 
 .consult-modal__staff-name {
@@ -242,10 +246,31 @@
   font-size: 12px;
 }
 
-.consult-modal__staff-absent {
+.consult-modal__staff-duty {
   margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 10px;
   font-size: 11px;
-  color: var(--text-muted);
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.consult-modal__staff-duty--available {
+  color: var(--safe);
+  background: var(--safe-bg);
+  border-color: var(--safe-border);
+}
+
+.consult-modal__staff-duty--delayed {
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+.consult-modal__staff-duty--unavailable {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
 }
 
 .consult-modal__staff-added {
