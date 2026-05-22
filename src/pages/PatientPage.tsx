@@ -18,6 +18,7 @@ import ModelDetailView from '../components/common/ModelDetailView';
 import ClinicalTimeline from '../components/common/ClinicalTimeline';
 import FloatingChatButton from '../components/common/FloatingChatButton';
 import PatientReportModal from '../components/common/PatientReportModal';
+import ReportLoadingOverlay from '../components/common/report/ReportLoadingOverlay';
 import Clock from '../components/common/Clock';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
@@ -67,7 +68,11 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
   const [selectedModel, setSelectedModel] = useState<ModelKey | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
 
-  const { data: report } = useAsync(
+  const {
+    data: report,
+    error: reportError,
+    refetch: refetchReport,
+  } = useAsync(
     async () => (reportOpen ? await getPatientReport(stayId) : null),
     [stayId, reportOpen],
   );
@@ -238,11 +243,21 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
 
       <FloatingChatButton stayToken={patient.stayToken} />
 
-      {report && (
+      {reportOpen && report && (
         <PatientReportModal
           open={reportOpen}
           onClose={() => setReportOpen(false)}
           report={report}
+        />
+      )}
+      {reportOpen && !report && !reportError && (
+        <ReportLoadingOverlay onClose={() => setReportOpen(false)} />
+      )}
+      {reportOpen && !report && reportError && (
+        <ReportLoadingOverlay
+          error
+          onClose={() => setReportOpen(false)}
+          onRetry={refetchReport}
         />
       )}
     </div>

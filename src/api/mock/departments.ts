@@ -7,6 +7,9 @@ export interface WireDepartment {
   config_key: string;
   display_name: string;
   sort_order: number;
+  // 실제 API는 config_key 대신 department_code 로 내려줌 — 폴백용.
+  // TODO: 백엔드 필드 통일 후 폴백 제거.
+  department_code?: string;
 }
 
 export const mockDepartments: WireDepartment[] = [

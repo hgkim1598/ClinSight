@@ -1,20 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import type {
   ConsultationRequest,
   ConsultStatus,
-  Department,
 } from '../types';
-import {
-  getConsultations,
-  getDepartments,
-} from '../api/services/consultationService';
+import { getConsultations } from '../api/services/consultationService';
+import { DEPARTMENT_LABELS } from '../utils/departments';
 import { getPatientReport } from '../api/services/reportService';
 import { formatPatientName } from '../utils/formatPatientName';
 import { formatDateTime } from '../utils/time';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientReportModal from '../components/common/PatientReportModal';
+import ReportLoadingOverlay from '../components/common/report/ReportLoadingOverlay';
 import LoadingState from '../components/common/LoadingState';
 import ErrorState from '../components/common/ErrorState';
 import { useAsync } from '../hooks/useAsync';
@@ -134,27 +132,14 @@ export default function ConsultationsPage() {
     refetch,
   } = useAsync(() => getConsultations(), []);
 
-  const [departments, setDepartments] = useState<Department[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    void getDepartments().then((d) => {
-      if (!cancelled) setDepartments(d);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // 부서 한글명은 정적 라벨 맵 사용 (/staff/departments 의존 제거).
+  const departmentMap = DEPARTMENT_LABELS;
 
-  const departmentMap = useMemo(
-    () =>
-      departments.reduce<Record<string, string>>((acc, d) => {
-        acc[d.configKey] = d.displayName;
-        return acc;
-      }, {}),
-    [departments],
-  );
-
-  const { data: report } = useAsync(
+  const {
+    data: report,
+    error: reportError,
+    refetch: refetchReport,
+  } = useAsync(
     async () =>
       reportOpen && selectedStayToken
         ? await getPatientReport(selectedStayToken)
@@ -283,12 +268,22 @@ export default function ConsultationsPage() {
         )}
       </main>
 
-      {report && (
+      {reportOpen && report && (
         <PatientReportModal
           open={reportOpen}
           onClose={handleCloseReport}
           report={report}
           hideConsultButton
+        />
+      )}
+      {reportOpen && !report && !reportError && (
+        <ReportLoadingOverlay onClose={handleCloseReport} />
+      )}
+      {reportOpen && !report && reportError && (
+        <ReportLoadingOverlay
+          error
+          onClose={handleCloseReport}
+          onRetry={refetchReport}
         />
       )}
     </div>

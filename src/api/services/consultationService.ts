@@ -31,8 +31,11 @@ import {
 // -------- 매핑 --------
 
 function mapDepartment(w: WireDepartment): Department {
+  // 실제 API는 department_code 로 내려줌 — config_key 우선, 없으면 폴백.
+  // configKey 가 비면 아코디언 키가 충돌(전체 동시 열림)하고 getStaff 필터도 깨짐.
+  // TODO: 백엔드 필드 통일 후 폴백 제거.
   return {
-    configKey: w.config_key,
+    configKey: w.config_key ?? w.department_code ?? '',
     displayName: w.display_name,
     sortOrder: w.sort_order,
   };

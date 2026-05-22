@@ -4,9 +4,10 @@ import { CheckCircle, X } from 'lucide-react';
 import type { ConsultPriority, PatientDetail, StaffMember } from '../../types';
 import {
   createConsultation,
-  getDepartments,
+  getStaff,
 } from '../../api/services/consultationService';
 import { patientLocalData } from '../../data/patientLocalData';
+import { groupStaffByDepartment } from '../../utils/departments';
 import { showToast } from '../../utils/toast';
 import { useAsync } from '../../hooks/useAsync';
 import DepartmentTree from './consult/DepartmentTree';
@@ -33,8 +34,12 @@ export default function ConsultRequestModal({
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const autoCloseTimerRef = useRef<number | null>(null);
 
-  const { data: departmentsData } = useAsync(() => getDepartments(), []);
-  const departments = departmentsData ?? [];
+  // 모달 마운트 시 전체 의료진 1회 조회 후 부서별로 그루핑 (/staff/departments 의존 제거).
+  const { data: staffData } = useAsync(() => getStaff(), []);
+  const groups = useMemo(
+    () => groupStaffByDepartment(staffData ?? []),
+    [staffData],
+  );
 
   const [recipients, setRecipients] = useState<SelectedRecipient[]>([]);
   const [subject, setSubject] = useState('');
@@ -202,10 +207,10 @@ export default function ConsultRequestModal({
               {displayName} ({patient.currentBedLabel})
             </div>
 
-            <section className="consult-modal__section">
+            <section className="consult-modal__section consult-modal__section--tree">
               <h3 className="consult-modal__section-title">부서/담당자 선택</h3>
               <DepartmentTree
-                departments={departments}
+                groups={groups}
                 selectedIds={recipientIds}
                 onSelect={addRecipient}
               />
