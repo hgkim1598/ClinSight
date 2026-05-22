@@ -102,7 +102,7 @@ function mapShapFactor(w: WireShapFactor): ShapFactor {
 }
 
 /**
- * top_factors_jsonb 를 정규화 — 백엔드가 다음 중 하나로 보낼 수 있음:
+ * SHAP 원본(shap_summary_jsonb / top_factors_jsonb)을 정규화 — 백엔드가 다음 중 하나로 보낼 수 있음:
  *  1. WireShapFactor[] (spec)
  *  2. JSON 문자열 ("[{...}]") — DB jsonb 컬럼이 직렬화된 채로 통과한 경우
  *  3. { base_value, top_features: [...] } — 실제 API 응답 (top_features 배열만 추출)
@@ -146,8 +146,11 @@ function mapLatest(w: WireLatestPrediction): LatestPrediction {
     predictedAt: w.predicted_at,
     featureWindowStart: w.feature_window_start,
     featureWindowEnd: w.feature_window_end,
-    // top_factors_jsonb 는 array / JSON 문자열 / { top_features } 객체 / null 등 다양하게 올 수 있음.
-    topFactors: normalizeTopFactors(w.top_factors_jsonb).map(mapShapFactor),
+    // SHAP: 실제 API는 shap_summary_jsonb({ base_value, top_features })에
+    // { feature, shap_value, feature_value } 형태로 담아 보낸다. top_factors_jsonb(spec/레거시)는
+    // 항목에 feature 키가 없어 라벨이 undefined 로 찍히던 원인 → shap_summary_jsonb 를 우선 읽고
+    // 없을 때만 top_factors_jsonb 로 fallback. (둘 다 array / { top_features } / JSON 문자열 / null 가능)
+    topFactors: normalizeTopFactors(w.shap_summary_jsonb ?? w.top_factors_jsonb).map(mapShapFactor),
     status: w.status,
   };
 }

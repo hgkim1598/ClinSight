@@ -43,7 +43,19 @@ export interface WireLatestPrediction {
   predicted_at: string;
   feature_window_start: string;
   feature_window_end: string;
-  /** API는 배열 / { base_value, top_features } 객체 / JSON 문자열 / null 등 다양하게 보냄. */
+  /**
+   * SHAP 원본. 실제 API는 두 필드를 모두 보낸다:
+   *  - shap_summary_jsonb: { base_value, top_features:[{feature, shap_value, feature_value}] }
+   *    → 실데이터(우선해서 읽음).
+   *  - top_factors_jsonb: spec/레거시 필드. 항목에 feature 키가 없어 라벨이 undefined 로
+   *    찍히던 원인. shap_summary_jsonb 가 없을 때만 fallback 으로 사용.
+   * 둘 다 배열 / { base_value, top_features } 객체 / JSON 문자열 / null 형태로 올 수 있다.
+   */
+  shap_summary_jsonb?:
+    | WireShapFactor[]
+    | { base_value?: number; top_features: WireShapFactor[] }
+    | string
+    | null;
   top_factors_jsonb: WireShapFactor[] | { base_value?: number; top_features: WireShapFactor[] } | string | null;
   status: string;
 }
