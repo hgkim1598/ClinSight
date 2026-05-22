@@ -137,7 +137,8 @@ export default function LoginPage() {
     }
   };
 
-  const welcomeName = me?.displayName ?? (email.trim() || '사용자');
+  // 환영 화면엔 이름만 표시(이메일 노출 안 함). 이름 미도착이면 이름 없이 인사.
+  const welcomeDisplayName = me?.displayName ?? null;
 
   return (
     <div className="login">
@@ -316,7 +317,13 @@ export default function LoginPage() {
             <span className="login__brand-name login__brand-name--lg">ClinSight</span>
           </div>
           <p className="login__welcome">
-            <strong>{welcomeName}</strong>님, 환영합니다
+            {welcomeDisplayName ? (
+              <>
+                <strong>{welcomeDisplayName}</strong>님, 환영합니다
+              </>
+            ) : (
+              '환영합니다'
+            )}
           </p>
           <div className="login__progress" aria-hidden="true">
             <span className="login__progress-bar" />

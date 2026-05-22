@@ -18,6 +18,7 @@ import type {
 } from '../types';
 import { getDashboardPatients, type DashboardSort } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
+import { getAlerts } from '../api/services/alertService';
 import { CURRENT_ICU_ID } from '../utils/constants';
 import { usePatients } from '../context/usePatients';
 import { patientLocalData } from '../data/patientLocalData';
@@ -84,18 +85,13 @@ function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[
   }
 }
 
-function buildKpis(dashboard: DashboardResponse): KpiData[] {
+function buildKpis(dashboard: DashboardResponse, activeAlertCount: number): KpiData[] {
   const totalPatients = dashboard.summary.totalPatients;
-  // 백엔드 summary 집계(high_risk_count/critical_alert_count) 대신 환자행에서 파생 →
-  // 표에 보이는 값과 항상 일치, summary 필드 불일치/누락에 영향받지 않음.
-  // TODO: 백엔드 summary 정합 후 dashboard.summary 값으로 환원 검토.
+  // 고위험 환자는 환자행에서 파생(표와 일치). 활성 알림은 환자행 active_alert_count(누적 추정)
+  // 합산이 부풀려져, 전용 알림 API(status==='active')에서 산출한 값을 인자로 받는다.
   const highRiskCount = dashboard.patients.filter(
     (p) => p.latestMortalityRiskLabel === 'high' || p.latestMortalityRiskLabel === 'critical',
   ).length;
-  const activeAlertCount = dashboard.patients.reduce(
-    (sum, p) => sum + (p.activeAlertCount ?? 0),
-    0,
-  );
   return [
     {
       label: '입실 환자',
@@ -112,7 +108,7 @@ function buildKpis(dashboard: DashboardResponse): KpiData[] {
     {
       label: '활성 알림',
       value: `${activeAlertCount}건`,
-      sub: '환자 활성 알림 합계',
+      sub: '현재 활성 알림',
       tone: activeAlertCount > 0 ? 'warn' : 'default',
     },
   ];
@@ -139,6 +135,13 @@ export default function OverviewPage() {
 
   const { data: staffing } = useAsync(() => getStaffing(CURRENT_ICU_ID), []);
 
+  // 활성 알림 KPI는 전용 알림 API에서 status='active' 개수로 산출(논블로킹).
+  const { data: alerts } = useAsync(() => getAlerts(), []);
+  const activeAlertCount = useMemo(
+    () => (alerts ?? []).filter((a) => a.status === 'active').length,
+    [alerts],
+  );
+
   // 받아온 환자 목록을 캐시에 저장(write-through) → AlertsPage 등이 추가 호출 없이 재사용.
   const { setPatients } = usePatients();
   useEffect(() => {
@@ -146,8 +149,8 @@ export default function OverviewPage() {
   }, [dashboard, setPatients]);
 
   const kpis = useMemo(
-    () => (dashboard ? buildKpis(dashboard) : []),
-    [dashboard],
+    () => (dashboard ? buildKpis(dashboard, activeAlertCount) : []),
+    [dashboard, activeAlertCount],
   );
 
   // Capacity 섹션 — staffing 역할별 가용 인원 + 간호사:환자 비율.

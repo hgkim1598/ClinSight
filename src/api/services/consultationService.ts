@@ -85,7 +85,7 @@ function mapConsultation(w: WireConsultation): ConsultationRequest {
     status: w.status,
     requesterStaffId: w.requester_staff_id ?? '',
     requesterDepartmentCode: w.requester_department_code ?? '',
-    recipients: (w.recipients_jsonb ?? []).map(mapRecipient),
+    recipients: (w.recipients ?? w.recipients_jsonb ?? []).map(mapRecipient),
     attachedReportId: w.attached_report_id ?? null,
     createdAt: w.created_at,
   };

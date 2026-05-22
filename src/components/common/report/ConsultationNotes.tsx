@@ -8,6 +8,11 @@ interface ConsultationNote {
   time: Date;
 }
 
+interface ConsultationNotesProps {
+  /** 'write'(기본): 작성란 표시 / 'read': 작성란 숨김(기존 협진 열람). */
+  mode?: 'write' | 'read';
+}
+
 function makeNoteId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -26,7 +31,9 @@ function formatDateTime(d: Date): string {
  * 메모는 모달 내부 로컬 상태로만 관리되며 부모 모달이 unmount되면 자동 폐기.
  * 백엔드 연결 시 추가 저장 endpoint로 교체될 자리.
  */
-export default function ConsultationNotes() {
+export default function ConsultationNotes({
+  mode = 'write',
+}: ConsultationNotesProps = {}) {
   const me = useMe();
   const [notes, setNotes] = useState<ConsultationNote[]>([]);
   const [noteInput, setNoteInput] = useState('');
@@ -63,24 +70,29 @@ export default function ConsultationNotes() {
           ))}
         </ul>
       )}
-      <div className="report-modal__note-add">
-        <textarea
-          className="report-modal__note-textarea"
-          value={noteInput}
-          onChange={(e) => setNoteInput(e.target.value)}
-          placeholder="협진 관련 메모를 입력하세요..."
-          rows={3}
-          aria-label="협진 메모 입력"
-        />
-        <button
-          type="button"
-          className="report-modal__note-button"
-          onClick={handleAddNote}
-          disabled={!noteInput.trim()}
-        >
-          보고서에 추가
-        </button>
-      </div>
+      {mode === 'read' && notes.length === 0 && (
+        <p className="report-paper__empty">등록된 협진 의견이 없습니다.</p>
+      )}
+      {mode === 'write' && (
+        <div className="report-modal__note-add">
+          <textarea
+            className="report-modal__note-textarea"
+            value={noteInput}
+            onChange={(e) => setNoteInput(e.target.value)}
+            placeholder="협진 관련 메모를 입력하세요..."
+            rows={3}
+            aria-label="협진 메모 입력"
+          />
+          <button
+            type="button"
+            className="report-modal__note-button"
+            onClick={handleAddNote}
+            disabled={!noteInput.trim()}
+          >
+            보고서에 추가
+          </button>
+        </div>
+      )}
     </section>
   );
 }

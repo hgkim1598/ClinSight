@@ -113,7 +113,7 @@ export default function PatientReportModal({
 
         <ReportContent report={report} />
 
-        <ConsultationNotes />
+        <ConsultationNotes mode={hideConsultButton ? 'read' : 'write'} />
 
         <footer className="report-paper__footer">
           <p>본 보고서는 ClinSight CDSS에 의해 자동 생성되었습니다.</p>

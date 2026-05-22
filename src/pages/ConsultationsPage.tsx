@@ -4,11 +4,13 @@ import { ChevronLeft } from 'lucide-react';
 import type {
   ConsultationRequest,
   ConsultStatus,
+  DashboardPatient,
 } from '../types';
 import { getConsultations } from '../api/services/consultationService';
 import { DEPARTMENT_LABELS } from '../utils/departments';
 import { getPatientReport } from '../api/services/reportService';
-import { formatPatientName } from '../utils/formatPatientName';
+import { patientLocalData } from '../data/patientLocalData';
+import { usePatients } from '../context/usePatients';
 import { formatDateTime } from '../utils/time';
 import Breadcrumb from '../components/common/Breadcrumb';
 import PatientReportModal from '../components/common/PatientReportModal';
@@ -37,6 +39,8 @@ interface ConsultRowProps {
   consult: ConsultationRequest;
   patientCount: number;
   departmentMap: Record<string, string>;
+  /** 캐시에서 stay_id 로 매칭된 환자 (이름/병실 표시용). 없으면 8자리 폴백. */
+  patient?: DashboardPatient;
   onOpenReport: (stayToken: string) => void;
 }
 
@@ -44,15 +48,19 @@ function ConsultRow({
   consult,
   patientCount,
   departmentMap,
+  patient,
   onOpenReport,
 }: ConsultRowProps) {
   const navigate = useNavigate();
   const toRecipients = consult.recipients.filter((r) => r.role === 'to');
   const primary = toRecipients[0];
   const moreCount = toRecipients.length - 1;
-  // PT 토큰은 stayToken 그대로 매핑하지 못함 — patient_token으로 변환은 detail 호출이 필요하지만,
-  // 표시용 단축 매핑으로 stayToken에서 PT-XXXXX를 유추 (mock 한정)
-  const displayName = formatPatientName(consult.stayToken.replace(/^ST-/, 'PT-'));
+  // 캐시에 매칭된 환자가 있으면 이름(병실), 없으면 stay_id 앞 8자리만 (UUID 전체 노출 방지).
+  const local = patient ? patientLocalData[patient.patientToken] : undefined;
+  const localName = local?.name;
+  const shortId = consult.stayToken ? `${consult.stayToken.slice(0, 8)}…` : '';
+  const displayName = localName ?? shortId;
+  const bedLabel = localName ? patient?.currentBedLabel : undefined;
 
   return (
     <tr className="consult-row">
@@ -66,7 +74,8 @@ function ConsultRow({
       <td>
         <div className="consult-row__patient">
           <span className="consult-row__patient-name">
-            {displayName} · {consult.stayToken}
+            {displayName}
+            {bedLabel ? ` (${bedLabel})` : ''}
           </span>
           <span
             className="consult-row__patient-count"
@@ -88,10 +97,11 @@ function ConsultRow({
           '—'
         )}
       </td>
-      <td>
+      <td className="consult-row__subject">
         {consult.priority === 'urgent' && (
           <span className="consult-row__priority">긴급</span>
         )}
+        {consult.subject || '—'}
       </td>
       <td className="consult-row__time">{formatDateTime(consult.createdAt)}</td>
       <td>
@@ -134,6 +144,8 @@ export default function ConsultationsPage() {
 
   // 부서 한글명은 정적 라벨 맵 사용 (/staff/departments 의존 제거).
   const departmentMap = DEPARTMENT_LABELS;
+  // 이미 캐시된 환자 목록으로 stay_id → 환자(이름/병실) 매칭 (추가 API 호출 없음).
+  const { patientByStayId } = usePatients();
 
   const {
     data: report,
@@ -247,7 +259,7 @@ export default function ConsultationsPage() {
                   <th>상태</th>
                   <th>환자</th>
                   <th>수신</th>
-                  <th>우선순위</th>
+                  <th>제목</th>
                   <th>요청 시각</th>
                   <th>액션</th>
                 </tr>
@@ -259,6 +271,7 @@ export default function ConsultationsPage() {
                     consult={c}
                     patientCount={countByStay[c.stayToken] ?? 1}
                     departmentMap={departmentMap}
+                    patient={patientByStayId.get(c.stayToken)}
                     onOpenReport={handleOpenReport}
                   />
                 ))}

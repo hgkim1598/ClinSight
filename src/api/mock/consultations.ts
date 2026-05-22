@@ -29,6 +29,8 @@ export interface WireConsultation {
   requester_staff_id?: string;
   requester_department_code?: string;
   recipients_jsonb?: WireRecipient[];
+  // 람다 목록 응답은 recipients 키(snake 항목)로 보냄 — 매퍼에서 폴백.
+  recipients?: WireRecipient[];
   attached_report_id?: string | null;
   updated_at?: string;
 }
