@@ -8,14 +8,21 @@
  */
 
 export interface WireTimelineItem {
-  item_type: 'prediction' | 'alert' | 'event';
-  item_id: string;
-  timeline_time: string;
-  title: string;
-  summary: string;
-  severity: 'critical' | 'warning' | 'info' | 'high';
-  detail_category: string;
+  // 뷰(v_clinical_timeline) 기준 — 설계 정본. 백엔드 뷰 전환 후 이 필드들로 들어온다.
+  item_type?: 'prediction' | 'alert' | 'event';
+  item_id?: string;
+  timeline_time?: string;
+  title?: string;
+  summary?: string;
+  severity?: 'critical' | 'warning' | 'info' | 'high';
+  detail_category?: string;
   payload_jsonb?: Record<string, unknown>;
+  // 폴백용 — 현재 백엔드가 내려주는 원본 clinical_events(event_*) 필드.
+  // TODO: 백엔드 뷰 전환 완료 후 폴백 필드 제거
+  event_time?: string;
+  event_type?: string;
+  body?: string;
+  source?: string;
 }
 
 export interface WireTimelineResponse {
