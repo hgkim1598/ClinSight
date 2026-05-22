@@ -93,18 +93,26 @@ function mapDashboardResponse(w: WireDashboardResponse, icuId: string): Dashboar
   };
 }
 
+/** age_years → 'NN대' 범주 (백엔드 age_group 미제공 시 폴백). */
+function toAgeGroup(years: number | null | undefined): string | undefined {
+  if (years == null || Number.isNaN(years)) return undefined;
+  return `${Math.floor(years / 10) * 10}s`;
+}
+
 function mapPatientDetail(w: WirePatientDetail): PatientDetail {
+  // 실제 API가 일부 필드를 미제공 → 내부 폴백. 시그니처는 그대로.
+  // TODO: 백엔드 필드 추가 후 폴백 제거.
   return {
     stayId: w.stay_id,
     stayToken: w.stay_token,
     patientToken: w.patient_token,
     ageYears: w.age_years,
-    ageGroup: w.age_group,
+    ageGroup: w.age_group ?? toAgeGroup(w.age_years) ?? '—',
     sex: w.sex,
-    admissionType: w.admission_type,
-    primaryDiagnosisCode: w.primary_diagnosis_code,
+    admissionType: w.admission_type ?? '—',
+    primaryDiagnosisCode: w.primary_diagnosis_code ?? '',
     primaryDiagnosisText: w.primary_diagnosis_text,
-    hospitalAdmitAt: w.hospital_admit_at,
+    hospitalAdmitAt: w.hospital_admit_at ?? '',
     icuInAt: w.icu_in_at,
     icuOutAt: w.icu_out_at,
     currentUnitCode: w.current_unit_code,
@@ -116,15 +124,25 @@ function mapPatientDetail(w: WirePatientDetail): PatientDetail {
 
 // -------- public API --------
 
-/** GET /dashboard/icu/{icuId} */
+/** 대시보드 정렬 파라미터 (백엔드 query string sortBy/sortOrder 로 전달). */
+export interface DashboardSort {
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
+/** GET /dashboard/icu/{icuId}?sortBy=&sortOrder= */
 export async function getDashboardPatients(
   icuId: string,
+  sort?: DashboardSort,
 ): Promise<DashboardResponse> {
   if (MOCK_MODE) {
     return mapDashboardResponse(mockDashboardPayload, icuId);
   }
+  const qs = sort
+    ? `?sortBy=${encodeURIComponent(sort.sortBy)}&sortOrder=${encodeURIComponent(sort.sortOrder)}`
+    : '';
   const wire = await request<WireDashboardResponse>(
-    `/dashboard/icu/${encodeURIComponent(icuId)}`,
+    `/dashboard/icu/${encodeURIComponent(icuId)}${qs}`,
   );
   return mapDashboardResponse(wire, icuId);
 }

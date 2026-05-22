@@ -13,11 +13,10 @@ import {
 import type {
   DashboardPatient,
   DashboardResponse,
-  DashboardStaffing,
   KpiData,
   RiskLevel,
 } from '../types';
-import { getDashboardPatients } from '../api/services/patientService';
+import { getDashboardPatients, type DashboardSort } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { CURRENT_ICU_ID } from '../utils/constants';
 import { usePatients } from '../context/usePatients';
@@ -50,6 +49,16 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'alert-desc', label: '알림 많은순' },
 ];
 
+/** UI 정렬 옵션 → 백엔드 정렬 파라미터. */
+const SORT_PARAMS: Record<SortKey, DashboardSort> = {
+  'risk-desc': { sortBy: 'latest_mortality_risk_score', sortOrder: 'desc' },
+  'risk-asc': { sortBy: 'latest_mortality_risk_score', sortOrder: 'asc' },
+  'recent-desc': { sortBy: 'last_observation_at', sortOrder: 'desc' },
+  'recent-asc': { sortBy: 'last_observation_at', sortOrder: 'asc' },
+  'sofa-desc': { sortBy: 'latest_sofa_total', sortOrder: 'desc' },
+  'alert-desc': { sortBy: 'active_alert_count', sortOrder: 'desc' },
+};
+
 const RISK_RANK: Record<RiskLevel, number> = { critical: 4, high: 3, medium: 2, low: 1 };
 const rankOf = (lvl: RiskLevel | null) => (lvl ? RISK_RANK[lvl] : 0);
 
@@ -75,26 +84,18 @@ function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[
   }
 }
 
-/**
- * 배정 assignments[]에서 role별로 고유 staff_id를 집계.
- * 한 의료진이 여러 환자에 배정될 수 있으므로 중복 제거 후 인원 카운트.
- */
-function countUniqueStaff(
-  staffing: DashboardStaffing | null,
-  role: string,
-): number {
-  if (!staffing) return 0;
-  const ids = new Set<string>();
-  for (const a of staffing.assignments) {
-    for (const s of a.assignedStaff) {
-      if (s.role === role) ids.add(s.staffId);
-    }
-  }
-  return ids.size;
-}
-
 function buildKpis(dashboard: DashboardResponse): KpiData[] {
-  const { totalPatients, highRiskCount, criticalAlertCount } = dashboard.summary;
+  const totalPatients = dashboard.summary.totalPatients;
+  // 백엔드 summary 집계(high_risk_count/critical_alert_count) 대신 환자행에서 파생 →
+  // 표에 보이는 값과 항상 일치, summary 필드 불일치/누락에 영향받지 않음.
+  // TODO: 백엔드 summary 정합 후 dashboard.summary 값으로 환원 검토.
+  const highRiskCount = dashboard.patients.filter(
+    (p) => p.latestMortalityRiskLabel === 'high' || p.latestMortalityRiskLabel === 'critical',
+  ).length;
+  const activeAlertCount = dashboard.patients.reduce(
+    (sum, p) => sum + (p.activeAlertCount ?? 0),
+    0,
+  );
   return [
     {
       label: '입실 환자',
@@ -110,9 +111,9 @@ function buildKpis(dashboard: DashboardResponse): KpiData[] {
     },
     {
       label: '활성 알림',
-      value: `${criticalAlertCount}건`,
-      sub: '미처리 critical',
-      tone: criticalAlertCount > 0 ? 'warn' : 'default',
+      value: `${activeAlertCount}건`,
+      sub: '환자 활성 알림 합계',
+      tone: activeAlertCount > 0 ? 'warn' : 'default',
     },
   ];
 }
@@ -122,12 +123,19 @@ const MAX_PATIENTS_PER_NURSE = 2;
 
 export default function OverviewPage() {
   const navigate = useNavigate();
+  const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
+  const [page, setPage] = useState(0);
+
+  // 정렬은 서버에 위임 — sortKey 변경 시 sortBy/sortOrder 쿼리로 refetch.
   const {
     data: dashboard,
     loading,
     error,
     refetch,
-  } = useAsync(() => getDashboardPatients(CURRENT_ICU_ID), []);
+  } = useAsync(
+    () => getDashboardPatients(CURRENT_ICU_ID, SORT_PARAMS[sortKey]),
+    [sortKey],
+  );
 
   const { data: staffing } = useAsync(() => getStaffing(CURRENT_ICU_ID), []);
 
@@ -137,17 +145,14 @@ export default function OverviewPage() {
     if (dashboard?.patients) setPatients(dashboard.patients);
   }, [dashboard, setPatients]);
 
-  const [sortKey, setSortKey] = useState<SortKey>('risk-desc');
-  const [page, setPage] = useState(0);
-
   const kpis = useMemo(
     () => (dashboard ? buildKpis(dashboard) : []),
     [dashboard],
   );
 
-  // Capacity 섹션 — staffing 응답의 assignments에서 unique 인원 + 비율 파생.
-  const physicianCount = countUniqueStaff(staffing ?? null, 'physician');
-  const nurseCount = countUniqueStaff(staffing ?? null, 'nurse');
+  // Capacity 섹션 — staffing 역할별 가용 인원 + 간호사:환자 비율.
+  const physicianCount = staffing?.physician.available ?? 0;
+  const nurseCount = staffing?.nurse.available ?? 0;
   const totalPatients = dashboard?.summary.totalPatients ?? 0;
   const nurseRatio = nurseCount > 0 ? totalPatients / nurseCount : 0;
   const nurseRatioLabel =

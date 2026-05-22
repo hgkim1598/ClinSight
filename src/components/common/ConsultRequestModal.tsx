@@ -6,7 +6,7 @@ import {
   createConsultation,
   getDepartments,
 } from '../../api/services/consultationService';
-import { formatPatientName } from '../../utils/formatPatientName';
+import { patientLocalData } from '../../data/patientLocalData';
 import { showToast } from '../../utils/toast';
 import { useAsync } from '../../hooks/useAsync';
 import DepartmentTree from './consult/DepartmentTree';
@@ -171,7 +171,8 @@ export default function ConsultRequestModal({
     onSubmitted();
   };
 
-  const displayName = formatPatientName(patient.patientToken);
+  const displayName =
+    patientLocalData[patient.patientToken]?.name ?? patient.patientToken;
 
   return (
     <div
@@ -198,7 +199,7 @@ export default function ConsultRequestModal({
             </header>
 
             <div className="consult-modal__patient">
-              {displayName} ({patient.currentBedLabel}) · {patient.patientToken}
+              {displayName} ({patient.currentBedLabel})
             </div>
 
             <section className="consult-modal__section">

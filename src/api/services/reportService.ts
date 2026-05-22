@@ -18,9 +18,10 @@ import type {
   VitalStatusLevel,
 } from '../../types';
 import { getPatientDetail } from './patientService';
-import { getVitals } from './vitalService';
+import { getClinicalData, observationsToVitalData } from './vitalService';
 import { getModelPredictions } from './modelService';
 import { MOCK_MODE, request } from '../client';
+import { toRelativeLabel } from '../../utils/time';
 
 /** 활력징후 상태 등급 산정 (mock heuristic — 백엔드 value_status로 대체될 자리). */
 function computeVitalStatus(value: number, [lo, hi]: [number, number]): VitalStatusLevel {
@@ -34,17 +35,21 @@ function computeVitalStatus(value: number, [lo, hi]: [number, number]): VitalSta
 const VITAL_KEYS: VitalKey[] = ['hr', 'map', 'spo2', 'rr', 'temp'];
 const MODEL_ORDER: ModelKey[] = ['mortality', 'aki', 'ards', 'sic', 'shock'];
 
-/** 보고서에 노출할 검사 항목과 출처(predictions의 어느 모델 raw에서 가져올지). */
+function formatLabValue(v: number | null | undefined): string {
+  if (v == null || Number.isNaN(v)) return '—';
+  return Number.isInteger(v) ? `${v}` : v.toFixed(1);
+}
+
+/** 보고서에 노출할 검사 항목 — clinical-data 관측치의 metric_code로 매칭. */
 const TARGET_LABS: Array<{
   label: string;
-  source: ModelKey;
-  metric: string;
+  metricCode: string;
   normalRange: string;
 }> = [
-  { label: 'Lactate', source: 'shock', metric: 'Lactate', normalRange: '0.5–2.2 mmol/L' },
-  { label: 'Creatinine', source: 'aki', metric: 'Creatinine', normalRange: '0.6–1.3 mg/dL' },
-  { label: 'Platelet', source: 'sic', metric: 'Platelet', normalRange: '150–400 x10³/µL' },
-  { label: 'PaO2/FiO2', source: 'ards', metric: 'PaO2/FiO2', normalRange: '> 400' },
+  { label: 'Lactate', metricCode: 'lactate', normalRange: '0.5–2.2 mmol/L' },
+  { label: 'Creatinine', metricCode: 'creatinine', normalRange: '0.6–1.3 mg/dL' },
+  { label: 'Platelet', metricCode: 'platelet', normalRange: '150–400 x10³/µL' },
+  { label: 'PaO2/FiO2', metricCode: 'pao2_fio2', normalRange: '> 400' },
 ];
 
 /**
@@ -55,10 +60,12 @@ export async function getPatientReport(stayId: string): Promise<PatientReport | 
   const patient = await getPatientDetail(stayId);
   if (!patient) return null;
 
-  const [vitalsData, predictionsData] = await Promise.all([
-    getVitals(stayId),
+  const [clinical, predictionsData] = await Promise.all([
+    getClinicalData(stayId),
     getModelPredictions(stayId),
   ]);
+  // clinical-data 한 번 호출로 vitals + labs 둘 다 산출 (추가 호출 없음).
+  const vitalsData = observationsToVitalData(clinical.observations);
 
   const vitals: ReportVitalRow[] = VITAL_KEYS.map((key) => {
     const series = vitalsData.series[key];
@@ -88,16 +95,25 @@ export async function getPatientReport(stayId: string): Promise<PatientReport | 
     };
   });
 
+  // labs: 예측 raw(실제 모드 미결선) 대신 clinical-data 관측치에서 lab metric별 최신값 사용.
+  const observations = clinical.observations;
+  const labRefIso =
+    observations.map((o) => o.observedAt).sort().pop() ?? new Date().toISOString();
   const labs: ReportLabRow[] = TARGET_LABS.flatMap((target) => {
-    const sourceRaw = predictionsData[target.source]?.raw ?? [];
-    const match = sourceRaw.find((m) => m.label === target.metric);
-    if (!match) return [];
+    const rows = observations.filter(
+      (o) =>
+        o.metricCode === target.metricCode &&
+        o.numericValue != null &&
+        !Number.isNaN(o.numericValue),
+    );
+    if (rows.length === 0) return [];
+    const latest = rows.reduce((a, b) => (a.observedAt >= b.observedAt ? a : b));
     return [
       {
         label: target.label,
-        value: match.value,
-        unit: match.unit,
-        time: match.time,
+        value: formatLabValue(latest.numericValue),
+        unit: latest.unit,
+        time: toRelativeLabel(latest.observedAt, labRefIso),
         normalRange: target.normalRange,
       },
     ];

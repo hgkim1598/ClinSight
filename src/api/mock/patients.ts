@@ -42,18 +42,23 @@ export interface WirePatientDetail {
   stay_token: string;
   patient_token: string;
   age_years: number;
-  age_group: string;
   sex: 'M' | 'F';
-  admission_type: string;
-  primary_diagnosis_code: string;
   primary_diagnosis_text: string;
-  hospital_admit_at: string;
   icu_in_at: string;
   icu_out_at: string | null;
   current_unit_code: string;
   current_bed_label: string;
   status: string;
   sepsis_onset_at: string | null;
+  // 실제 API 미제공 — optional 처리 후 mapPatientDetail 에서 폴백.
+  // TODO: 백엔드 필드 추가 후 optional 제거.
+  age_group?: string;
+  admission_type?: string;
+  primary_diagnosis_code?: string;
+  hospital_admit_at?: string;
+  // 실제 API가 환자 상세에 함께 내려주는 필드 (현재 미사용 — predictions 는 별도 API로 조회).
+  predictions?: Record<string, { risk_score: number | null; risk_label: string | null }>;
+  active_alert_count?: number;
 }
 
 const dashboardPatients: WireDashboardPatient[] = [

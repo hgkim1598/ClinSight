@@ -182,14 +182,22 @@ export interface PatientAssignment {
   assignedStaff: AssignedStaff[];
 }
 
+/** 역할별 인원 수 (실제 staffing API: { total, available }). */
+export interface StaffingRoleCount {
+  total: number;
+  available: number;
+}
+
+/**
+ * 대시보드 staffing view-model.
+ * 실제 API는 역할별 카운트({ physician/nurse/admin: { total, available } })를 내려준다.
+ * (구 spec 의 assignments[] 구조는 서비스 매핑에서 폴백으로만 처리.)
+ */
 export interface DashboardStaffing {
-  icuUnitCode: string;
-  assignments: PatientAssignment[];
-  summary: {
-    totalPatients: number;
-    myPatientsCount: number;
-    unassignedCount: number;
-  };
+  icuId: string;
+  physician: StaffingRoleCount;
+  nurse: StaffingRoleCount;
+  admin: StaffingRoleCount;
 }
 
 // ---------- Clinical Observations (wire) ----------
