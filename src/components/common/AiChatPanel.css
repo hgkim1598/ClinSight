@@ -130,7 +130,33 @@
   padding: 0 4px;
 }
 
-/* 예제 프롬프트 (환자 컨텍스트 첫 진입 시) */
+/* 웰컴 영역 (대화 시작 전, messages 비어 있을 때) */
+.ai-chat__welcome {
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.ai-chat__welcome-icon {
+  color: var(--primary);
+}
+
+.ai-chat__welcome-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.ai-chat__welcome .ai-chat__prompts {
+  justify-content: center;
+}
+
+/* 예제 프롬프트 (웰컴 영역 안) */
 .ai-chat__prompts {
   display: flex;
   flex-wrap: wrap;

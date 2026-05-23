@@ -19,16 +19,16 @@ export function AiModeProvider({ children }: AiModeProviderProps) {
   }, []);
 
   const closeChatPanel = useCallback(() => {
+    // 패널만 숨긴다. chatContext 는 유지 → 같은 환자에서 다시 열면 대화/세션이 보존된다.
     setChatPanelOpen(false);
-    // 이전 환자 컨텍스트가 남아 다음에 열 때 잘못된 환자가 보이는 것을 방지.
-    setChatContext(null);
   }, []);
 
-  // 라우트(pathname) 변경 시 채팅 패널 자동 닫기.
-  // 모델 상세 전환처럼 같은 pathname 내 state 변경은 pathname 이 그대로라 영향 없음.
+  // 라우트(pathname) 변경 시에만 완전 리셋: 패널 닫기 + 컨텍스트 비우기.
+  // (모델 상세 전환처럼 같은 pathname 내 state 변경은 pathname 이 그대로라 영향 없음.)
   useEffect(() => {
-    closeChatPanel();
-  }, [pathname, closeChatPanel]);
+    setChatPanelOpen(false);
+    setChatContext(null);
+  }, [pathname]);
 
   return (
     <AiModeContext.Provider

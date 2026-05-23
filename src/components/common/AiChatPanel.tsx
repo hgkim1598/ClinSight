@@ -3,7 +3,6 @@ import type { KeyboardEvent } from 'react';
 import { Info, Send, Sparkles, X } from 'lucide-react';
 import {
   createChatSession,
-  getChatIntro,
   postChatMessage,
 } from '../../api/services/aiInsightService';
 import { useAiMode } from '../../context/aiMode';
@@ -27,16 +26,21 @@ const PATIENT_PROMPT_EXAMPLES: string[] = [
   'SHAP 기여도 분석을 설명해주세요',
 ];
 
+/** 환자 표시명 — PatientHeader 와 동일 소스(patientLocalData). 미스 시 토큰 폴백. */
+function resolvePatientLabel(
+  context: Extract<ChatContext, { type: 'patient' }>,
+): string {
+  return (
+    patientLocalData[context.patientToken ?? '']?.name ??
+    context.patientToken ??
+    context.stayToken
+  );
+}
+
 function buildHeaderTitle(context: ChatContext | null): string {
   if (!context) return 'AI 어시스턴트';
   if (context.type === 'patient') {
-    // 이름은 PatientHeader 와 동일 소스(patientLocalData)에서 조회.
-    // 미스 시 patient_token, 그마저 없으면 stayToken 으로 폴백.
-    const label =
-      patientLocalData[context.patientToken ?? '']?.name ??
-      context.patientToken ??
-      context.stayToken;
-    return `환자 AI 어시스턴트 · ${label}`;
+    return `환자 AI 어시스턴트 · ${resolvePatientLabel(context)}`;
   }
   return `${SECTION_LABEL[context.section]} · AI 설명`;
 }
@@ -77,33 +81,8 @@ export default function AiChatPanel() {
     setSessionKey(null);
   }
 
-  // 컨텍스트 변경 시 세션 생성 + 인트로 메시지 표시.
-  // deps 는 contextKey(문자열) 만 둔다 — chatContext 객체 참조를 넣으면 대화 도중
-  // 새 참조가 될 때 effect 가 재실행되어 messages 가 인트로로 리셋되는 버그가 난다.
-  useEffect(() => {
-    if (!chatContext) return;
-    let cancelled = false;
-    void (async () => {
-      const stayToken =
-        chatContext.type === 'patient' ? chatContext.stayToken : 'unknown';
-      const [session, introText] = await Promise.all([
-        createChatSession(stayToken, buildSessionTitle(chatContext)),
-        getChatIntro(chatContext),
-      ]);
-      if (cancelled) return;
-      setSessionKey(session.sessionKey);
-      // 인트로는 대화가 비어 있을 때만 1회 추가 (이미 메시지가 있으면 보존).
-      setMessages((prev) =>
-        prev.length === 0
-          ? [{ id: makeId(), role: 'ai', text: introText }]
-          : prev,
-      );
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextKey]);
+  // 세션은 인트로 표시용으로 미리 만들지 않는다 — 첫 메시지 전송 시 sendMessage 에서
+  // lazily 생성한다. 대화 시작 전(messages 비어 있음)에는 웰컴 영역만 보여준다.
 
   // 새 메시지 도착 시 자동 스크롤
   useEffect(() => {
@@ -159,9 +138,8 @@ export default function AiChatPanel() {
     }
   };
 
-  // 환자 전체 컨텍스트 + 사용자 메시지가 한 건도 없을 때만 예제 프롬프트 노출
-  const showPromptExamples =
-    chatContext?.type === 'patient' && messages.every((m) => m.role === 'ai');
+  // 대화 시작 전(환자 컨텍스트 + messages 비어 있음) 웰컴 영역을 보여줄지 여부.
+  const showWelcome = chatContext?.type === 'patient' && messages.length === 0;
 
   return (
     <aside
@@ -199,19 +177,30 @@ export default function AiChatPanel() {
             )}
           </div>
         ))}
-        {showPromptExamples && (
-          <div className="ai-chat__prompts" role="group" aria-label="예제 질문">
-            {PATIENT_PROMPT_EXAMPLES.map((prompt) => (
-              <button
-                key={prompt}
-                type="button"
-                className="ai-chat__prompt"
-                onClick={() => void sendMessage(prompt)}
-                disabled={pendingResponse}
-              >
-                {prompt}
-              </button>
-            ))}
+        {showWelcome && (
+          <div className="ai-chat__welcome">
+            <Sparkles
+              size={28}
+              className="ai-chat__welcome-icon"
+              aria-hidden="true"
+            />
+            <p className="ai-chat__welcome-text">
+              안녕하세요. <br />
+              {resolvePatientLabel(chatContext)} 환자의 현재 상태에 대해 질문해주세요.
+            </p>
+            <div className="ai-chat__prompts" role="group" aria-label="예제 질문">
+              {PATIENT_PROMPT_EXAMPLES.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  className="ai-chat__prompt"
+                  onClick={() => void sendMessage(prompt)}
+                  disabled={pendingResponse}
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {pendingResponse && (
