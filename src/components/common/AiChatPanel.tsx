@@ -69,6 +69,8 @@ export default function AiChatPanel() {
   }
 
   // 컨텍스트 변경 시 세션 생성 + 인트로 메시지 표시.
+  // deps 는 contextKey(문자열) 만 둔다 — chatContext 객체 참조를 넣으면 대화 도중
+  // 새 참조가 될 때 effect 가 재실행되어 messages 가 인트로로 리셋되는 버그가 난다.
   useEffect(() => {
     if (!chatContext) return;
     let cancelled = false;
@@ -81,12 +83,18 @@ export default function AiChatPanel() {
       ]);
       if (cancelled) return;
       setSessionKey(session.sessionKey);
-      setMessages([{ id: makeId(), role: 'ai', text: introText }]);
+      // 인트로는 대화가 비어 있을 때만 1회 추가 (이미 메시지가 있으면 보존).
+      setMessages((prev) =>
+        prev.length === 0
+          ? [{ id: makeId(), role: 'ai', text: introText }]
+          : prev,
+      );
     })();
     return () => {
       cancelled = true;
     };
-  }, [contextKey, chatContext]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextKey]);
 
   // 새 메시지 도착 시 자동 스크롤
   useEffect(() => {

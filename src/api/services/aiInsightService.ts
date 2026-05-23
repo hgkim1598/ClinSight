@@ -130,13 +130,18 @@ export interface ChatMessageDTO {
   content: string;
 }
 
+/**
+ * 백엔드 실제 POST 응답은 스펙(§12-2의 `output_text`)과 달리 GET 과 동일한
+ * `messages[]` 형태로 내려온다. 최신 assistant 메시지의 content 를 사용한다.
+ */
 interface WirePostMessageResponse {
-  interaction_id: string;
-  interaction_type: string;
   session_key: string;
-  output_text: string;
-  guardrail_result: unknown;
-  created_at: string;
+  messages: Array<{
+    interaction_id?: string;
+    role: ChatRole;
+    content: string;
+    created_at?: string;
+  }>;
 }
 
 interface WireGetMessagesResponse {
@@ -167,9 +172,13 @@ export async function postChatMessage(
       body: JSON.stringify({ message }),
     },
   );
+  // 응답 messages[] 중 가장 최근 assistant 메시지의 content 를 추출.
+  const latestAssistant = [...(w.messages ?? [])]
+    .reverse()
+    .find((m) => m.role === 'assistant');
   return {
     role: 'assistant',
-    content: w.output_text,
+    content: latestAssistant?.content ?? '',
   };
 }
 
