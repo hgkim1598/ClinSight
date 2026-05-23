@@ -58,7 +58,7 @@ export type AiInsightSection = 'trend' | 'shap' | 'rawMetrics' | 'auxiliary';
 /** 채팅 패널 컨텍스트 */
 export type ChatContext =
   | { type: 'section'; section: AiInsightSection; modelKey: TargetName }
-  | { type: 'patient'; stayToken: string };
+  | { type: 'patient'; stayToken: string; patientToken?: string };
 
 /** 채팅 메시지 한 건 */
 export interface ChatMessage {

@@ -4,16 +4,21 @@ import './FloatingChatButton.css';
 
 interface FloatingChatButtonProps {
   stayToken: string;
+  /** 헤더에 환자 이름을 표시하기 위한 토큰 (없으면 stayToken 폴백). */
+  patientToken?: string;
 }
 
-export default function FloatingChatButton({ stayToken }: FloatingChatButtonProps) {
+export default function FloatingChatButton({
+  stayToken,
+  patientToken,
+}: FloatingChatButtonProps) {
   const { chatPanelOpen, openChatPanel, closeChatPanel } = useAiMode();
 
   const handleClick = () => {
     if (chatPanelOpen) {
       closeChatPanel();
     } else {
-      openChatPanel({ type: 'patient', stayToken });
+      openChatPanel({ type: 'patient', stayToken, patientToken });
     }
   };
 

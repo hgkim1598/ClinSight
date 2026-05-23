@@ -241,7 +241,10 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
         </>
       )}
 
-      <FloatingChatButton stayToken={patient.stayToken} />
+      <FloatingChatButton
+        stayToken={patient.stayToken}
+        patientToken={patient.patientToken}
+      />
 
       {reportOpen && report && (
         <PatientReportModal

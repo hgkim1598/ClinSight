@@ -8,6 +8,7 @@ import {
 } from '../../api/services/aiInsightService';
 import { useAiMode } from '../../context/aiMode';
 import { useSnackbar } from '../../context/useSnackbar';
+import { patientLocalData } from '../../data/patientLocalData';
 import type { AiInsightSection, ChatContext, ChatMessage } from '../../types';
 import './AiChatPanel.css';
 
@@ -28,7 +29,15 @@ const PATIENT_PROMPT_EXAMPLES: string[] = [
 
 function buildHeaderTitle(context: ChatContext | null): string {
   if (!context) return 'AI 어시스턴트';
-  if (context.type === 'patient') return `환자 AI 어시스턴트 · ${context.stayToken}`;
+  if (context.type === 'patient') {
+    // 이름은 PatientHeader 와 동일 소스(patientLocalData)에서 조회.
+    // 미스 시 patient_token, 그마저 없으면 stayToken 으로 폴백.
+    const label =
+      patientLocalData[context.patientToken ?? '']?.name ??
+      context.patientToken ??
+      context.stayToken;
+    return `환자 AI 어시스턴트 · ${label}`;
+  }
   return `${SECTION_LABEL[context.section]} · AI 설명`;
 }
 
