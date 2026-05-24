@@ -504,6 +504,7 @@ export function latestToView(input: LatestToViewInput): Record<TargetName, Model
     const tone: RiskTone = riskLabel ? riskLabelToTone(riskLabel) : 'safe';
 
     const card: ModelPrediction = {
+      predictionId: pred.predictionId,
       title,
       tone,
       riskLabel: riskLabel ?? undefined,

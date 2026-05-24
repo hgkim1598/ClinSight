@@ -21,24 +21,36 @@ import { aiInsights, buildPatientChatIntro, buildSectionChatIntro } from '../moc
 
 export interface AiInsightResult {
   interactionId: string;
+  predictionId: string;
+  /** 백엔드가 사용한 model_key (긴 form, 예: mortality_48h). */
+  modelKey: string;
+  section: AiInsightSection;
+  /** 위험 등급. 예측 실패 등으로 없을 수 있음. */
+  riskLabel: string | null;
   /** Bedrock이 생성한 임상 설명. */
   explanation: string;
+  /** AI가 제시한 주요 기여 요인. 구조 미확정이라 unknown[]. */
+  keyFactors: unknown[];
   /** ai_interactions 캐시 히트 여부. */
   cached: boolean;
+  /** 안전 안내 문구. */
+  safetyNote: string;
 }
 
+/**
+ * Lambda 응답(snake_case). 요청 body 는 camelCase 인데 응답은 snake_case 인 비대칭은
+ * Lambda 구현을 따른 것이다 (요청/응답 케이싱이 의도적으로 다름).
+ */
 interface WireAiInsightResponse {
   interaction_id: string;
-  interaction_type: string;
-  stay_token: string;
   prediction_id: string;
+  model_key: string;
+  section: string;
+  risk_label: string | null;
   explanation: string;
-  top_factors: unknown[];
-  guardrail_result: unknown;
-  model_provider: string;
-  llm_model_id: string;
+  key_factors: unknown[];
   cached: boolean;
-  created_at: string;
+  safety_note: string;
 }
 
 /**
@@ -48,30 +60,48 @@ interface WireAiInsightResponse {
 export async function postAiInsight(
   stayToken: string,
   predictionId: string,
-  modelKey: string,
+  modelKey: ModelKey,
+  section: AiInsightSection,
   forceRefresh = false,
 ): Promise<AiInsightResult> {
   if (MOCK_MODE) {
+    // mock 에서도 섹션/모델별 텍스트 유지 — aiInsights 매트릭스 lookup (빈 값이면 폴백).
+    const explanation =
+      aiInsights[modelKey]?.[section] ||
+      '현재 입력된 수치 기준으로 위험도 평가가 산출되었습니다. 임상 판단은 담당 의료진의 평가가 필요합니다.';
     return {
       interactionId: `mock-insight-${Date.now()}`,
-      explanation:
-        '현재 입력된 수치 기준으로 48시간 사망 위험도가 높게 예측되었으며, 주요 기여 요인은 lactate 상승과 평균 동맥압 저하입니다. 임상 판단은 담당 의료진의 평가가 필요합니다.',
+      predictionId,
+      modelKey,
+      section,
+      riskLabel: null,
+      explanation,
+      keyFactors: [],
       cached: false,
+      safetyNote: '이 결과는 최종 진단이나 처방이 아닙니다.',
     };
   }
+  // 요청 body 는 Lambda 가 기대하는 camelCase. (응답은 snake_case)
   const w = await request<WireAiInsightResponse>('/ai/insights', {
     method: 'POST',
     body: JSON.stringify({
-      stay_token: stayToken,
-      prediction_id: predictionId,
-      model_key: modelKey,
-      force_refresh: forceRefresh,
+      stayToken,
+      predictionId,
+      modelKey,
+      section,
+      forceRefresh,
     }),
   });
   return {
     interactionId: w.interaction_id,
+    predictionId: w.prediction_id,
+    modelKey: w.model_key,
+    section: w.section as AiInsightSection,
+    riskLabel: w.risk_label,
     explanation: w.explanation,
+    keyFactors: w.key_factors,
     cached: w.cached,
+    safetyNote: w.safety_note,
   };
 }
 

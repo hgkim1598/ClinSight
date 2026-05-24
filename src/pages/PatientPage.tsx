@@ -178,6 +178,7 @@ function PatientPageContent({ stayId }: PatientPageContentProps) {
           <LoadingState />
         ) : predictions ? (
           <ModelDetailView
+            stayToken={patient.stayToken}
             selectedModel={selectedModel}
             predictions={predictions}
             onBack={() => setSelectedModel(null)}

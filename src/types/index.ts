@@ -408,6 +408,8 @@ export interface EscalationPrediction {
 
 /** 모델 카드/모델 상세 view-model */
 export interface ModelPrediction {
+  /** 최신 예측 식별자(prediction_id). AI 설명 요청(postAiInsight) 등에 사용. 예측 없으면 undefined. */
+  predictionId?: string;
   title: string;
   tone: RiskTone;
   /** API risk_label에서 유래. 컴포넌트가 직접 쓸 때만 채워짐. */
