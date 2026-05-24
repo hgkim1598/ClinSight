@@ -3,6 +3,9 @@ import type { MouseEvent, ReactNode } from 'react';
 import { Info, Sparkles, X } from 'lucide-react';
 import './AiInsightModal.css';
 
+/** ModelDetailView 가 로딩 중에 내려보내는 문구. 이 값일 때만 글자 bounce 애니메이션 표시. */
+const LOADING_TEXT = 'AI 설명을 불러오는 중...';
+
 interface AiInsightModalProps {
   open: boolean;
   onClose: () => void;
@@ -41,6 +44,8 @@ export default function AiInsightModal({
     if (e.target === e.currentTarget) onClose();
   };
 
+  const isLoading = insight === LOADING_TEXT;
+
   return (
     <div className="ai-modal__overlay" onClick={handleOverlayClick}>
       <div
@@ -69,7 +74,25 @@ export default function AiInsightModal({
 
         <section className="ai-modal__insight" aria-label="AI 설명">
           <h4 className="ai-modal__insight-title">AI 설명</h4>
-          <p className="ai-modal__insight-text">{insight}</p>
+          {isLoading ? (
+            <p
+              className="ai-modal__insight-text ai-modal__insight-text--loading"
+              aria-label={insight}
+            >
+              {Array.from(insight).map((ch, i) => (
+                <span
+                  key={i}
+                  className="ai-modal__loading-char"
+                  style={{ animationDelay: `${i * 0.06}s` }}
+                  aria-hidden="true"
+                >
+                  {ch}
+                </span>
+              ))}
+            </p>
+          ) : (
+            <p className="ai-modal__insight-text">{insight}</p>
+          )}
           <div className="ai-modal__disclaimer">
             <Info size={12} aria-hidden="true" />
             AI 생성 텍스트 · 임상 판단 대체 불가

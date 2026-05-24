@@ -100,6 +100,36 @@
   color: var(--text);
 }
 
+/* 로딩 상태("AI 설명을 불러오는 중..."): 글자가 파도처럼 순차로 통통 튀는 애니메이션. */
+.ai-modal__insight-text--loading {
+  text-align: center;
+  color: var(--primary);
+}
+
+.ai-modal__loading-char {
+  display: inline-block;
+  white-space: pre;
+  animation: ai-modal-loading-bounce 1.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes ai-modal-loading-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-modal__loading-char {
+    animation: none;
+  }
+}
+
 .ai-modal__disclaimer {
   display: inline-flex;
   align-items: center;
