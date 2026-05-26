@@ -155,7 +155,7 @@ const PT19482_MORTALITY = buildLatestAndHistory(
       { feature: 'map',       value: 58,  direction: 'decrease', contribution: 0.21 },
       { feature: 'sofa_total', value: 12, direction: 'increase', contribution: 0.18 },
       { feature: 'age',       value: 72,  direction: 'increase', contribution: 0.09 },
-      { feature: 'pao2_fio2', value: 180, direction: 'decrease', contribution: 0.07 },
+      { feature: 'pao2fio2ratio', value: 180, direction: 'decrease', contribution: 0.07 },
     ],
   },
   'ST-19482',
@@ -187,7 +187,7 @@ const PT19482_ARDS = buildLatestAndHistory(
     threshold: 0.5,
     trendScores: [0.32, 0.34, 0.38, 0.42, 0.45, 0.48, 0.51],
     topFactors: [
-      { feature: 'pao2_fio2', value: 180,  direction: 'decrease', contribution: 0.26 },
+      { feature: 'pao2fio2ratio', value: 180,  direction: 'decrease', contribution: 0.26 },
       { feature: 'spo2',      value: 91,   direction: 'decrease', contribution: 0.18 },
       { feature: 'rr',        value: 28,   direction: 'increase', contribution: 0.12 },
       { feature: 'fio2',      value: 0.6,  direction: 'increase', contribution: 0.09 },
@@ -241,7 +241,7 @@ const PT19482_INV_VENT = buildLatestAndHistory(
     threshold: 0.4,
     trendScores: [0.20, 0.24, 0.28, 0.32, 0.34, 0.36, 0.38],
     topFactors: [
-      { feature: 'pao2_fio2', value: 180, direction: 'decrease', contribution: 0.22 },
+      { feature: 'pao2fio2ratio', value: 180, direction: 'decrease', contribution: 0.22 },
       { feature: 'rr',        value: 28,  direction: 'increase', contribution: 0.14 },
       { feature: 'fio2',      value: 0.6, direction: 'increase', contribution: 0.09 },
     ],
@@ -299,7 +299,7 @@ const PT19482_RAW: WireRawPoint[] = [
   { target: 'aki', metric_code: 'bun',          numeric_value: 38,  unit: 'mg/dL',    observed_at: isoOffsetHours(1) },
   { target: 'aki', metric_code: 'potassium',    numeric_value: 5.1, unit: 'mmol/L',   observed_at: isoOffsetHours(1) },
   // ards 카드 raw
-  { target: 'ards', metric_code: 'pao2_fio2', numeric_value: 180,  unit: '',     observed_at: isoOffsetMinutes(30) },
+  { target: 'ards', metric_code: 'pao2fio2ratio', numeric_value: 180,  unit: '',     observed_at: isoOffsetMinutes(30) },
   { target: 'ards', metric_code: 'spo2',      numeric_value: 91,   unit: '%',    observed_at: isoOffsetMinutes(10) },
   { target: 'ards', metric_code: 'fio2',      numeric_value: 0.6,  unit: '',     observed_at: isoOffsetMinutes(10) },
   { target: 'ards', metric_code: 'rr',        numeric_value: 28,   unit: '/min', observed_at: isoOffsetMinutes(10) },

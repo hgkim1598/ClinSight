@@ -49,7 +49,7 @@ const TARGET_LABS: Array<{
   { label: 'Lactate', metricCode: 'lactate', normalRange: '0.5–2.2 mmol/L' },
   { label: 'Creatinine', metricCode: 'creatinine', normalRange: '0.6–1.3 mg/dL' },
   { label: 'Platelet', metricCode: 'platelet', normalRange: '150–400 x10³/µL' },
-  { label: 'PaO2/FiO2', metricCode: 'pao2_fio2', normalRange: '> 400' },
+  { label: 'PaO2/FiO2', metricCode: 'pao2fio2ratio', normalRange: '> 400' },
 ];
 
 /**

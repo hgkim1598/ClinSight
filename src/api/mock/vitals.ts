@@ -131,7 +131,7 @@ const PT19482_LABS: LabSpec[] = [
     points: [[12, 1.6], [2, 2.1]],
   },
   {
-    metricCode: 'pao2_fio2', metricName: 'PaO2/FiO2', unit: '',
+    metricCode: 'pao2fio2ratio', metricName: 'PaO2/FiO2', unit: '',
     normalLow: 400, normalHigh: 500,
     points: [[20, 380], [14, 310], [8, 245], [3, 198]],
   },
@@ -141,7 +141,7 @@ const PT19482_LABS: LabSpec[] = [
     points: [[22, 185], [10, 142], [2, 98]],
   },
   {
-    metricCode: 'bilirubin', metricName: 'Bilirubin', unit: 'mg/dL',
+    metricCode: 'bilirubin_total', metricName: 'Bilirubin', unit: 'mg/dL',
     normalLow: 0.2, normalHigh: 1.2,
     points: [[20, 1.0], [8, 1.8], [1, 2.4]],
   },

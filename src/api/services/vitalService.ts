@@ -82,7 +82,8 @@ const VITAL_KEYS: VitalKey[] = ['hr', 'map', 'spo2', 'rr', 'temp', 'gcs', 'urine
 const METRIC_CODE_ALIAS: Record<string, string> = {
   resp_rate: 'rr',
   temperature: 'temp',
-  bilirubin_total: 'bilirubin',
+  // DB 가 bilirubin_total 로 내려오므로 LAB_TYPE_BY_METRIC 에서 직접 매핑. 이 alias 는 비활성.
+  // bilirubin_total: 'bilirubin',
 };
 
 function canonicalMetricCode(code: string): string {
@@ -93,18 +94,18 @@ function canonicalMetricCode(code: string): string {
 const LAB_TYPE_BY_METRIC: Record<string, LabDot['type']> = {
   lactate: 'lac',
   creatinine: 'cre',
-  pao2_fio2: 'pf_ratio',
+  pao2fio2ratio: 'pf_ratio',
   platelet: 'platelet',
-  bilirubin: 'bilirubin',
+  bilirubin_total: 'bilirubin',
 };
 
 /** lab metric_code → annotation 표시 라벨 prefix 매핑 */
 const LAB_LABEL_PREFIX: Record<string, string> = {
   lactate: 'Lac',
   creatinine: 'Cre',
-  pao2_fio2: 'P/F',
+  pao2fio2ratio: 'P/F',
   platelet: 'Plt',
-  bilirubin: 'Bil',
+  bilirubin_total: 'Bil',
 };
 
 const EMPTY_VITAL_SERIES = (label: string, unit: string, normal: [number, number]): VitalSeries => ({

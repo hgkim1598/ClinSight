@@ -19,7 +19,7 @@ import type {
 import { getDashboardPatients, type DashboardSort } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { getAlerts } from '../api/services/alertService';
-import { CURRENT_ICU_ID } from '../utils/constants';
+import { CURRENT_ICU_ID, scoreToRiskLabel } from '../utils/constants';
 import { usePatients } from '../context/usePatients';
 import { patientLocalData } from '../data/patientLocalData';
 import Badge from '../components/common/Badge';
@@ -87,10 +87,11 @@ function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[
 
 function buildKpis(dashboard: DashboardResponse, activeAlertCount: number): KpiData[] {
   const totalPatients = dashboard.summary.totalPatients;
-  // 고위험 환자는 환자행에서 파생(표와 일치). 활성 알림은 환자행 active_alert_count(누적 추정)
-  // 합산이 부풀려져, 전용 알림 API(status==='active')에서 산출한 값을 인자로 받는다.
+  // 고위험 환자는 환자행 sepsis_light_prob 에서 파생(표 "패혈증 위험도" 컬럼과 일치).
+  // 활성 알림은 환자행 active_alert_count(누적 추정) 합산이 부풀려져,
+  // 전용 알림 API(status==='active')에서 산출한 값을 인자로 받는다.
   const highRiskCount = dashboard.patients.filter(
-    (p) => p.latestMortalityRiskLabel === 'high' || p.latestMortalityRiskLabel === 'critical',
+    (p) => p.sepsisLightProb != null && scoreToRiskLabel(p.sepsisLightProb) === 'high',
   ).length;
   return [
     {
@@ -297,7 +298,11 @@ export default function OverviewPage() {
                     return (
                     <tr
                       key={p.stayId ?? p.stayToken ?? p.patientToken ?? `row-${idx}`}
-                      className={p.latestMortalityRiskLabel === 'high' ? 'is-high' : ''}
+                      className={
+                        p.sepsisLightProb != null && scoreToRiskLabel(p.sepsisLightProb) === 'high'
+                          ? 'is-high'
+                          : ''
+                      }
                       onClick={() => navigate(`/patient/${p.stayId}`)}
                     >
                       <td className="cell-bed">{p.currentBedLabel}</td>
@@ -317,7 +322,13 @@ export default function OverviewPage() {
                       <td className="cell-sofa">{p.activeAlertCount}</td>
                       <td className="cell-sofa">{p.latestSofaTotal}</td>
                       <td>
-                        <Badge level={p.latestMortalityRiskLabel} />
+                        <Badge
+                          level={
+                            p.sepsisLightProb != null
+                              ? scoreToRiskLabel(p.sepsisLightProb)
+                              : null
+                          }
+                        />
                       </td>
                     </tr>
                     );

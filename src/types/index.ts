@@ -121,6 +121,8 @@ export interface DashboardPatient {
   latestMortalityRiskScore: number | null;
   latestMortalityRiskLabel: RiskLevel | null;
   latestComplicationRiskScore: number | null;
+  /** sepsis_light 모델 확률(0~1). 백엔드 롤아웃 중이라 optional. 표 "패혈증 위험도" 컬럼 소스. */
+  sepsisLightProb?: number | null;
   latestSofaTotal: number;
   activeAlertCount: number;
   lastPredictionAt: string;
@@ -206,7 +208,7 @@ export interface DashboardStaffing {
 export interface ClinicalObservation {
   observationId: string;
   metricGroup: 'vital' | 'lab' | 'derived';
-  /** API metric_code. 풀네임 사용 (lactate, creatinine, pao2_fio2 등). */
+  /** API metric_code. 풀네임 사용 (lactate, creatinine, pao2fio2ratio 등). */
   metricCode: string;
   metricName: string;
   numericValue: number;
@@ -255,7 +257,7 @@ export interface LabDot {
   label: string;
   value: number;
   type: 'lac' | 'cre' | 'pf_ratio' | 'platelet' | 'bilirubin';
-  /** API metric_code. 풀네임 (lactate, creatinine, pao2_fio2, platelet, bilirubin). */
+  /** API metric_code. 풀네임 (lactate, creatinine, pao2fio2ratio, platelet, bilirubin_total). */
   metricCode?: string;
   /** 원본 ISO 시각. datetime 툴팁용. */
   isoTime?: string;
