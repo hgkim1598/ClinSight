@@ -11,6 +11,7 @@
 
 body {
   font-family: var(--sans);
+  font-variant-numeric: tabular-nums; /* 의료 수치 정렬을 위한 고정폭 숫자 */
   background: var(--canvas);
   color: var(--text);
   min-height: 100vh;
