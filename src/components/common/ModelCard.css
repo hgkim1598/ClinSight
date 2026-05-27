@@ -2,7 +2,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 4px;
   padding: var(--space-md);
   background: var(--card);
   border: 1px solid var(--border);
@@ -31,15 +31,18 @@
 
 .model-card__head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-sm);
+  min-height: 40px;
 }
 
 .model-card__title {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
+  line-height: 1.35;
+  min-width: 0;
 }
 
 .model-card__value {
@@ -47,6 +50,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-sm);
+  margin-top: auto;
+  width: 100%;
 }
 
 .model-card__value-text {
