@@ -17,11 +17,34 @@ const STATUS_LABEL: Record<VitalStatusLevel, string> = {
   critical: '위험',
 };
 
+/**
+ * 활력징후 표시 포맷.
+ *  - temp: 소수 1자리
+ *  - spo2: 정수, 100 상한
+ *  - hr/map/rr/gcs/urine_output: 정수
+ *  - 그 외 키: 소수점 있으면 toFixed(1), 없으면 정수 (폴백)
+ */
 function formatVitalValue(row: ReportVitalRow): string {
   if (row.latestValue == null) return '—';
-  const rounded = Number.isInteger(row.latestValue)
-    ? `${row.latestValue}`
-    : row.latestValue.toFixed(1);
+  const key = row.key;
+  let rounded: string;
+  if (key === 'temp') {
+    rounded = row.latestValue.toFixed(1);
+  } else if (key === 'spo2') {
+    rounded = String(Math.min(100, Math.round(row.latestValue)));
+  } else if (
+    key === 'hr' ||
+    key === 'map' ||
+    key === 'rr' ||
+    key === 'gcs' ||
+    key === 'urine_output'
+  ) {
+    rounded = String(Math.round(row.latestValue));
+  } else {
+    rounded = Number.isInteger(row.latestValue)
+      ? `${row.latestValue}`
+      : row.latestValue.toFixed(1);
+  }
   return `${rounded} ${row.unit}`;
 }
 
@@ -148,7 +171,7 @@ export default function ReportContent({ report }: ReportContentProps) {
               <tr key={p.key}>
                 <td>{p.title}</td>
                 <td className="report-table__num">
-                  {p.probability != null ? `${p.probability}%` : '—'}
+                  {p.probability != null ? `${Math.round(p.probability)}%` : '—'}
                 </td>
                 <td>
                   {p.risk ? (

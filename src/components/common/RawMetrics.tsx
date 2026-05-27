@@ -12,6 +12,17 @@ function latestTime(metrics: RawMetric[]): string {
   return input?.time ?? metrics[0]?.time ?? '—';
 }
 
+/**
+ * 문자열 값 표시 포맷. 숫자로 파싱 가능하면 정수는 그대로, 소수는 toFixed(1).
+ * 숫자가 아닌 문자열(예: 'Yes', '없음')이면 원본 그대로 반환.
+ */
+function formatValue(raw: string): string {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  if (Number.isInteger(n)) return String(n);
+  return n.toFixed(1);
+}
+
 export default function RawMetrics({ metrics, maxCards = 3 }: RawMetricsProps) {
   const modelInputs = metrics.filter((m) => m.isModelInput).slice(0, maxCards);
   if (modelInputs.length === 0) {
@@ -32,7 +43,7 @@ export default function RawMetrics({ metrics, maxCards = 3 }: RawMetricsProps) {
             <span className="raw-metrics__cell-tag">Model input</span>
             <span className="raw-metrics__cell-label">{m.label}</span>
             <span className="raw-metrics__cell-value">
-              {m.value}
+              {formatValue(m.value)}
               {m.unit && <span className="raw-metrics__cell-unit"> {m.unit}</span>}
             </span>
             <span className="raw-metrics__cell-time">{m.time}</span>

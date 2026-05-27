@@ -46,6 +46,12 @@ const VISIBLE_HOURS = 24;
 const CHART_HEIGHT = 260;
 
 /** ISO → "5/17 19:44" 형태 (월/일 시:분). 잘못된 입력이면 빈 문자열. */
+/** lab dot 값 포맷 — lactate/creatinine/bilirubin 은 소수 1자리, P/F ratio·platelet 은 정수. */
+function formatDotValue(type: DotType, value: number): string {
+  if (type === 'lac' || type === 'cre' || type === 'bilirubin') return value.toFixed(1);
+  return String(Math.round(value));
+}
+
 function formatTooltipTime(iso: string | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -411,7 +417,7 @@ function ChartBody({
           className="vital-chart__value"
           style={{ color: DOT_INFO[primaryDotType].color(latestDot.value) }}
         >
-          {Math.round(latestDot.value)}
+          {formatDotValue(primaryDotType, latestDot.value)}
           <span className="vital-chart__unit"> {DOT_INFO[primaryDotType].unit}</span>
         </span>
       </span>
@@ -555,27 +561,27 @@ function ChartBody({
                       } else if (name === 'lacY' && point.lacValue != null) {
                         rows.push({
                           label: DOT_INFO.lac.label,
-                          value: `${Math.round(point.lacValue)} ${DOT_INFO.lac.unit}`,
+                          value: `${formatDotValue('lac', point.lacValue)} ${DOT_INFO.lac.unit}`,
                         });
                       } else if (name === 'creY' && point.creValue != null) {
                         rows.push({
                           label: DOT_INFO.cre.label,
-                          value: `${Math.round(point.creValue)} ${DOT_INFO.cre.unit}`,
+                          value: `${formatDotValue('cre', point.creValue)} ${DOT_INFO.cre.unit}`,
                         });
                       } else if (name === 'pfY' && point.pfValue != null) {
                         rows.push({
                           label: DOT_INFO.pf_ratio.label,
-                          value: `${Math.round(point.pfValue)}`,
+                          value: `${formatDotValue('pf_ratio', point.pfValue)}`,
                         });
                       } else if (name === 'pltY' && point.pltValue != null) {
                         rows.push({
                           label: DOT_INFO.platelet.label,
-                          value: `${Math.round(point.pltValue)} ${DOT_INFO.platelet.unit}`,
+                          value: `${formatDotValue('platelet', point.pltValue)} ${DOT_INFO.platelet.unit}`,
                         });
                       } else if (name === 'bilY' && point.bilValue != null) {
                         rows.push({
                           label: DOT_INFO.bilirubin.label,
-                          value: `${Math.round(point.bilValue)} ${DOT_INFO.bilirubin.unit}`,
+                          value: `${formatDotValue('bilirubin', point.bilValue)} ${DOT_INFO.bilirubin.unit}`,
                         });
                       }
                       // skip: normalBase, normalBand, dotOn — 차트 보조 dataKey
@@ -968,27 +974,27 @@ function CompareChartBody({
                         if (name === 'lacY' && point.lacValue != null) {
                           rows.push({
                             label: DOT_INFO.lac.label,
-                            value: `${Math.round(point.lacValue as number)} ${DOT_INFO.lac.unit}`,
+                            value: `${formatDotValue('lac', point.lacValue as number)} ${DOT_INFO.lac.unit}`,
                           });
                         } else if (name === 'creY' && point.creValue != null) {
                           rows.push({
                             label: DOT_INFO.cre.label,
-                            value: `${Math.round(point.creValue as number)} ${DOT_INFO.cre.unit}`,
+                            value: `${formatDotValue('cre', point.creValue as number)} ${DOT_INFO.cre.unit}`,
                           });
                         } else if (name === 'pfY' && point.pfValue != null) {
                           rows.push({
                             label: DOT_INFO.pf_ratio.label,
-                            value: `${Math.round(point.pfValue as number)}`,
+                            value: `${formatDotValue('pf_ratio', point.pfValue as number)}`,
                           });
                         } else if (name === 'pltY' && point.pltValue != null) {
                           rows.push({
                             label: DOT_INFO.platelet.label,
-                            value: `${Math.round(point.pltValue as number)} ${DOT_INFO.platelet.unit}`,
+                            value: `${formatDotValue('platelet', point.pltValue as number)} ${DOT_INFO.platelet.unit}`,
                           });
                         } else if (name === 'bilY' && point.bilValue != null) {
                           rows.push({
                             label: DOT_INFO.bilirubin.label,
-                            value: `${Math.round(point.bilValue as number)} ${DOT_INFO.bilirubin.unit}`,
+                            value: `${formatDotValue('bilirubin', point.bilValue as number)} ${DOT_INFO.bilirubin.unit}`,
                           });
                         }
                       }

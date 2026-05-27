@@ -109,9 +109,9 @@ export default function PatientHeader({ patient, onSummaryClick }: PatientHeader
           <span>
             {String(ageDisplay)} / {patient.sex === 'M' ? 'M' : 'F'}
           </span>
-          {weightKg != null && <span>체중 {weightKg} kg</span>}
-          {heightCm != null && <span>신장 {heightCm} cm</span>}
-          {bmi != null && <span>BMI {bmi}</span>}
+          {weightKg != null && <span>체중 {weightKg.toFixed(1)} kg</span>}
+          {heightCm != null && <span>신장 {Math.round(heightCm)} cm</span>}
+          {bmi != null && <span>BMI {bmi.toFixed(1)}</span>}
         </div>
 
         {/* 3단: 임상 핵심 정보 grid (병상 · 입실시간 · 주진단 · SEPSIS ONSET) */}
