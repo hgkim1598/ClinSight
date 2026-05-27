@@ -9,6 +9,7 @@ interface PatientHeaderProps {
   onSummaryClick?: () => void;
 }
 
+/*
 function hoursSinceIso(iso: string | null | undefined): number | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -16,6 +17,7 @@ function hoursSinceIso(iso: string | null | undefined): number | null {
   const diffMs = Date.now() - d.getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
 }
+*/
 
 /**
  * ISO → 경과 일수. HOD/ICU Day(startFromOne=true) 는 당일을 1일로,
