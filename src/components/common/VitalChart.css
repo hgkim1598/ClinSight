@@ -55,12 +55,12 @@
   width: 36px;
   height: 36px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
-  margin-left: 8px;
+  margin-left: var(--space-sm);
 }
 
 .vital-chart__compare-btn:hover {
@@ -70,13 +70,43 @@
 
 .vital-chart__compare-btn.is-active {
   color: var(--primary);
-  background: rgba(37, 99, 235, 0.1);
+  background: var(--primary-bg);
   border-color: var(--primary);
 }
 
 .vital-chart__compare-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* 비교 모드에서 disabled 된 탭 (sofa / coag / hepatic) */
+.vital-chart__tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 비교 모드 범례 — 차트 위에 라인 색·이름 표시 */
+.vital-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.vital-chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.vital-chart__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .vital-chart__meta {

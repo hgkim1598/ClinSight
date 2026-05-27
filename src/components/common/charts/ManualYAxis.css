@@ -1,0 +1,9 @@
+/* ============================================
+   ManualYAxis — SVG 라벨/틱 스타일
+   ============================================ */
+
+/* 세로 라벨 (rotate(-90)). fill 색은 React props labelColor 로 인라인 주입. */
+.manual-y-axis__label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+}

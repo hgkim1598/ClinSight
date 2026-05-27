@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import './ManualYAxis.css';
 
 /**
  * recharts XAxis 기본 height. 차트 하단에서 차지하는 공간.
@@ -20,6 +21,10 @@ interface ManualYAxisProps {
   orientation: 'left' | 'right';
   width: number;
   formatTick?: (v: number) => string;
+  /** 축 옆 세로 라벨 (예: "HR (bpm)"). 미지정이면 라벨 없음. */
+  label?: string;
+  /** 라벨 색상 — 해당 라인 색상과 일치시켜 축↔라인 매핑이 즉시 보이게. */
+  labelColor?: string;
   style?: CSSProperties;
 }
 
@@ -48,6 +53,8 @@ export default function ManualYAxis({
   orientation,
   width,
   formatTick = (v) => `${Math.round(v)}`,
+  label,
+  labelColor,
   style,
 }: ManualYAxisProps) {
   const plotTop = marginTop;
@@ -82,6 +89,22 @@ export default function ManualYAxis({
         y2={plotBottom}
         stroke="var(--border)"
       />
+      {label && (() => {
+        const labelX = isLeft ? 14 : width - 14;
+        const labelY = (plotTop + plotBottom) / 2;
+        return (
+          <text
+            x={labelX}
+            y={labelY}
+            transform={`rotate(-90, ${labelX}, ${labelY})`}
+            fill={labelColor ?? 'var(--text-secondary)'}
+            textAnchor="middle"
+            className="manual-y-axis__label"
+          >
+            {label}
+          </text>
+        );
+      })()}
       {tickValues.map((tick) => {
         const ratio = range === 0 ? 0 : (tick - yMin) / range;
         const y = plotBottom - ratio * plotHeight;
