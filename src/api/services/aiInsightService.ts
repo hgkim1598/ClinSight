@@ -136,7 +136,7 @@ export async function createChatSession(
   const w = await request<WireChatSessionResponse>('/ai/chat/sessions', {
     method: 'POST',
     body: JSON.stringify({
-      stay_token: stayToken,
+      stayToken: stayToken,
       session_title: sessionTitle,
     }),
   });
