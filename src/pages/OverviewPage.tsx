@@ -75,9 +75,13 @@ function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[
         (a, b) => rankOf(a.latestMortalityRiskLabel) - rankOf(b.latestMortalityRiskLabel),
       );
     case 'recent-desc':
-      return arr.sort((a, b) => b.lastObservationAt.localeCompare(a.lastObservationAt));
+      return arr.sort((a, b) =>
+        (b.lastObservationAt ?? '').localeCompare(a.lastObservationAt ?? ''),
+      );
     case 'recent-asc':
-      return arr.sort((a, b) => a.lastObservationAt.localeCompare(b.lastObservationAt));
+      return arr.sort((a, b) =>
+        (a.lastObservationAt ?? '').localeCompare(b.lastObservationAt ?? ''),
+      );
     case 'sofa-desc':
       return arr.sort((a, b) => b.latestSofaTotal - a.latestSofaTotal);
     case 'alert-desc':

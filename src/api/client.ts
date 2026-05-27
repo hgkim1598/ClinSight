@@ -116,6 +116,10 @@ export async function request<T>(
     }
   }
 
+  // 빈 응답(204 No Content 등) 방어: JSON.parse 호출 전에 가드. null 로 폴백.
+  if (!text) {
+    return null as T;
+  }
   const envelope = JSON.parse(text) as ApiEnvelope<T>;
   if (!envelope.success || envelope.error) {
     throw new ApiError(
