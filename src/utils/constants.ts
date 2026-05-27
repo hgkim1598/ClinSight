@@ -37,3 +37,19 @@ export function scoreToRiskLabel(score: number): RiskLevel {
   if (score >= RISK_THRESHOLDS.MEDIUM) return 'medium';
   return 'low';
 }
+
+/**
+ * sepsis_deep_prob 전용 임계치 — 패혈증 위험 분류만 별도 기준 적용.
+ * (mortality/aki 등 다른 모델 score 는 RISK_THRESHOLDS 사용)
+ */
+export const SEPSIS_RISK_THRESHOLDS = {
+  HIGH: 0.3,
+  MEDIUM: 0.2,
+} as const;
+
+/** sepsis_deep_prob(0~1) → RiskLevel. SEPSIS_RISK_THRESHOLDS 기반. */
+export function sepsisProbToRiskLabel(score: number): RiskLevel {
+  if (score >= SEPSIS_RISK_THRESHOLDS.HIGH) return 'high';
+  if (score >= SEPSIS_RISK_THRESHOLDS.MEDIUM) return 'medium';
+  return 'low';
+}

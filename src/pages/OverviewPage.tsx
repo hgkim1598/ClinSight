@@ -19,7 +19,7 @@ import type {
 import { getDashboardPatients, type DashboardSort } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { getAlerts } from '../api/services/alertService';
-import { CURRENT_ICU_ID, scoreToRiskLabel } from '../utils/constants';
+import { CURRENT_ICU_ID, sepsisProbToRiskLabel } from '../utils/constants';
 import { usePatients } from '../context/usePatients';
 import { patientLocalData } from '../data/patientLocalData';
 import Badge from '../components/common/Badge';
@@ -95,7 +95,7 @@ function buildKpis(dashboard: DashboardResponse, activeAlertCount: number): KpiD
   // 활성 알림은 환자행 active_alert_count(누적 추정) 합산이 부풀려져,
   // 전용 알림 API(status==='active')에서 산출한 값을 인자로 받는다.
   const highRiskCount = dashboard.patients.filter(
-    (p) => p.sepsisDeepProb != null && scoreToRiskLabel(p.sepsisDeepProb) === 'high',
+    (p) => p.sepsisDeepProb != null && sepsisProbToRiskLabel(p.sepsisDeepProb) === 'high',
   ).length;
   return [
     {
@@ -303,7 +303,7 @@ export default function OverviewPage() {
                     <tr
                       key={p.stayId ?? p.stayToken ?? p.patientToken ?? `row-${idx}`}
                       className={
-                        p.sepsisDeepProb != null && scoreToRiskLabel(p.sepsisDeepProb) === 'high'
+                        p.sepsisDeepProb != null && sepsisProbToRiskLabel(p.sepsisDeepProb) === 'high'
                           ? 'is-high'
                           : ''
                       }
@@ -329,7 +329,7 @@ export default function OverviewPage() {
                         <Badge
                           level={
                             p.sepsisDeepProb != null
-                              ? scoreToRiskLabel(p.sepsisDeepProb)
+                              ? sepsisProbToRiskLabel(p.sepsisDeepProb)
                               : null
                           }
                         />
