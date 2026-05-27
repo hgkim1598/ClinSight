@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SubmitEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Activity, CreditCard } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import { useMe } from '../context/useMeta';
+import clinsightLogo from '../assets/images/clinsight-logo.png';
 import './LoginPage.css';
 
 type Stage = 'form' | 'newPassword' | 'splash';
@@ -148,7 +149,7 @@ export default function LoginPage() {
         <form className="login__card" onSubmit={handleSubmit} noValidate>
           <div className="login__brand">
             <span className="login__logo-mark">
-              <Activity size={22} />
+              <img src={clinsightLogo} alt="ClinSight" width={22} height={22} />
             </span>
             <span className="login__brand-name">ClinSight</span>
           </div>
@@ -239,7 +240,7 @@ export default function LoginPage() {
         <form className="login__card" onSubmit={handleNewPasswordSubmit} noValidate>
           <div className="login__brand">
             <span className="login__logo-mark">
-              <Activity size={22} />
+              <img src={clinsightLogo} alt="ClinSight" width={22} height={22} />
             </span>
             <span className="login__brand-name">ClinSight</span>
           </div>
@@ -312,7 +313,7 @@ export default function LoginPage() {
         <div className="login__splash" role="status" aria-live="polite">
           <div className="login__brand login__brand--lg">
             <span className="login__logo-mark login__logo-mark--lg">
-              <Activity size={28} />
+              <img src={clinsightLogo} alt="ClinSight" width={28} height={28} />
             </span>
             <span className="login__brand-name login__brand-name--lg">ClinSight</span>
           </div>

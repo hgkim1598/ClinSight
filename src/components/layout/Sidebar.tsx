@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { ComponentType, SVGProps } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Activity,
   LayoutDashboard,
   Bell,
   ClipboardList,
@@ -16,6 +15,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
+import clinsightLogo from '../../assets/images/clinsight-logo.png';
 import './Sidebar.css';
 
 const THEME_STORAGE_KEY = 'clinsight-theme';
@@ -111,7 +111,7 @@ export default function Sidebar({ collapsed, mobileOpen, onToggle }: SidebarProp
         aria-label="ICU 현황으로 이동"
       >
         <span className="sidebar__logo-mark">
-          <Activity size={18} />
+          <img src={clinsightLogo} alt="ClinSight" width={18} height={18} />
         </span>
         {!collapsed && (
           <span className="sidebar__logo-text">
