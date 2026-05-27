@@ -50,10 +50,22 @@ function currentProbability(p: ModelPrediction): number | null {
   return p.trend[p.trend.length - 1].pct;
 }
 
+function parseTrendHours(label: string): number | null {
+  if (label === '현재') return 0;
+  const m = label.match(/^-(\d+)h$/);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 function buildDeltaText(p: ModelPrediction): string {
   const delta = p.trendWarn.delta?.trim();
   if (!delta) return '추세 데이터 부족';
-  return `${delta} 6시간 변화`;
+  if (p.trend.length < 2) return delta;
+  const firstHr = parseTrendHours(p.trend[0].t);
+  const lastHr = parseTrendHours(p.trend[p.trend.length - 1].t);
+  if (firstHr == null || lastHr == null) return delta;
+  const spanHr = Math.round(Math.abs(firstHr - lastHr));
+  if (spanHr <= 0) return delta;
+  return `${delta} ${spanHr}시간 변화`;
 }
 
 export default function ModelDetailView({

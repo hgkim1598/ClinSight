@@ -264,9 +264,9 @@ export function computeTrendWarning(history: PredictionHistoryPoint[]): TrendWar
   if (sorted.length < 2) return { delta: '', note: '' };
   const first = sorted[0].riskScore as number;
   const last = sorted[sorted.length - 1].riskScore as number;
-  const deltaPct = Math.round((last - first) * 100);
-  const sign = deltaPct >= 0 ? '+' : '';
-  const delta = `${sign}${deltaPct}%p`;
+  const deltaPct = Math.round((last - first) * 1000) / 10;
+  const sign = deltaPct >= 0 ? '+' : '-';
+  const delta = `${sign}${Math.abs(deltaPct).toFixed(1)}%p`;
   const note =
     deltaPct >= 15
       ? '최근 추세에서 위험이 빠르게 상승 중입니다. 평가 필요.'
