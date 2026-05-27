@@ -96,7 +96,7 @@
 .capacity-tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
+  padding: 4px 12px;
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 500;
@@ -113,11 +113,11 @@
 }
 
 .capacity-tag__label {
-  padding: 2px 8px;
+  padding: 4px 8px;
 }
 
 .capacity-tag__count {
-  padding: 2px 8px;
+  padding: 4px 8px;
   background: color-mix(in srgb, var(--primary) 22%, transparent);
   color: var(--primary);
   font-weight: 600;
@@ -203,7 +203,7 @@
   color: var(--text);
   font-family: inherit;
   font-size: 13px;
-  padding: 6px 28px 6px 10px;
+  padding: 8px 24px 8px 12px;
   cursor: pointer;
   transition: border-color 0.12s ease;
 }
@@ -390,6 +390,18 @@
   font-feature-settings: 'tnum';
   min-width: 88px;
   text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .overview {
+    padding: var(--space-md);
+  }
+  .overview__kpis {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .patient-table {
+    font-size: var(--text-sm);
+  }
 }
 
 @media (max-width: 768px) {

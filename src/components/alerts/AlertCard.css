@@ -135,14 +135,14 @@
 .alert-card__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-top: -2px;
+  gap: 4px;
+  margin-top: 0;
 }
 
 .alert-card__tag {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 4px 8px;
   background: var(--canvas);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -173,7 +173,7 @@
 
 .alert-card__action {
   min-height: 36px;
-  padding: 6px 14px;
+  padding: 8px 12px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);

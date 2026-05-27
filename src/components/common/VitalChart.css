@@ -22,8 +22,8 @@
   background: var(--canvas);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 2px;
-  gap: 2px;
+  padding: 4px;
+  gap: 4px;
 }
 
 .vital-chart__tab {
@@ -33,7 +33,7 @@
   font: inherit;
   font-size: 13px;
   font-weight: 500;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease;
@@ -209,8 +209,8 @@
   font-weight: 700;
   color: var(--text);
   font-size: 13px;
-  padding-bottom: 6px;
-  margin-bottom: 6px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -268,7 +268,7 @@
 .vital-chart__labs li {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
 }
 
