@@ -184,8 +184,8 @@
 }
 
 .alerts-section__count--danger {
-  background: var(--danger-bg);
-  color: var(--danger);
+  background: var(--danger);
+  color: #ffffff;
   border-color: transparent;
 }
 

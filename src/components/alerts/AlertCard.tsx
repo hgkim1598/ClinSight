@@ -1,5 +1,17 @@
 import { useNavigate } from 'react-router-dom';
-import type { Alert, AlertAction, DashboardPatient } from '../../types';
+import {
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  CheckCircle2,
+  Info,
+} from 'lucide-react';
+import type {
+  Alert,
+  AlertAction,
+  AlertSeverity,
+  DashboardPatient,
+} from '../../types';
 import { markAlertRead } from '../../api/services/alertService';
 import { useSnackbar } from '../../context/useSnackbar';
 import { patientLocalData } from '../../data/patientLocalData';
@@ -22,6 +34,16 @@ interface AlertCardProps {
  * API의 alert_source는 model_key('mortality_48h' 등) 또는 trigger_rule_key('threshold' 등)가
  * 들어온다. 컴포넌트가 카테고리로 분류해 표시한다.
  */
+/** severity → 메타 영역에 표시할 아이콘 + 색상. */
+function getSeverityIcon(severity: AlertSeverity): {
+  Icon: typeof AlertTriangle;
+  color: string;
+} {
+  if (severity === 'critical') return { Icon: AlertTriangle, color: 'var(--danger)' };
+  if (severity === 'warning') return { Icon: AlertCircle, color: 'var(--warn)' };
+  return { Icon: Info, color: 'var(--text-muted)' };
+}
+
 function getSourceTag(alertSource: string): { label: string; modifier: string } {
   if (alertSource === 'threshold') {
     return { label: '임계치 초과', modifier: 'alert-card__source--threshold' };
@@ -62,6 +84,7 @@ export default function AlertCard({
   const { show } = useSnackbar();
   const sourceTag = getSourceTag(alert.alertSource);
   const actions = buildActions(alert);
+  const { Icon: SevIcon, color: sevColor } = getSeverityIcon(alert.severity);
 
   const goToPatient = async () => {
     if (alert.delivery.readAt == null) {
@@ -143,6 +166,12 @@ export default function AlertCard({
     >
       <div className="alert-card__row alert-card__row--meta">
         <div className="alert-card__source-group">
+          <SevIcon
+            size={16}
+            className="alert-card__severity-icon"
+            style={{ color: sevColor }}
+            aria-hidden="true"
+          />
           <span className={`alert-card__source ${sourceTag.modifier}`}>
             {sourceTag.label}
           </span>
@@ -174,11 +203,25 @@ export default function AlertCard({
 
       {alert.status === 'acknowledged' && alert.delivery.acknowledgedAt && (
         <div className="alert-card__status-meta">
+          <CheckCircle
+            size={14}
+            className="alert-card__status-icon"
+            style={{ color: 'var(--safe)' }}
+            aria-hidden="true"
+          />
           확인 · {formatTime(alert.delivery.acknowledgedAt)}
         </div>
       )}
       {alert.status === 'resolved' && (
-        <div className="alert-card__status-meta">해소됨</div>
+        <div className="alert-card__status-meta">
+          <CheckCircle2
+            size={14}
+            className="alert-card__status-icon"
+            style={{ color: 'var(--text-muted)' }}
+            aria-hidden="true"
+          />
+          해소됨
+        </div>
       )}
 
       {actions.length > 0 && (

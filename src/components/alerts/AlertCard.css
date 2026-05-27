@@ -5,7 +5,6 @@
   padding: 12px 16px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-left-width: 3px;
   border-radius: var(--radius-md);
   cursor: pointer;
   text-align: left;
@@ -24,20 +23,44 @@
   outline-offset: 2px;
 }
 
-.alert-card--critical {
-  border-left-color: var(--danger);
+/* 미확인 + severity 조합 — 배경 미세 틴트(94/6) + 사방 균일 글로우(blur 8 / spread 3) */
+.alert-card--new.alert-card--critical {
+  background: color-mix(in srgb, var(--card) 94%, var(--danger));
+  box-shadow: 0 0 8px 3px rgba(220, 38, 38, 0.2);
 }
 
-.alert-card--warning {
-  border-left-color: var(--warn);
+.alert-card--new.alert-card--warning {
+  background: color-mix(in srgb, var(--card) 94%, var(--warn));
+  box-shadow: 0 0 8px 3px rgba(217, 119, 6, 0.2);
+}
+
+/* 미확인 hover — severity 색 테두리 라인 + 글로우 살짝 강화 */
+.alert-card--new.alert-card--critical:hover {
+  border-color: var(--danger);
+  box-shadow: 0 0 10px 4px rgba(220, 38, 38, 0.25);
+}
+
+.alert-card--new.alert-card--warning:hover {
+  border-color: var(--warn);
+  box-shadow: 0 0 10px 4px rgba(217, 119, 6, 0.25);
 }
 
 .alert-card--acknowledged {
-  opacity: 0.75;
+  opacity: 0.85;
+}
+
+.alert-card--acknowledged .alert-card__title {
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .alert-card--resolved {
-  opacity: 0.55;
+  opacity: 0.6;
+}
+
+.alert-card--resolved .alert-card__title {
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
 .alert-card__row--meta {
@@ -128,8 +151,16 @@
 }
 
 .alert-card__status-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.alert-card__status-icon,
+.alert-card__severity-icon {
+  flex-shrink: 0;
 }
 
 .alert-card__actions {
