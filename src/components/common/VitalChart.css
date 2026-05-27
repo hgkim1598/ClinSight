@@ -297,7 +297,7 @@
 /* ---------- Line dot 등장 지연 ----------
    Line이 0.8s 동안 그려진 뒤 dot이 나타나도록.
    Scatter는 animationBegin={800}으로 별도 제어. */
-@keyframes dotFadeIn {
+@keyframes vitalDotFadeIn {
   0%,
   99% {
     opacity: 0;
@@ -307,15 +307,15 @@
   }
 }
 
-.recharts-dot,
-.recharts-line-dots circle {
-  animation: dotFadeIn 0.01s ease-out 0.8s forwards;
+.vital-chart .recharts-dot,
+.vital-chart .recharts-line-dots > * {
+  animation: vitalDotFadeIn 0.01s ease-out 0.8s forwards;
   opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .recharts-dot,
-  .recharts-line-dots circle {
+  .vital-chart .recharts-dot,
+  .vital-chart .recharts-line-dots > * {
     animation: none;
     opacity: 1;
   }

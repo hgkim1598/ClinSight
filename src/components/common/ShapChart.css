@@ -45,10 +45,10 @@
   transition: filter 0.15s ease;
   overflow: hidden;
   transform-origin: left;
-  animation: expandRight 0.8s ease-out forwards;
+  animation: shapExpandRight 0.8s ease-out forwards;
 }
 
-@keyframes expandRight {
+@keyframes shapExpandRight {
   from {
     transform: scaleX(0);
   }

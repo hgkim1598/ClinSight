@@ -145,10 +145,10 @@
   height: 100%;
   border-radius: var(--radius-sm);
   transform-origin: left;
-  animation: expandRight 0.8s ease-out forwards;
+  animation: escalationExpandRight 0.8s ease-out forwards;
 }
 
-@keyframes expandRight {
+@keyframes escalationExpandRight {
   from {
     transform: scaleX(0);
   }
