@@ -144,6 +144,33 @@
 .escalation__shap-fill {
   height: 100%;
   border-radius: var(--radius-sm);
+  transform-origin: left;
+  animation: expandRight 0.8s ease-out forwards;
+}
+
+@keyframes expandRight {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.escalation__shap li:nth-child(1) .escalation__shap-fill {
+  animation-delay: 0ms;
+}
+.escalation__shap li:nth-child(2) .escalation__shap-fill {
+  animation-delay: 80ms;
+}
+.escalation__shap li:nth-child(3) .escalation__shap-fill {
+  animation-delay: 160ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escalation__shap-fill {
+    animation: none;
+  }
 }
 
 .escalation__shap-fill--up {

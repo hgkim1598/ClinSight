@@ -93,7 +93,9 @@ export default function TrendBar({ trend }: TrendBarProps) {
             strokeWidth={2}
             dot={{ r: 3, fill: 'var(--primary)', stroke: 'var(--primary)' }}
             activeDot={{ r: 5 }}
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={800}
+            animationEasing="ease-out"
           />
         </LineChart>
       </ResponsiveContainer>

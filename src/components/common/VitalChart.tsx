@@ -611,7 +611,7 @@ function ChartBody({
                       stackId="normal"
                       stroke="none"
                       fill="transparent"
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                       activeDot={false}
                     />
                     <Area
@@ -620,7 +620,7 @@ function ChartBody({
                       stackId="normal"
                       stroke="none"
                       fill="var(--safe-bg)"
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                       activeDot={false}
                     />
                   </>
@@ -636,7 +636,7 @@ function ChartBody({
                       dot={{ r: 3, fill: 'var(--chart-line-1)', stroke: 'var(--chart-line-1)' }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                     <Line
                       yAxisId="right"
@@ -647,16 +647,16 @@ function ChartBody({
                       dot={{ r: 3, fill: 'var(--chart-line-2)', stroke: 'var(--chart-line-2)' }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                     {config.dots.includes('lac') && (
-                      <Scatter yAxisId="left" dataKey="lacY" shape={<LacShape />} isAnimationActive={false} />
+                      <Scatter yAxisId="left" dataKey="lacY" shape={<LacShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('cre') && (
-                      <Scatter yAxisId="left" dataKey="creY" shape={<CreShape />} isAnimationActive={false} />
+                      <Scatter yAxisId="left" dataKey="creY" shape={<CreShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('pf_ratio') && (
-                      <Scatter yAxisId="left" dataKey="pfY" shape={<PfRatioShape />} isAnimationActive={false} />
+                      <Scatter yAxisId="left" dataKey="pfY" shape={<PfRatioShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                   </>
                 )}
@@ -670,36 +670,36 @@ function ChartBody({
                       dot={{ r: 3, fill: 'var(--primary)', stroke: 'var(--primary)' }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                     {!isCns && <Scatter dataKey="dotOn" fill="var(--warn)" shape="circle" />}
                     {config.dots.includes('lac') && (
-                      <Scatter dataKey="lacY" shape={<LacShape />} isAnimationActive={false} />
+                      <Scatter dataKey="lacY" shape={<LacShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('cre') && (
-                      <Scatter dataKey="creY" shape={<CreShape />} isAnimationActive={false} />
+                      <Scatter dataKey="creY" shape={<CreShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('pf_ratio') && (
-                      <Scatter dataKey="pfY" shape={<PfRatioShape />} isAnimationActive={false} />
+                      <Scatter dataKey="pfY" shape={<PfRatioShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                   </>
                 )}
                 {isDotsOnly && (
                   <>
                     {config.dots.includes('lac') && (
-                      <Scatter dataKey="lacY" shape={<LacShape />} isAnimationActive={false} />
+                      <Scatter dataKey="lacY" shape={<LacShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('cre') && (
-                      <Scatter dataKey="creY" shape={<CreShape />} isAnimationActive={false} />
+                      <Scatter dataKey="creY" shape={<CreShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('pf_ratio') && (
-                      <Scatter dataKey="pfY" shape={<PfRatioShape />} isAnimationActive={false} />
+                      <Scatter dataKey="pfY" shape={<PfRatioShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('platelet') && (
-                      <Scatter dataKey="pltY" shape={<PlateletShape />} isAnimationActive={false} />
+                      <Scatter dataKey="pltY" shape={<PlateletShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                     {config.dots.includes('bilirubin') && (
-                      <Scatter dataKey="bilY" shape={<BilirubinShape />} isAnimationActive={false} />
+                      <Scatter dataKey="bilY" shape={<BilirubinShape />} isAnimationActive={true} animationDuration={800} animationEasing="ease-out" />
                     )}
                   </>
                 )}
@@ -1030,7 +1030,7 @@ function CompareChartBody({
                       dot={{ r: 3, fill: ln.color, stroke: ln.color }}
                       activeDot={{ r: 5 }}
                       connectNulls
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                   ))}
                   {dotYAxisId && dotTypes.includes('lac') && (
@@ -1038,7 +1038,7 @@ function CompareChartBody({
                       yAxisId={dotYAxisId}
                       dataKey="lacY"
                       shape={<LacShape />}
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                   )}
                   {dotYAxisId && dotTypes.includes('cre') && (
@@ -1046,7 +1046,7 @@ function CompareChartBody({
                       yAxisId={dotYAxisId}
                       dataKey="creY"
                       shape={<CreShape />}
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                   )}
                   {dotYAxisId && dotTypes.includes('pf_ratio') && (
@@ -1054,7 +1054,7 @@ function CompareChartBody({
                       yAxisId={dotYAxisId}
                       dataKey="pfY"
                       shape={<PfRatioShape />}
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                   )}
                   {dotYAxisId && dotTypes.includes('platelet') && (
@@ -1062,7 +1062,7 @@ function CompareChartBody({
                       yAxisId={dotYAxisId}
                       dataKey="pltY"
                       shape={<PlateletShape />}
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                   )}
                   {dotYAxisId && dotTypes.includes('bilirubin') && (
@@ -1070,7 +1070,7 @@ function CompareChartBody({
                       yAxisId={dotYAxisId}
                       dataKey="bilY"
                       shape={<BilirubinShape />}
-                      isAnimationActive={false}
+                      isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                     />
                   )}
                 </ComposedChart>

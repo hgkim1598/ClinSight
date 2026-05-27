@@ -296,7 +296,7 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
                         dot={{ r: 3, fill: o.color, strokeOpacity: dimmed ? 0.2 : 1 }}
                         activeDot={{ r: 5 }}
                         connectNulls={false}
-                        isAnimationActive={false}
+                        isAnimationActive={true} animationDuration={800} animationEasing="ease-out"
                       />
                     );
                   })}
