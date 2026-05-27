@@ -66,8 +66,49 @@
   background: var(--card);
   border: 2px solid var(--anatomy-line);
   color: var(--text-secondary);
+  box-shadow: 0 2px 10px rgba(148, 163, 184, 0.15);
   transition: border-color 0.12s ease, color 0.12s ease, background-color 0.12s ease,
-    transform 0.12s ease;
+    box-shadow 0.2s ease, transform 0.2s ease;
+  animation: organPulse 0.6s ease-out both;
+  animation-iteration-count: 2;
+}
+
+@keyframes organPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 진입 시 장기별 stagger — ORGANS 순서에 무관하게 DOM 등장 순으로 적용 */
+.sofa-body .sofa-organ:nth-of-type(1) .sofa-organ__icon {
+  animation-delay: 0ms;
+}
+.sofa-body .sofa-organ:nth-of-type(2) .sofa-organ__icon {
+  animation-delay: 40ms;
+}
+.sofa-body .sofa-organ:nth-of-type(3) .sofa-organ__icon {
+  animation-delay: 80ms;
+}
+.sofa-body .sofa-organ:nth-of-type(4) .sofa-organ__icon {
+  animation-delay: 120ms;
+}
+.sofa-body .sofa-organ:nth-of-type(5) .sofa-organ__icon {
+  animation-delay: 160ms;
+}
+.sofa-body .sofa-organ:nth-of-type(6) .sofa-organ__icon {
+  animation-delay: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sofa-organ__icon {
+    animation: none;
+  }
 }
 
 .sofa-organ__icon svg {
@@ -76,8 +117,9 @@
 }
 
 .sofa-organ:hover .sofa-organ__icon {
-  border-color: var(--border-strong);
+  border-color: var(--primary);
   color: var(--text);
+  box-shadow: 0 0 12px 3px rgba(37, 99, 235, 0.3);
 }
 
 .sofa-organ:focus-visible .sofa-organ__icon {
@@ -93,6 +135,7 @@
   border-color: var(--primary);
   background: var(--primary-bg);
   color: var(--primary);
+  box-shadow: 0 0 12px 3px rgba(37, 99, 235, 0.35);
 }
 
 .sofa-organ__meta {
