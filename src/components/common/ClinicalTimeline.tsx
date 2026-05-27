@@ -41,9 +41,9 @@ const CATEGORY_ICON: Record<TimelineEventCategory, ComponentType<IconProps>> = {
 
 const CATEGORY_LABEL: Record<TimelineEventCategory, string> = {
   vitals: '바이탈',
-  lab: '검사',
+  lab: '검사결과',
   medication: '투약',
-  procedure: '시술',
+  procedure: '검사',
   assessment: '평가',
   alert: '경보',
   mortality: '사망 위험',
