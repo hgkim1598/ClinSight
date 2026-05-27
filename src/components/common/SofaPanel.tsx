@@ -2,7 +2,7 @@
 // cardiovascular은 거의 매시간, respiration/coagulation/liver는 하루 1~2회 수준
 // 결측 보간 없이 실제 측정값만 표시. connectNulls={false} 유지.
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -72,6 +72,99 @@ const ORGAN_LEGEND_LABEL: Record<OrganKey, string> = {
   liver: '간',
   renal: '신장',
   coagulation: '응고계',
+};
+
+// ============================================================
+// Organ-별 dot shape — 6개 organ 의 SOFA 점수가 동일할 때 라인·점이 완전히
+// 겹쳐 하나만 보이는 문제를 해소하기 위해 점 모양을 차별화한다.
+// recharts 가 cx/cy 를 자동 주입하므로 우리는 color/size/opacity 만 받는다.
+// ============================================================
+
+interface OrganDotProps {
+  cx?: number;
+  cy?: number;
+  color: string;
+  size?: number;
+  opacity?: number;
+}
+
+function CircleDot({ cx, cy, color, size = 3, opacity = 1 }: OrganDotProps) {
+  if (cx == null || cy == null) return null;
+  return <circle cx={cx} cy={cy} r={size} fill={color} opacity={opacity} />;
+}
+
+function RectDot({ cx, cy, color, size = 3, opacity = 1 }: OrganDotProps) {
+  if (cx == null || cy == null) return null;
+  return (
+    <rect
+      x={cx - size}
+      y={cy - size}
+      width={size * 2}
+      height={size * 2}
+      fill={color}
+      opacity={opacity}
+    />
+  );
+}
+
+function DiamondDot({ cx, cy, color, size = 3, opacity = 1 }: OrganDotProps) {
+  if (cx == null || cy == null) return null;
+  const s = size * 1.3;
+  return (
+    <rect
+      x={-s}
+      y={-s}
+      width={s * 2}
+      height={s * 2}
+      transform={`translate(${cx} ${cy}) rotate(45)`}
+      fill={color}
+      opacity={opacity}
+    />
+  );
+}
+
+function TriangleUpDot({ cx, cy, color, size = 3, opacity = 1 }: OrganDotProps) {
+  if (cx == null || cy == null) return null;
+  const s = size * 1.3;
+  return (
+    <polygon
+      points={`${cx},${cy - s} ${cx - s},${cy + s} ${cx + s},${cy + s}`}
+      fill={color}
+      opacity={opacity}
+    />
+  );
+}
+
+function TriangleDownDot({ cx, cy, color, size = 3, opacity = 1 }: OrganDotProps) {
+  if (cx == null || cy == null) return null;
+  const s = size * 1.3;
+  return (
+    <polygon
+      points={`${cx},${cy + s} ${cx - s},${cy - s} ${cx + s},${cy - s}`}
+      fill={color}
+      opacity={opacity}
+    />
+  );
+}
+
+function PlusDot({ cx, cy, color, size = 3, opacity = 1 }: OrganDotProps) {
+  if (cx == null || cy == null) return null;
+  const t = size * 0.45;
+  return (
+    <g opacity={opacity}>
+      <rect x={cx - size} y={cy - t} width={size * 2} height={t * 2} fill={color} />
+      <rect x={cx - t} y={cy - size} width={t * 2} height={size * 2} fill={color} />
+    </g>
+  );
+}
+
+const ORGAN_DOT: Record<OrganKey, (props: OrganDotProps) => ReactElement | null> = {
+  respiration: CircleDot,
+  coagulation: RectDot,
+  liver: DiamondDot,
+  cardiovascular: TriangleUpDot,
+  cns: TriangleDownDot,
+  renal: PlusDot,
 };
 
 const EMPTY_TREND: SofaTrend = {
@@ -279,6 +372,8 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
                   {ORGANS.map((o) => {
                     const isFocused = selected === o.key;
                     const dimmed = selected !== null && !isFocused;
+                    const dotOpacity = dimmed ? 0.2 : 1;
+                    const Shape = ORGAN_DOT[o.key];
                     return (
                       <Line
                         key={o.key}
@@ -288,8 +383,8 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
                         stroke={o.color}
                         strokeWidth={isFocused ? 3 : 2}
                         strokeOpacity={dimmed ? 0.2 : 1}
-                        dot={{ r: 3, fill: o.color, strokeOpacity: dimmed ? 0.2 : 1 }}
-                        activeDot={{ r: 5 }}
+                        dot={<Shape color={o.color} size={3} opacity={dotOpacity} />}
+                        activeDot={<Shape color={o.color} size={5} opacity={1} />}
                         connectNulls={false}
                         isAnimationActive={false}
                       />
