@@ -2,7 +2,7 @@
 // cardiovascular은 거의 매시간, respiration/coagulation/liver는 하루 1~2회 수준
 // 결측 보간 없이 실제 측정값만 표시. connectNulls={false} 유지.
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -165,12 +165,17 @@ export default function SofaPanel({ patientId }: SofaPanelProps) {
     Math.round(visibleDataCount / VISIBLE_TICK_COUNT) - 1,
   );
 
-  // 첫 진입 시 가장 오른쪽(최신)으로 스크롤
-  useLayoutEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
-  }, [innerWidth]);
+  // 첫 진입 + 데이터 갱신 시 가장 오른쪽(최신)으로 스크롤.
+  // 사용자가 수동 스크롤 중일 때는 발화하지 않음 — chartData/innerWidth 변경 시에만.
+  // recharts SVG가 완전히 레이아웃된 뒤에 scrollWidth를 읽기 위해 rAF 1프레임 지연.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const raf = requestAnimationFrame(() => {
+      el.scrollLeft = el.scrollWidth;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [innerWidth, chartData]);
 
   const handleOrganClick = (key: OrganKey) => {
     setSelected((prev) => (prev === key ? null : key));
