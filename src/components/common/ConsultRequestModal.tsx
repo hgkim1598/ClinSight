@@ -32,6 +32,7 @@ export default function ConsultRequestModal({
   patient,
 }: ConsultRequestModalProps) {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const autoCloseTimerRef = useRef<number | null>(null);
 
   // 모달 마운트 시 전체 의료진 1회 조회 후 부서별로 그루핑 (/staff/departments 의존 제거).
@@ -62,6 +63,26 @@ export default function ConsultRequestModal({
     closeBtnRef.current?.focus();
     return () => document.removeEventListener('keydown', handleKey);
   }, [open, onClose]);
+
+  // 모달이 열릴 때 message 를 환자 정보 기반 템플릿으로 자동 채움 + 빈 줄(2번째 줄)에 커서 배치.
+  // closeBtnRef.focus() 직후 실행되어 포커스가 textarea 로 이동.
+  useEffect(() => {
+    if (!open) return;
+    const sexLabel = patient.sex === 'M' ? '남성' : '여성';
+    const ageText = patient.ageYears != null ? `${patient.ageYears}세` : '(나이)';
+    const dxText = patient.primaryDiagnosisText || '(진단명)';
+    const firstLine = `상기환자는 ${ageText} ${sexLabel}환자, ${dxText}으로 입원함`;
+    const template = `${firstLine}\n\n고신 선처 부탁드립니다\n감사합니다`;
+    setMessage(template);
+    const cursorPos = firstLine.length + 1; // 첫 줄 길이 + '\n' 다음 = 2번째 줄 시작
+    requestAnimationFrame(() => {
+      const ta = messageRef.current;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(cursorPos, cursorPos);
+      }
+    });
+  }, [open, patient.ageYears, patient.sex, patient.primaryDiagnosisText]);
 
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
@@ -100,8 +121,8 @@ export default function ConsultRequestModal({
 
   const addRecipient = (staff: StaffMember, deptDisplayName: string) => {
     if (recipientIds.has(staff.staffId)) return;
-    setRecipients((prev) => [
-      ...prev,
+    // 단일 선택: 기존 선택은 폐기하고 새 1명만 보관. 역할은 항상 'to' 고정.
+    setRecipients([
       {
         staffId: staff.staffId,
         departmentCode: staff.primaryDepartmentCode,
@@ -110,14 +131,6 @@ export default function ConsultRequestModal({
         role: 'to',
       },
     ]);
-  };
-
-  const toggleRecipientRole = (staffId: string) => {
-    setRecipients((prev) =>
-      prev.map((r) =>
-        r.staffId === staffId ? { ...r, role: r.role === 'to' ? 'cc' : 'to' } : r,
-      ),
-    );
   };
 
   const removeRecipient = (staffId: string) => {
@@ -226,7 +239,6 @@ export default function ConsultRequestModal({
               </h3>
               <RecipientChips
                 recipients={recipients}
-                onToggleRole={toggleRecipientRole}
                 onRemove={removeRecipient}
               />
             </section>
@@ -246,6 +258,7 @@ export default function ConsultRequestModal({
             <section className="consult-modal__section">
               <h3 className="consult-modal__section-title">요청 사유</h3>
               <textarea
+                ref={messageRef}
                 className="consult-modal__reason"
                 placeholder="협진 요청 사유를 입력하세요 (선택)"
                 value={message}
@@ -265,17 +278,6 @@ export default function ConsultRequestModal({
                 <button
                   type="button"
                   role="radio"
-                  aria-checked={priority === 'urgent'}
-                  className={`consult-modal__priority-btn consult-modal__priority-btn--urgent ${
-                    priority === 'urgent' ? 'is-active' : ''
-                  }`}
-                  onClick={() => setPriority('urgent')}
-                >
-                  긴급
-                </button>
-                <button
-                  type="button"
-                  role="radio"
                   aria-checked={priority === 'routine'}
                   className={`consult-modal__priority-btn ${
                     priority === 'routine' ? 'is-active' : ''
@@ -283,6 +285,28 @@ export default function ConsultRequestModal({
                   onClick={() => setPriority('routine')}
                 >
                   일반
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={priority === 'urgent'}
+                  className={`consult-modal__priority-btn consult-modal__priority-btn--urgent ${
+                    priority === 'urgent' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setPriority('urgent')}
+                >
+                  스케줄 응급
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={priority === 'emergent'}
+                  className={`consult-modal__priority-btn consult-modal__priority-btn--emergent ${
+                    priority === 'emergent' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setPriority('emergent')}
+                >
+                  환자 응급
                 </button>
               </div>
             </section>
@@ -315,9 +339,6 @@ export default function ConsultRequestModal({
               {recipients.map((r) => (
                 <li key={r.staffId}>
                   <span className={`consult-modal__chip consult-modal__chip--${r.role}`}>
-                    <span className="consult-modal__chip-role consult-modal__chip-role--static">
-                      {r.role === 'to' ? '수신' : '참조'}
-                    </span>
                     <span className="consult-modal__chip-name">
                       {r.displayName} ({r.departmentDisplayName})
                     </span>

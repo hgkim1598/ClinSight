@@ -15,13 +15,11 @@ export interface SelectedRecipient {
 
 interface RecipientChipsProps {
   recipients: SelectedRecipient[];
-  onToggleRole: (staffId: string) => void;
   onRemove: (staffId: string) => void;
 }
 
 export default function RecipientChips({
   recipients,
-  onToggleRole,
   onRemove,
 }: RecipientChipsProps) {
   if (recipients.length === 0) {
@@ -37,14 +35,6 @@ export default function RecipientChips({
       {recipients.map((r) => (
         <li key={r.staffId}>
           <span className={`consult-modal__chip consult-modal__chip--${r.role}`}>
-            <button
-              type="button"
-              className="consult-modal__chip-role"
-              onClick={() => onToggleRole(r.staffId)}
-              aria-label={`${r.displayName} 역할 전환`}
-            >
-              {r.role === 'to' ? '수신' : '참조'}
-            </button>
             <span className="consult-modal__chip-name">
               {r.displayName} ({r.departmentDisplayName})
             </span>

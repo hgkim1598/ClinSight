@@ -408,6 +408,12 @@
   color: var(--danger);
 }
 
+.consult-modal__priority-btn--emergent.is-active {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
 /* ---------- 푸터 버튼 ---------- */
 .consult-modal__footer {
   display: flex;

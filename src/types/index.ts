@@ -493,7 +493,7 @@ export interface SavedReport {
 
 // ---------- 협진 ----------
 
-export type ConsultPriority = 'urgent' | 'routine';
+export type ConsultPriority = 'routine' | 'urgent' | 'emergent';
 
 /** API 표준 enum (mock 시절 'pending'/'accepted' 폐기) */
 export type ConsultStatus = 'requested' | 'in_progress' | 'completed';
