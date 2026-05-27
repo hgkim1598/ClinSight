@@ -33,7 +33,7 @@ function mapDashboardPatient(w: WireDashboardPatient): DashboardPatient {
     latestMortalityRiskScore: w.latest_mortality_risk_score,
     latestMortalityRiskLabel: w.latest_mortality_risk_label,
     latestComplicationRiskScore: w.latest_complication_risk_score,
-    sepsisLightProb: w.sepsis_light_prob ?? null,
+    sepsisDeepProb: w.sepsis_deep_prob ?? null,
     latestSofaTotal: w.latest_sofa_total,
     activeAlertCount: w.active_alert_count,
     lastPredictionAt: w.last_prediction_at,

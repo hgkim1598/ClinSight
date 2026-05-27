@@ -91,11 +91,11 @@ function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[
 
 function buildKpis(dashboard: DashboardResponse, activeAlertCount: number): KpiData[] {
   const totalPatients = dashboard.summary.totalPatients;
-  // 고위험 환자는 환자행 sepsis_light_prob 에서 파생(표 "패혈증 위험도" 컬럼과 일치).
+  // 고위험 환자는 환자행 sepsis_deep_prob 에서 파생(표 "패혈증 위험도" 컬럼과 일치).
   // 활성 알림은 환자행 active_alert_count(누적 추정) 합산이 부풀려져,
   // 전용 알림 API(status==='active')에서 산출한 값을 인자로 받는다.
   const highRiskCount = dashboard.patients.filter(
-    (p) => p.sepsisLightProb != null && scoreToRiskLabel(p.sepsisLightProb) === 'high',
+    (p) => p.sepsisDeepProb != null && scoreToRiskLabel(p.sepsisDeepProb) === 'high',
   ).length;
   return [
     {
@@ -303,7 +303,7 @@ export default function OverviewPage() {
                     <tr
                       key={p.stayId ?? p.stayToken ?? p.patientToken ?? `row-${idx}`}
                       className={
-                        p.sepsisLightProb != null && scoreToRiskLabel(p.sepsisLightProb) === 'high'
+                        p.sepsisDeepProb != null && scoreToRiskLabel(p.sepsisDeepProb) === 'high'
                           ? 'is-high'
                           : ''
                       }
@@ -328,8 +328,8 @@ export default function OverviewPage() {
                       <td>
                         <Badge
                           level={
-                            p.sepsisLightProb != null
-                              ? scoreToRiskLabel(p.sepsisLightProb)
+                            p.sepsisDeepProb != null
+                              ? scoreToRiskLabel(p.sepsisDeepProb)
                               : null
                           }
                         />
