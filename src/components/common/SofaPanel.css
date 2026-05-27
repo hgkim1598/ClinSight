@@ -302,3 +302,29 @@
     height: 240px;
   }
 }
+
+/* ---------- Line dot 등장 지연 ----------
+   Line이 0.8s 동안 그려진 뒤 dot이 나타나도록. */
+@keyframes dotFadeIn {
+  0%,
+  99% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.recharts-dot,
+.recharts-line-dots > * {
+  animation: dotFadeIn 0.01s ease-out 0.8s forwards;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recharts-dot,
+  .recharts-line-dots circle {
+    animation: none;
+    opacity: 1;
+  }
+}
