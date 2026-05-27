@@ -121,8 +121,8 @@ export interface DashboardPatient {
   latestMortalityRiskScore: number | null;
   latestMortalityRiskLabel: RiskLevel | null;
   latestComplicationRiskScore: number | null;
-  /** sepsis_light 모델 확률(0~1). 백엔드 롤아웃 중이라 optional. 표 "패혈증 위험도" 컬럼 소스. */
-  sepsisLightProb?: number | null;
+  /** sepsis_deep 모델 확률(0~1). 백엔드 롤아웃 중이라 optional. 표 "패혈증 위험도" 컬럼 소스. */
+  sepsisDeepProb?: number | null;
   latestSofaTotal: number;
   activeAlertCount: number;
   lastPredictionAt: string;

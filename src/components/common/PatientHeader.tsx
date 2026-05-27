@@ -9,6 +9,7 @@ interface PatientHeaderProps {
   onSummaryClick?: () => void;
 }
 
+/*
 function hoursSinceIso(iso: string | null | undefined): number | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -16,18 +17,24 @@ function hoursSinceIso(iso: string | null | undefined): number | null {
   const diffMs = Date.now() - d.getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
 }
+*/
 
 /**
  * ISO → 경과 일수. HOD/ICU Day(startFromOne=true) 는 당일을 1일로,
  * Onset Day(false) 는 0일로 표기. 빈 문자열 · Invalid Date 면 null.
- * 절대 ms 기반(86400000) — 자정 경계가 아닌 24h 단위.
+ *
+ * 의료 현장 표준에 맞춰 **KST(UTC+9) 달력 자정 기준** 으로 차이를 계산한다
+ * (24h 경과 기준이 아님). 예: 5/25 22:00 입실 → 다음날 00:01 = Day 2.
+ * 음수 가드: 미래 시각이면 0 으로 클램프.
  */
 function calcDaysSince(isoDate: string, startFromOne: boolean): number | null {
   if (!isoDate) return null;
   const d = new Date(isoDate);
   if (Number.isNaN(d.getTime())) return null;
-  const diffMs = Date.now() - d.getTime();
-  const days = Math.floor(diffMs / 86400000);
+  const KST_OFFSET_MS = 9 * 3600000;
+  const dKstDay = Math.floor((d.getTime() + KST_OFFSET_MS) / 86400000);
+  const nowKstDay = Math.floor((Date.now() + KST_OFFSET_MS) / 86400000);
+  const days = Math.max(0, nowKstDay - dKstDay);
   return startFromOne ? days + 1 : days;
 }
 

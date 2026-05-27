@@ -19,7 +19,7 @@ import type {
 import { getDashboardPatients, type DashboardSort } from '../api/services/patientService';
 import { getStaffing } from '../api/services/staffingService';
 import { getAlerts } from '../api/services/alertService';
-import { CURRENT_ICU_ID, scoreToRiskLabel } from '../utils/constants';
+import { CURRENT_ICU_ID, sepsisProbToRiskLabel } from '../utils/constants';
 import { usePatients } from '../context/usePatients';
 import { patientLocalData } from '../data/patientLocalData';
 import Badge from '../components/common/Badge';
@@ -52,8 +52,8 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 /** UI 정렬 옵션 → 백엔드 정렬 파라미터. */
 const SORT_PARAMS: Record<SortKey, DashboardSort> = {
-  'risk-desc': { sortBy: 'latest_mortality_risk_score', sortOrder: 'desc' },
-  'risk-asc': { sortBy: 'latest_mortality_risk_score', sortOrder: 'asc' },
+  'risk-desc': { sortBy: 'sepsis_deep_prob', sortOrder: 'desc' },
+  'risk-asc': { sortBy: 'sepsis_deep_prob', sortOrder: 'asc' },
   'recent-desc': { sortBy: 'last_observation_at', sortOrder: 'desc' },
   'recent-asc': { sortBy: 'last_observation_at', sortOrder: 'asc' },
   'sofa-desc': { sortBy: 'latest_sofa_total', sortOrder: 'desc' },
@@ -91,11 +91,11 @@ function sortPatients(list: DashboardPatient[], key: SortKey): DashboardPatient[
 
 function buildKpis(dashboard: DashboardResponse, activeAlertCount: number): KpiData[] {
   const totalPatients = dashboard.summary.totalPatients;
-  // 고위험 환자는 환자행 sepsis_light_prob 에서 파생(표 "패혈증 위험도" 컬럼과 일치).
+  // 고위험 환자는 환자행 sepsis_deep_prob 에서 파생(표 "패혈증 위험도" 컬럼과 일치).
   // 활성 알림은 환자행 active_alert_count(누적 추정) 합산이 부풀려져,
   // 전용 알림 API(status==='active')에서 산출한 값을 인자로 받는다.
   const highRiskCount = dashboard.patients.filter(
-    (p) => p.sepsisLightProb != null && scoreToRiskLabel(p.sepsisLightProb) === 'high',
+    (p) => p.sepsisDeepProb != null && sepsisProbToRiskLabel(p.sepsisDeepProb) === 'high',
   ).length;
   return [
     {
@@ -303,7 +303,7 @@ export default function OverviewPage() {
                     <tr
                       key={p.stayId ?? p.stayToken ?? p.patientToken ?? `row-${idx}`}
                       className={
-                        p.sepsisLightProb != null && scoreToRiskLabel(p.sepsisLightProb) === 'high'
+                        p.sepsisDeepProb != null && sepsisProbToRiskLabel(p.sepsisDeepProb) === 'high'
                           ? 'is-high'
                           : ''
                       }
@@ -328,8 +328,8 @@ export default function OverviewPage() {
                       <td>
                         <Badge
                           level={
-                            p.sepsisLightProb != null
-                              ? scoreToRiskLabel(p.sepsisLightProb)
+                            p.sepsisDeepProb != null
+                              ? sepsisProbToRiskLabel(p.sepsisDeepProb)
                               : null
                           }
                         />

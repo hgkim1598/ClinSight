@@ -21,7 +21,7 @@ export interface WireDashboardPatient {
   latest_mortality_risk_score: number | null;
   latest_mortality_risk_label: 'high' | 'medium' | 'low' | null;
   latest_complication_risk_score: number | null;
-  sepsis_light_prob?: number | null;
+  sepsis_deep_prob?: number | null;
   latest_sofa_total: number;
   active_alert_count: number;
   last_prediction_at: string;
@@ -73,7 +73,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.74,
     latest_mortality_risk_label: 'high',
     latest_complication_risk_score: 0.68,
-    sepsis_light_prob: 0.82,
+    sepsis_deep_prob: 0.82,
     latest_sofa_total: 12,
     active_alert_count: 3,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -89,7 +89,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.66,
     latest_mortality_risk_label: 'high',
     latest_complication_risk_score: 0.54,
-    sepsis_light_prob: 0.71,
+    sepsis_deep_prob: 0.71,
     latest_sofa_total: 11,
     active_alert_count: 2,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -105,7 +105,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.45,
     latest_mortality_risk_label: 'medium',
     latest_complication_risk_score: 0.42,
-    sepsis_light_prob: 0.52,
+    sepsis_deep_prob: 0.52,
     latest_sofa_total: 8,
     active_alert_count: 1,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -121,7 +121,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.41,
     latest_mortality_risk_label: 'medium',
     latest_complication_risk_score: 0.38,
-    sepsis_light_prob: 0.45,
+    sepsis_deep_prob: 0.45,
     latest_sofa_total: 7,
     active_alert_count: 1,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -137,7 +137,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.36,
     latest_mortality_risk_label: 'medium',
     latest_complication_risk_score: 0.32,
-    sepsis_light_prob: 0.38,
+    sepsis_deep_prob: 0.38,
     latest_sofa_total: 6,
     active_alert_count: 0,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -153,7 +153,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.18,
     latest_mortality_risk_label: 'low',
     latest_complication_risk_score: 0.15,
-    sepsis_light_prob: 0.24,
+    sepsis_deep_prob: 0.24,
     latest_sofa_total: 4,
     active_alert_count: 0,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -169,7 +169,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.15,
     latest_mortality_risk_label: 'low',
     latest_complication_risk_score: 0.13,
-    sepsis_light_prob: 0.18,
+    sepsis_deep_prob: 0.18,
     latest_sofa_total: 3,
     active_alert_count: 0,
     last_prediction_at: '2026-05-11T08:30:00Z',
@@ -185,7 +185,7 @@ const dashboardPatients: WireDashboardPatient[] = [
     latest_mortality_risk_score: 0.11,
     latest_mortality_risk_label: 'low',
     latest_complication_risk_score: 0.10,
-    sepsis_light_prob: 0.12,
+    sepsis_deep_prob: 0.12,
     latest_sofa_total: 2,
     active_alert_count: 0,
     last_prediction_at: '2026-05-11T08:30:00Z',
