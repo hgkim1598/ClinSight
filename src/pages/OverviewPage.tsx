@@ -52,8 +52,8 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 /** UI 정렬 옵션 → 백엔드 정렬 파라미터. */
 const SORT_PARAMS: Record<SortKey, DashboardSort> = {
-  'risk-desc': { sortBy: 'latest_mortality_risk_score', sortOrder: 'desc' },
-  'risk-asc': { sortBy: 'latest_mortality_risk_score', sortOrder: 'asc' },
+  'risk-desc': { sortBy: 'sepsis_deep_prob', sortOrder: 'desc' },
+  'risk-asc': { sortBy: 'sepsis_deep_prob', sortOrder: 'asc' },
   'recent-desc': { sortBy: 'last_observation_at', sortOrder: 'desc' },
   'recent-asc': { sortBy: 'last_observation_at', sortOrder: 'asc' },
   'sofa-desc': { sortBy: 'latest_sofa_total', sortOrder: 'desc' },
